@@ -21,9 +21,9 @@ def get_default_bacteria():
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, bacteria):
     num_samples, num_bacteria_in_sample = data.shape
     if num_samples != len(samples):
-        raise Exception("Number of sample lables does not match number of samples")
+        FATAL("Number of sample lables does not match number of samples")
     if num_bacteria_in_sample != len(bacteria):
-        raise Exception("Number of bacteria labels does not match number of samples")
+        FATAL("Number of bacteria labels does not match number of samples")
     full_dict = {}
     for bac_ind, bac in enumerate(bacteria):
         samp_dict = {}
