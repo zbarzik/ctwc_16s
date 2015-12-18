@@ -18,6 +18,15 @@ def get_default_samples():
 def get_default_bacteria():
     return ['leonardo', 'donatello', 'raphael', 'michelangelo', 'splinter', 'shredder']
 
+def get_default_data(bacteria, samples):
+    num_bac = len(bacteria)
+    num_samp = len(samples)
+    data = np.zeros((num_bac, num_samp))
+    for row, bac in enumerate(bacteria):
+        for col, samp in enumerate(samples):
+            data[row, col] = 1 if ord(samp[0]) < ord(bac[0]) else 0
+    return data
+
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, bacteria):
     num_samples, num_bacteria_in_sample = data.shape
     if num_samples != len(samples):
@@ -37,14 +46,14 @@ def unifrac_distance_rows(data, samples_arg=None, bacteria_arg=None, tree_arg=No
 
     if samples_arg==None:
         samples = get_default_samples()
-    elif callable(samples):
+    elif callable(samples_arg):
         samples = samples_arg()
     else:
         samples = samples_arg
 
     if bacteria_arg==None:
         bacteria = get_default_bacteria()
-    elif callable(bacteria):
+    elif callable(bacteria_arg):
         bacteria = bacteria_arg()
     else:
         bacteria = bacteria_arg
@@ -60,6 +69,8 @@ def unifrac_distance_rows(data, samples_arg=None, bacteria_arg=None, tree_arg=No
     unifrac = fast_unifrac(tree, data_dict)
     return unifrac['distance_matrix']
 
+def unifrac_distance_cols(data, samples_arg=None, bacteria_arg=None, tree_arg=None):
+    return unifrac_distance_rows(data.transpose(), samples_arg, bacteria_arg, tree_arg)
 
 def pearson_correlation_rows(data):
     return np.corrcoef(data)
@@ -88,9 +99,9 @@ if __name__ == '__main__':
     samples = get_default_samples()
     bacteria = get_default_bacteria()
     tree = get_default_tree(bacteria)
-    data = np.random.rand(len(samples), len(bacteria))
+    data = get_default_data(bacteria, samples)
     print tree.asciiArt()
     print samples
     print bacteria
     print data
-    print __unifrac_prepare_dictionary_from_matrix_rows(data, samples, bacteria)
+    print unifrac_distance_cols(data, samples, bacteria, tree)
