@@ -12,11 +12,22 @@ def get_default_tree(bacteria):
     tr = DndParser(tree_str, UniFracTreeNode)
     return tr
 
+def get_tree_from_file(path):
+    from cogent.parse.tree import DndParser
+    from cogent.maths.unifrac.fast_tree import UniFracTreeNode
+    f = open(path, 'r')
+    tr = DndParser(f.read(), UniFracTreeNode)
+    return tr
+
+def get_gg_97_otu_tree():
+    tr = get_tree_from_file('97_otus.tree')
+    return tr
+
 def get_default_samples():
     return ['mouth', 'butt', 'leg', 'armpit', 'foot']
 
 def get_default_bacteria():
-    return ['leonardo', 'donatello', 'raphael', 'michelangelo', 'splinter', 'shredder']
+    return ['leonardo', 'donatello', 'raphael', 'michelangelo', 'splinter', 'shredder', 'april']
 
 def get_default_data(bacteria, samples):
     num_bac = len(bacteria)
@@ -95,13 +106,20 @@ def euclideane_distance_rows(data):
 def euclidean_distance_cols(data):
     return euclidean_distance_rows(data.transpose())
 
+def get_distance_matrices(data, samples=None, tree=None, bacteria=None):
+    cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, bacteria_arg=bacteria, tree_arg=tree)
+    rows_dist = pearson_correlation_rows(data)
+    return rows_dist, cols_dist
+
 if __name__ == '__main__':
     samples = get_default_samples()
     bacteria = get_default_bacteria()
     tree = get_default_tree(bacteria)
     data = get_default_data(bacteria, samples)
-    print tree.asciiArt()
-    print samples
-    print bacteria
-    print data
-    print unifrac_distance_cols(data, samples, bacteria, tree)
+    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, bacteria)
+    print "Tree:\n" + tree.asciiArt()
+    print "Samples:\n" + str(samples)
+    print "Bacteria:\n" + str(bacteria)
+    print "Data:\n" + str(data)
+    print "Rows Matrix:\n" + str(rows_dist)
+    print "Cols Matrix:\n" + str(cols_dist)
