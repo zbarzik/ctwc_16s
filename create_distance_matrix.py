@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from common import DEBUG,INFO,WARN,ERROR,FATAL
+import warnings
 
 import numpy as np
 
@@ -23,6 +24,21 @@ def get_gg_97_otu_tree():
     tr = get_tree_from_file('97_otus.tree')
     return tr
 
+def get_biom_table_from_file(path):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from biom import parse_table
+    with open(path) as f:
+        table = parse_table(f)
+        return table
+    return None
+
+def get_sample_biom_table():
+    table = get_biom_table_from_file('305_otu_table.json')
+    if table is not None:
+        return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
+    return None
+
 def get_default_samples():
     return ['mouth', 'butt', 'leg', 'armpit', 'foot']
 
@@ -41,9 +57,9 @@ def get_default_data(bacteria, samples):
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, bacteria):
     num_samples, num_bacteria_in_sample = data.shape
     if num_samples != len(samples):
-        FATAL("Number of sample lables does not match number of samples")
+        FATAL("Number of sample lables {0} does not match number of samples {1}".format(num_samples, len(samples)))
     if num_bacteria_in_sample != len(bacteria):
-        FATAL("Number of bacteria labels does not match number of samples")
+        FATAL("Number of bacteria labels {0} does not match number of samples {1}".format(num_bacteria_in_sample, len(bacteria)))
     full_dict = {}
     for bac_ind, bac in enumerate(bacteria):
         samp_dict = {}
@@ -53,23 +69,24 @@ def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, bacteria):
     return full_dict
 
 def unifrac_distance_rows(data, samples_arg=None, bacteria_arg=None, tree_arg=None):
-    from cogent.maths.unifrac.fast_unifrac import fast_unifrac
-
-    if samples_arg==None:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from cogent.maths.unifrac.fast_unifrac import fast_unifrac
+    if samples_arg is None:
         samples = get_default_samples()
     elif callable(samples_arg):
         samples = samples_arg()
     else:
         samples = samples_arg
 
-    if bacteria_arg==None:
+    if bacteria_arg is None:
         bacteria = get_default_bacteria()
     elif callable(bacteria_arg):
         bacteria = bacteria_arg()
     else:
         bacteria = bacteria_arg
 
-    if tree_arg==None:
+    if tree_arg is None:
         tree = get_default_tree(bacteria)
     elif callable(tree_arg):
         tree = tree_arg()
@@ -111,15 +128,22 @@ def get_distance_matrices(data, samples=None, tree=None, bacteria=None):
     rows_dist = pearson_correlation_rows(data)
     return rows_dist, cols_dist
 
+def live_debug():
+    table, otus, samples = get_sample_biom_table()
+    import pdb
+    pdb.set_trace()
+
 if __name__ == '__main__':
-    samples = get_default_samples()
-    bacteria = get_default_bacteria()
-    tree = get_default_tree(bacteria)
-    data = get_default_data(bacteria, samples)
+    data, bacteria, samples = get_sample_biom_table()
+    tree = get_gg_97_otu_tree()
+    #samples = get_default_samples()
+    #bacteria = get_default_bacteria()
+    #tree = get_default_tree(bacteria)
+    #data = get_default_data(bacteria, samples)
     rows_dist, cols_dist = get_distance_matrices(data, samples, tree, bacteria)
-    print "Tree:\n" + tree.asciiArt()
+#    print "Tree:\n" + tree.asciiArt()
     print "Samples:\n" + str(samples)
     print "Bacteria:\n" + str(bacteria)
-    print "Data:\n" + str(data)
+#    print "Data:\n" + str(data)
     print "Rows Matrix:\n" + str(rows_dist)
     print "Cols Matrix:\n" + str(cols_dist)
