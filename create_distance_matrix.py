@@ -4,12 +4,12 @@ import warnings
 
 import numpy as np
 
-def get_default_tree(bacteria):
+def get_default_tree(otus):
     from cogent.parse.tree import DndParser
     from cogent.maths.unifrac.fast_tree import UniFracTreeNode
     tree_str = "(((A:0.15)B:0.2,(C:0.3,D:0.4)E:0.6)F:0.1)G;"
-    for i, bac in enumerate(bacteria):
-        tree_str = tree_str.replace(chr(ord('A') + i), bac)
+    for i, otu in enumerate(otus):
+        tree_str = tree_str.replace(chr(ord('A') + i), otu)
     tr = DndParser(tree_str, UniFracTreeNode)
     return tr
 
@@ -42,33 +42,33 @@ def get_sample_biom_table():
 def get_default_samples():
     return ['mouth', 'butt', 'leg', 'armpit', 'foot']
 
-def get_default_bacteria():
+def get_default_otus():
     return ['leonardo', 'donatello', 'raphael', 'michelangelo', 'splinter', 'shredder', 'april']
 
-def get_default_data(bacteria, samples):
-    num_bac = len(bacteria)
+def get_default_data(otus, samples):
+    num_otu = len(otus)
     num_samp = len(samples)
-    data = np.zeros((num_bac, num_samp))
-    for row, bac in enumerate(bacteria):
+    data = np.zeros((num_otu, num_samp))
+    for row, otu in enumerate(otus):
         for col, samp in enumerate(samples):
-            data[row, col] = 1 if ord(samp[0]) < ord(bac[0]) else 0
+            data[row, col] = 1 if ord(samp[0]) < ord(otu[0]) else 0
     return data
 
-def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, bacteria):
-    num_samples, num_bacteria_in_sample = data.shape
+def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus):
+    num_samples, num_otus_in_sample = data.shape
     if num_samples != len(samples):
         FATAL("Number of sample lables {0} does not match number of samples {1}".format(num_samples, len(samples)))
-    if num_bacteria_in_sample != len(bacteria):
-        FATAL("Number of bacteria labels {0} does not match number of samples {1}".format(num_bacteria_in_sample, len(bacteria)))
+    if num_otus_in_sample != len(otus):
+        FATAL("Number of otus labels {0} does not match number of samples {1}".format(num_otus_in_sample, len(otus)))
     full_dict = {}
-    for bac_ind, bac in enumerate(bacteria):
+    for otu_ind, otu in enumerate(otus):
         samp_dict = {}
         for samp_ind, samp in enumerate(samples):
-            samp_dict[samp] = data[samp_ind, bac_ind]
-        full_dict[bac] = samp_dict
+            samp_dict[samp] = data[samp_ind, otu_ind]
+        full_dict[otu] = samp_dict
     return full_dict
 
-def unifrac_distance_rows(data, samples_arg=None, bacteria_arg=None, tree_arg=None):
+def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         from cogent.maths.unifrac.fast_unifrac import fast_unifrac
@@ -79,26 +79,26 @@ def unifrac_distance_rows(data, samples_arg=None, bacteria_arg=None, tree_arg=No
     else:
         samples = samples_arg
 
-    if bacteria_arg is None:
-        bacteria = get_default_bacteria()
-    elif callable(bacteria_arg):
-        bacteria = bacteria_arg()
+    if otus_arg is None:
+        otus = get_default_otus()
+    elif callable(otus_arg):
+        otus = otus_arg()
     else:
-        bacteria = bacteria_arg
+        otus = otus_arg
 
     if tree_arg is None:
-        tree = get_default_tree(bacteria)
+        tree = get_default_tree(otus)
     elif callable(tree_arg):
         tree = tree_arg()
     else:
         tree = tree_arg
 
-    data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, bacteria)
+    data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus)
     unifrac = fast_unifrac(tree, data_dict)
     return unifrac['distance_matrix']
 
-def unifrac_distance_cols(data, samples_arg=None, bacteria_arg=None, tree_arg=None):
-    return unifrac_distance_rows(data.transpose(), samples_arg, bacteria_arg, tree_arg)
+def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None):
+    return unifrac_distance_rows(data.transpose(), samples_arg, otus_arg, tree_arg)
 
 def pearson_correlation_rows(data):
     return np.corrcoef(data)
@@ -123,8 +123,8 @@ def euclideane_distance_rows(data):
 def euclidean_distance_cols(data):
     return euclidean_distance_rows(data.transpose())
 
-def get_distance_matrices(data, samples=None, tree=None, bacteria=None):
-    cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, bacteria_arg=bacteria, tree_arg=tree)
+def get_distance_matrices(data, samples=None, tree=None, otus=None):
+    cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree)
     rows_dist = pearson_correlation_rows(data)
     return rows_dist, cols_dist
 
@@ -134,16 +134,16 @@ def live_debug():
     pdb.set_trace()
 
 if __name__ == '__main__':
-    data, bacteria, samples = get_sample_biom_table()
+    data, otus, samples = get_sample_biom_table()
     tree = get_gg_97_otu_tree()
     #samples = get_default_samples()
-    #bacteria = get_default_bacteria()
-    #tree = get_default_tree(bacteria)
-    #data = get_default_data(bacteria, samples)
-    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, bacteria)
+    #otus = get_default_otus()
+    #tree = get_default_tree(otus)
+    #data = get_default_data(otus, samples)
+    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, otus)
 #    print "Tree:\n" + tree.asciiArt()
     print "Samples:\n" + str(samples)
-    print "Bacteria:\n" + str(bacteria)
+    print "OTUs:\n" + str(otus)
 #    print "Data:\n" + str(data)
     print "Rows Matrix:\n" + str(rows_dist)
     print "Cols Matrix:\n" + str(cols_dist)
