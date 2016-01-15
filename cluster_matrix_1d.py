@@ -29,12 +29,13 @@ def plot_results(vec):
     plt.ylabel('some numbers')
     plt.show()
 
-def plot_num_clusters_by_eps():
+def plot_num_clusters_by_eps(data, cols_dist, rows_dist):
     best_i = 1
     largest_set = 0
     vec = []
-    for i in range(2,50000, 150):
-        clust, labels = cluster_rows(rows_dist, eps=1.0/i)
+    for i in range(2, 20000, 100):
+        clust, labels = cluster_rows(data.transpose(), cols_dist[0], eps=1.0/i)
+        #clust, labels = cluster_rows(data, rows_dist, eps=1.0/i)
         cur_size = len(set(labels))
         if cur_size > largest_set:
             best_i = i
@@ -52,12 +53,15 @@ if __name__ == '__main__':
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
     tree = create_distance_matrix.get_gg_97_otu_tree()
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
+
     print "Original rows distance matrix:\n{0}".format(rows_dist)
-    clust, labels = cluster_rows(data, rows_dist, eps=0.001)
+    clust, labels = cluster_rows(data, rows_dist, eps=0.0003)
     print "Clustered by rows ({0} clusters):\n{1}".format(len(set(labels)), clust)
     plot_distnace_matrix(data)
     plot_distnace_matrix(clust)
-#    print cols_dist[0]
-#    clust, labels = cluster_rows(cols_dist[0].transpose())
-#    print clust.transpose()
-#    print set(labels)
+
+    print "Original cols distance matrix:\n{0}".format(cols_dist)
+    clust, labels = cluster_rows(data.transpose(), cols_dist[0], eps=0.001)
+    print "Clustered by rows ({0} clusters):\n{1}".format(len(set(labels)), clust.transpose())
+    plot_distnace_matrix(data)
+    plot_distnace_matrix(clust.transpose())
