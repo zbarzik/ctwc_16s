@@ -125,7 +125,7 @@ def euclidean_distance_cols(data):
 
 def get_distance_matrices(data, samples=None, tree=None, otus=None):
     cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree)
-    rows_dist = pearson_correlation_rows(data)
+    rows_dist = abs(pearson_correlation_rows(data))
     return rows_dist, cols_dist
 
 def live_debug():
