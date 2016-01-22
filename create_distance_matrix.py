@@ -100,11 +100,16 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None):
 def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None):
     return unifrac_distance_rows(data.transpose(), samples_arg, otus_arg, tree_arg)
 
-def pearson_correlation_rows(data):
-    return np.corrcoef(data)
+def dissimilarity_from_correlation(correlation):
+    ones = np.ones(correlation.shape)
+    return ones - abs(correlation)
 
-def pearson_correlation_cols(data):
-    return pearson_correlation_rows(data.transpose())
+def pearson_distance_rows(data):
+    correlation = np.corrcoef(data)
+    return dissimilarity_from_correlation(correlation)
+
+def pearson_distance_cols(data):
+    return pearson_distance_rows(data.transpose())
 
 def euclideane_distance_rows(data):
     def _dist(vec1, vec2):
@@ -125,7 +130,7 @@ def euclidean_distance_cols(data):
 
 def get_distance_matrices(data, samples=None, tree=None, otus=None):
     cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree)
-    rows_dist = abs(pearson_correlation_rows(data))
+    rows_dist = pearson_distance_rows(data)
     return rows_dist, cols_dist
 
 def live_debug():
