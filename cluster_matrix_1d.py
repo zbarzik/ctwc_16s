@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from common import DEBUG,INFO,WARN,ERROR,FATAL
+from common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT
 import warnings
 
 import numpy as np
@@ -16,7 +16,7 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 ])
 
 
-def cluster_rows_agglomerative(data, dist_matrix, n_clusters=10):
+def cluster_rows_agglomerative(data, dist_matrix, n_clusters=9):
     a = data.tolist()
     ag = AgglomerativeClustering(n_clusters=n_clusters).fit(dist_matrix)
     for i in range(len(a)): a[i].insert(0, ag.labels_[i])
@@ -63,10 +63,19 @@ def plot_distnace_matrix(dist_mat):
 def test():
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
 
-    data = inject_pattern_to_data(data)
+    data = inject_row_pattern_to_data(data)
+
+    print "Original data:\n{0}\n\n".format(data)
 
     tree = create_distance_matrix.get_gg_97_otu_tree()
+
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
+
+    ASSERT(rows_dist.shape[0] == rows_dist.shape[1])
+    ASSERT(cols_dist[0].shape[0] == cols_dist[0].shape[1])
+
+    ASSERT(rows_dist.shape[0] == data.shape[0])
+    ASSERT(cols_dist[0].shape[0] == data.shape[1])
 
     print "Original rows distance matrix:\n{0}\n\n".format(rows_dist)
 
@@ -81,7 +90,7 @@ def test():
     #plot_distnace_matrix(data)
     #plot_distnace_matrix(clust)
 
-    print "Original cols distance matrix:\n{0}\n\n".format(cols_dist)
+    print "Original cols distance matrix:\n{0}\n\n".format(cols_dist[0])
 
     clust, labels = cluster_rows(data.transpose(), cols_dist[0])
 
@@ -90,19 +99,17 @@ def test():
         st += str(labels[i])
     print st + "\n\n"
 
-    print "Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust.transpose())
+    print "Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust.transpose())
     #plot_distnace_matrix(data)
     #plot_distnace_matrix(clust.transpose())
 
-def inject_pattern_to_data(data):
-    data, otus, samples = create_distance_matrix.get_sample_biom_table()
+def inject_row_pattern_to_data(data):
     z = np.zeros(data.shape)
-    for col in range(len(samples)): # Add a lot of some bacteria to some of the samples
-        row = 0
-        z[row][col] += (col % 2) * 150
-        z[row+1][col] += (col % 2) * 200
-        z[row+2][col] += (1 - (col % 2)) * 200
-        z[row+3][col] += (1 - (col % 2)) * 200
+    for col in range(data.shape[1]): # Flooding to create a false relationship between rows
+        for row in range(6):
+            z[row, col] = (col % 2) * 200
+        for row in range(data.shape[0] - 10, data.shape[0]):
+            z[row, col] += (1 - (col % 2)) * 200
     return data + z
 
 if __name__ == "__main__":

@@ -24,6 +24,12 @@ def FATAL(message):
     ERROR(message)
     exit(-1)
 
+def ASSERT(condition):
+    import traceback
+    if not condition:
+        traceback.print_stack()
+        FATAL("Assertion failed!")
+
 def init_logger():
     file_handler = logging.FileHandler(filename=LOG_FILE, mode='a')
     console_handler = logging.StreamHandler()
