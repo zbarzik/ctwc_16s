@@ -7,6 +7,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import AgglomerativeClustering
 import create_distance_matrix
 
+
+# Constants
+N_CLUSTERS = 9
+
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1). 
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 [ 0.9, 0.0, 0.9, 0.1, 0.9 ],
@@ -16,7 +20,7 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 ])
 
 
-def cluster_rows_agglomerative(data, dist_matrix, n_clusters=9):
+def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
     a = data.tolist()
     ag = AgglomerativeClustering(n_clusters=n_clusters).fit(dist_matrix)
     for i in range(len(a)): a[i].insert(0, ag.labels_[i])

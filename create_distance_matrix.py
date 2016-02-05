@@ -150,7 +150,7 @@ def get_distance_matrices(data, samples=None, tree=None, otus=None):
     rows_dist = pearson_distance_rows(data)
     return rows_dist, cols_dist
 
-if __name__ == '__main__':
+def test():
     data, otus, samples = get_sample_biom_table()
     tree = get_gg_97_otu_tree()
     #samples = get_default_samples()
@@ -158,9 +158,12 @@ if __name__ == '__main__':
     #tree = get_default_tree(otus)
     #data = get_default_data(otus, samples)
     rows_dist, cols_dist = get_distance_matrices(data, samples, tree, otus)
-#    print "Tree:\n" + tree.asciiArt()
+    #print "Tree:\n" + tree.asciiArt()
     print "Samples:\n" + str(samples)
     print "OTUs:\n" + str(otus)
-#    print "Data:\n" + str(data)
+    #print "Data:\n" + str(data)
     print "Rows Matrix:\n" + str(rows_dist)
     print "Cols Matrix:\n" + str(cols_dist)
+
+if __name__ == '__main__':
+    test()
