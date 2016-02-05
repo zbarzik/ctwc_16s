@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT
+from common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP
 import warnings
 
 import numpy as np
@@ -45,7 +45,7 @@ def plot_num_clusters_by_eps(data, cols_dist, rows_dist):
     largest_set = 0
     vec = []
     for i in range(2, 20000, 100):
-        clust, labels = cluster_rows_dbscan(data.transpose(), cols_dist[0], eps=1.0/i)
+        clust, labels = cluster_rows_dbscan(data.transpose(), cols_dist, eps=1.0/i)
         cur_size = len(set(labels))
         if cur_size > largest_set:
             best_i = i
@@ -63,7 +63,9 @@ def plot_distnace_matrix(dist_mat):
 def test():
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
 
-    data = inject_row_pattern_to_data(data)
+    #data = inject_row_pattern_to_data(data)
+
+    #data = inject_col_pattern_to_data(data)
 
     print "Original data:\n{0}\n\n".format(data)
 
@@ -72,10 +74,10 @@ def test():
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
 
     ASSERT(rows_dist.shape[0] == rows_dist.shape[1])
-    ASSERT(cols_dist[0].shape[0] == cols_dist[0].shape[1])
+    ASSERT(cols_dist.shape[0] == cols_dist.shape[1])
 
     ASSERT(rows_dist.shape[0] == data.shape[0])
-    ASSERT(cols_dist[0].shape[0] == data.shape[1])
+    ASSERT(cols_dist.shape[0] == data.shape[1])
 
     print "Original rows distance matrix:\n{0}\n\n".format(rows_dist)
 
@@ -90,9 +92,9 @@ def test():
     #plot_distnace_matrix(data)
     #plot_distnace_matrix(clust)
 
-    print "Original cols distance matrix:\n{0}\n\n".format(cols_dist[0])
+    print "Original cols distance matrix:\n{0}\n\n".format(cols_dist)
 
-    clust, labels = cluster_rows(data.transpose(), cols_dist[0])
+    clust, labels = cluster_rows(data.transpose(), cols_dist)
 
     st = "Lables:\n"
     for i in range(labels.shape[0]):
@@ -110,6 +112,16 @@ def inject_row_pattern_to_data(data):
             z[row, col] = (col % 2) * 200
         for row in range(data.shape[0] - 10, data.shape[0]):
             z[row, col] += (1 - (col % 2)) * 200
+    return data + z
+
+def inject_col_pattern_to_data(data):
+    z = np.zeros(data.shape)
+    for col in range(6):
+        for row in range(data.shape[0]): # Flooding to create a false relationship between rows
+            if row != col:
+               z[row, col] = data[row, 0] - data[row, col]
+            else:
+               z[row, col] = data[row, 0] + 1
     return data + z
 
 if __name__ == "__main__":

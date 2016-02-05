@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from common import DEBUG,INFO,WARN,ERROR,FATAL
+from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 import warnings
 
 import numpy as np
@@ -68,6 +68,18 @@ def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus):
         full_dict[otu] = samp_dict
     return full_dict
 
+def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, samples):
+    uf_dist_mat = unifrac_output[0]
+    uf_samples = unifrac_output[1]
+    z = np.zeros(uf_dist_mat.shape)
+    ASSERT(len(uf_samples) == len(samples))
+    for samp_ind, samp in enumerate(samples):
+        uf_ind = uf_samples.index(samp)
+        for other_ind, other_samp in enumerate(samples):
+            uf_other_ind = uf_samples.index(other_samp)
+            z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
+    return z
+
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -94,8 +106,9 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None):
         tree = tree_arg
 
     data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus)
-    unifrac = fast_unifrac(tree, data_dict)
-    return unifrac['distance_matrix']
+    unifrac = fast_unifrac(tree, data_dict, weighted=True)
+    mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples)
+    return mat
 
 def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None):
     return unifrac_distance_rows(data.transpose(), samples_arg, otus_arg, tree_arg)
@@ -106,6 +119,10 @@ def dissimilarity_from_correlation(correlation):
 
 def pearson_distance_rows(data):
     correlation = np.corrcoef(data)
+    for i in range(correlation.shape[0]):
+        for j in range(correlation.shape[1]):
+            if correlation[i][j] != correlation[i][j]:
+                correlation[i][j] = 0
     return dissimilarity_from_correlation(correlation)
 
 def pearson_distance_cols(data):
@@ -132,11 +149,6 @@ def get_distance_matrices(data, samples=None, tree=None, otus=None):
     cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree)
     rows_dist = pearson_distance_rows(data)
     return rows_dist, cols_dist
-
-def live_debug():
-    table, otus, samples = get_sample_biom_table()
-    import pdb
-    pdb.set_trace()
 
 if __name__ == '__main__':
     data, otus, samples = get_sample_biom_table()

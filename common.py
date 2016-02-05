@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import logging
+import logging, pdb
 
 LOG_LEVEL_CONSOLE = logging.WARN
 LOG_LEVEL_FILE = logging.DEBUG
@@ -29,6 +29,9 @@ def ASSERT(condition):
     if not condition:
         traceback.print_stack()
         FATAL("Assertion failed!")
+
+def BP():
+    pdb.set_trace()
 
 def init_logger():
     file_handler = logging.FileHandler(filename=LOG_FILE, mode='a')
