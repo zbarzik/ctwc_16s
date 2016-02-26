@@ -6,6 +6,8 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AgglomerativeClustering
 import create_distance_matrix
+import itertools
+import math
 
 
 # Constants
@@ -19,14 +21,16 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 [ 0.1, 0.9, 0.1, 0.9, 0.0 ]
                                 ])
 
-
 def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
     a = data.tolist()
-    ag = AgglomerativeClustering(n_clusters=n_clusters).fit(dist_matrix)
+    ag = AgglomerativeClustering(n_clusters=n_clusters,
+                                 linkage="complete",
+                                 affinity="l2",
+                                 compute_full_tree=True).fit(dist_matrix)
     for i in range(len(a)): a[i].insert(0, ag.labels_[i])
     a.sort()
     for i in range(len(a)): del a[i][0]
-    return np.array(a), ag.labels_
+    return np.array(a), ag.labels_, ag
 
 def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
     a = data.tolist()
@@ -85,7 +89,7 @@ def test():
 
     print "Original rows distance matrix:\n{0}\n\n".format(rows_dist)
 
-    clust, labels = cluster_rows(data, rows_dist)
+    clust, labels, _ = cluster_rows(data, rows_dist)
 
     st = "Lables:\n"
     for i in range(labels.shape[0]):
@@ -98,7 +102,7 @@ def test():
 
     print "Original cols distance matrix:\n{0}\n\n".format(cols_dist)
 
-    clust, labels = cluster_rows(data.transpose(), cols_dist)
+    clust, labels, _ = cluster_rows(data.transpose(), cols_dist)
 
     st = "Lables:\n"
     for i in range(labels.shape[0]):
