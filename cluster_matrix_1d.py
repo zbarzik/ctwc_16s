@@ -6,8 +6,6 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AgglomerativeClustering
 import create_distance_matrix
-import itertools
-import math
 
 
 # Constants

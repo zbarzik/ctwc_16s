@@ -2,7 +2,7 @@
 
 import logging, pdb
 
-LOG_LEVEL_CONSOLE = logging.WARN
+LOG_LEVEL_CONSOLE = logging.DEBUG
 LOG_LEVEL_FILE = logging.DEBUG
 
 LOG_FILE = "ctwc_logger.log"
@@ -28,7 +28,8 @@ def ASSERT(condition):
     import traceback
     if not condition:
         traceback.print_stack()
-        FATAL("Assertion failed!")
+        ERROR("Assertion failed!")
+        BP()
 
 def BP():
     pdb.set_trace()
