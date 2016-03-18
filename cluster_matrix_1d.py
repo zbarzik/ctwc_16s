@@ -9,7 +9,7 @@ import create_distance_matrix
 
 
 # Constants
-N_CLUSTERS = 9
+N_CLUSTERS = 100
 
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1). 
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
@@ -25,17 +25,17 @@ def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
                                  linkage="complete",
                                  affinity="l2",
                                  compute_full_tree=True).fit(dist_matrix)
-    for i in range(len(a)): a[i].insert(0, ag.labels_[i])
-    a.sort()
-    for i in range(len(a)): del a[i][0]
+    #for i in range(len(a)): a[i].insert(0, ag.labels_[i])
+    #a.sort()
+    #for i in range(len(a)): del a[i][0]
     return np.array(a), ag.labels_, ag
 
 def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
     a = data.tolist()
     db = DBSCAN(eps=eps, metric="precomputed", min_samples=3).fit(dist_matrix)
-    for i in range(len(a)): a[i].insert(0, db.labels_[i])
-    a.sort()
-    for i in range(len(a)): del a[i][0]
+    #for i in range(len(a)): a[i].insert(0, db.labels_[i])
+    #a.sort()
+    #for i in range(len(a)): del a[i][0]
     return np.array(a), db.labels_
 
 def cluster_rows(data, dist_matrix):
@@ -89,9 +89,9 @@ def test():
 
     clust, labels, _ = cluster_rows(data, rows_dist)
 
-    st = "Lables:\n"
+    st = "Labels:\n"
     for i in range(labels.shape[0]):
-        st += str(labels[i])
+        st += str(labels[i]) + " "
     print st + "\n\n"
 
     print "Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust)
@@ -102,9 +102,9 @@ def test():
 
     clust, labels, _ = cluster_rows(data.transpose(), cols_dist)
 
-    st = "Lables:\n"
+    st = "Labels:\n"
     for i in range(labels.shape[0]):
-        st += str(labels[i])
+        st += str(labels[i]) + " "
     print st + "\n\n"
 
     print "Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust.transpose())

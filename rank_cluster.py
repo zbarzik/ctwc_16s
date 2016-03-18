@@ -32,6 +32,21 @@ def get_node_children_count(node, children, n_leaves):
         count += 1 + get_node_children_count(get_right_child(children, node, n_leaves), children, n_leaves)
     return count
 
+def get_all_labels_for_node(node, children, n_leaves, labels):
+    if node < n_leaves:
+        l = set([labels[node]])
+    else:
+        right_children = get_all_labels_for_node(get_right_child(children, node, n_leaves),
+                                                 children,
+                                                 n_leaves,
+                                                 labels)
+        left_children = get_all_labels_for_node(get_left_child(children, node, n_leaves),
+                                                children,
+                                                n_leaves,
+                                                labels)
+        l = right_children | left_children
+    return l
+
 def get_node_rank(node, children, n_leaves):
     depth = get_node_depth(node, children, n_leaves)
     count = get_node_children_count(node, children, n_leaves)
@@ -44,10 +59,10 @@ def get_ranks(ag):
     n_samples = ag.children_.shape[0] + ag.n_leaves_
     l = []
     for i in range(n_samples):
-        l.append((i,
+        l.append([i,
                   get_node_depth(i, ag.children_, ag.n_leaves_),
                   get_node_children_count(i, ag.children_, ag.n_leaves_),
-                  get_node_rank(i, ag.children_, ag.n_leaves_)))
+                  get_node_rank(i, ag.children_, ag.n_leaves_)])
     return l
 
 def generate_dummy_data():
@@ -79,15 +94,48 @@ def generate_dummy_data():
     DEBUG(str([{'node_id': next(ii), 'left': x[0], 'right':x[1]} for x in model.children_]))
     return model, model.labels_
 
+def get_nth_top_cluster_base_node(ranks_list, n=1):
+    ranks_array = np.array(ranks_list)
+    nth_max_index = -1
+    for i in range(n):
+        if nth_max_index >= 0:
+            ranks_array = np.delete(ranks_array, nth_max_index, axis=0)
+        max_indices = ranks_array.argmax(axis=0)
+        nth_max_index = max_indices[3]
+        nth_max_rank = ranks_array[nth_max_index][3]
+    nth_max_node = ranks_array[nth_max_index][0]
+    return nth_max_node, nth_max_rank, ranks_array[nth_max_index]
+
+def get_index_list_for_label_filter(label_filter, labels):
+    l = []
+    for ind, label in enumerate(labels):
+        if label in label_filter:
+            l.append(ind)
+    return l
+
 def test():
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
     tree = create_distance_matrix.get_gg_97_otu_tree()
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
     clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
 #    ag, labels = generate_dummy_data()
+
+    ranks_list = get_ranks(ag)
     INFO("Lables: {0}".format(labels))
-    INFO("Ranks: {0}".format(get_ranks(ag)))
-    clust, labels, ag = cluster_matrix_1d.cluster_rows(data.transpose(), cols_dist)
+    INFO("Ranks: {0}".format(ranks_list))
+    max_rank = get_nth_top_cluster_base_node(ranks_list)
+    INFO("Max node: {0} rank: {1}".format(max_rank[0], max_rank[1]))
+    labels_in_top_cluster = get_all_labels_for_node(max_rank[0],
+                                                    ag.children_,
+                                                    ag.n_leaves_,
+                                                    labels)
+    INFO("Labels in top cluster: {0}".format(labels_in_top_cluster))
+    INFO("Labels overall: {0}".format(set(labels)))
+
+    picked_indices = get_index_list_for_label_filter(labels_in_top_cluster, labels)
+
+    INFO("Picked indices: {0}".format(picked_indices))
+    #clust, labels, ag = cluster_matrix_1d.cluster_rows(data.transpose(), cols_dist)
 
 if __name__ == "__main__":
     test()
