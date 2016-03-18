@@ -113,28 +113,40 @@ def get_index_list_for_label_filter(label_filter, labels):
             l.append(ind)
     return l
 
-def test():
-    data, otus, samples = create_distance_matrix.get_sample_biom_table()
-    tree = create_distance_matrix.get_gg_97_otu_tree()
-    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
+def filter_rows_by_rank(data, rows_dist, debug=False):
+    log_func = INFO if debug else DEBUG
     clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
-#    ag, labels = generate_dummy_data()
-
     ranks_list = get_ranks(ag)
-    INFO("Lables: {0}".format(labels))
-    INFO("Ranks: {0}".format(ranks_list))
+    log_func("Lables: {0}".format(labels))
+    log_func("Ranks: {0}".format(ranks_list))
     max_rank = get_nth_top_cluster_base_node(ranks_list)
-    INFO("Max node: {0} rank: {1}".format(max_rank[0], max_rank[1]))
+    log_func("Max node: {0} rank: {1}".format(max_rank[0], max_rank[1]))
     labels_in_top_cluster = get_all_labels_for_node(max_rank[0],
                                                     ag.children_,
                                                     ag.n_leaves_,
                                                     labels)
-    INFO("Labels in top cluster: {0}".format(labels_in_top_cluster))
-    INFO("Labels overall: {0}".format(set(labels)))
+    log_func("Labels in top cluster: {0}".format(labels_in_top_cluster))
+    log_func("Labels overall: {0}".format(set(labels)))
 
     picked_indices = get_index_list_for_label_filter(labels_in_top_cluster, labels)
 
-    INFO("Picked indices: {0}".format(picked_indices))
+    log_func("Picked indices: {0}".format(picked_indices))
+
+    filtered_data = [row for ind, row in enumerate(data) if ind in picked_indices]
+    return filtered_data, picked_indices
+
+def test():
+    data, otus, samples = create_distance_matrix.get_sample_biom_table()
+    tree = create_distance_matrix.get_gg_97_otu_tree()
+    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
+
+    filtered_data, picked_indices = filter_rows_by_rank(data, rows_dist, True)
+
+    ASSERT(len(picked_indices) == len(filtered_data))
+
+    for row in filtered_data:
+        ASSERT(row in data)
+
     #clust, labels, ag = cluster_matrix_1d.cluster_rows(data.transpose(), cols_dist)
 
 if __name__ == "__main__":
