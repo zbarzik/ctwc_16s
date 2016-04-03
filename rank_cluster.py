@@ -68,7 +68,8 @@ def get_ranks(ag):
 def generate_dummy_data():
     from sklearn.cluster import AgglomerativeClustering
     import itertools
-    X = np.array([[ -5.27453240e-01,  -6.14130238e-01,  -1.63611427e+00,
+    X = np.array([[
+         -5.27453240e-01,  -6.14130238e-01,  -1.63611427e+00,
          -9.26556498e-01,   7.82296885e-01,  -1.06286220e+00,
          -1.24368729e+00,  -1.16151964e+00,  -2.25816923e-01,
          -3.32354552e-02],
@@ -113,7 +114,7 @@ def get_index_list_for_label_filter(label_filter, labels):
             l.append(ind)
     return l
 
-def filter_rows_by_rank(data, rows_dist, debug=False):
+def filter_rows_by_top_rank(data, rows_dist, debug=False):
     log_func = INFO if debug else DEBUG
     clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
     ranks_list = get_ranks(ag)
@@ -133,21 +134,26 @@ def filter_rows_by_rank(data, rows_dist, debug=False):
     log_func("Picked indices: {0}".format(picked_indices))
 
     filtered_data = [row for ind, row in enumerate(data) if ind in picked_indices]
-    return filtered_data, picked_indices
+
+    filtered_dist_matrix = [row for ind, row in enumerate(rows_dist) if ind in picked_indices]
+
+    return np.asarray(filtered_data), filtered_dist_matrix, picked_indices, max_rank[1]
 
 def test():
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
     tree = create_distance_matrix.get_gg_97_otu_tree()
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
 
-    filtered_data, picked_indices = filter_rows_by_rank(data, rows_dist, True)
+    filtered_data, filtered_dist_matrix, picked_indices, max_rank = filter_rows_by_top_rank(data, rows_dist, True)
 
     ASSERT(len(picked_indices) == len(filtered_data))
+
+    ASSERT(len(picked_indices) == len(filtered_dist_matrix))
 
     for row in filtered_data:
         ASSERT(row in data)
 
-    #clust, labels, ag = cluster_matrix_1d.cluster_rows(data.transpose(), cols_dist)
+    clust, labels, ag = cluster_matrix_1d.cluster_rows(filtered_data.transpose(), cols_dist)
 
 if __name__ == "__main__":
     test()
