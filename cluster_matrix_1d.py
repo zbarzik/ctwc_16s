@@ -21,7 +21,7 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
 
 def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
     a = data.tolist()
-    ag = AgglomerativeClustering(n_clusters=n_clusters,
+    ag = AgglomerativeClustering(n_clusters=n_clusters if n_clusters < len(a) else len(a),
                                  linkage="complete",
                                  affinity="l2",
                                  compute_full_tree=True).fit(dist_matrix)
