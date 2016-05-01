@@ -44,18 +44,23 @@ def get_default_samples():
     return ['mouth', 'butt', 'leg', 'armpit', 'foot']
 
 def get_default_otus():
-    return ['leonardo', 'donatello', 'raphael', 'michelangelo', 'splinter', 'shredder', 'april']
+    return ['donatello', 'leonardo', 'raphael', 'michelangelo', 'splinter', 'shredder', 'april']
 
 def get_default_data(otus, samples):
-    num_otu = len(otus)
-    num_samp = len(samples)
-    data = np.zeros((num_otu, num_samp))
-    for row, otu in enumerate(otus):
-        for col, samp in enumerate(samples):
-            data[row, col] = 1 if ord(samp[0]) < ord(otu[0]) else 0
+    #num_otu = len(otus)
+    #num_samp = len(samples)
+    #data = np.random.randint(low=0, high=2, size=(num_otu, num_samp))
+    data = np.array([   [0, 1, 1, 1, 1],
+                        [1, 1, 0, 1, 1],
+                        [0, 0, 1, 1, 0],
+                        [1, 1, 0, 1, 1],
+                        [1, 0, 0, 1, 1],
+                        [1, 0, 0, 1, 0],
+                        [0, 0, 0, 1, 1]])
+
     return data
 
-def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus):
+def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
     num_samples, num_otus_in_sample = data.shape
     if num_samples != len(samples):
         FATAL("Number of sample lables {0} does not match number of samples {1}".format(num_samples, len(samples)))
@@ -65,23 +70,32 @@ def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus):
     for otu_ind, otu in enumerate(otus):
         samp_dict = {}
         for samp_ind, samp in enumerate(samples):
-            samp_dict[samp] = data[samp_ind, otu_ind]
+            if samp in sample_filter or otu in otu_filter:
+                samp_dict[samp] = 0
+            else:
+                samp_dict[samp] = data[samp_ind, otu_ind]
         full_dict[otu] = samp_dict
+    DEBUG("Full dictionary: {0}".format(full_dict))
     return full_dict
 
-def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, samples):
+def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, samples, sample_filter, otu_filter):
     uf_dist_mat = unifrac_output[0]
     uf_samples = unifrac_output[1]
-    z = np.zeros(uf_dist_mat.shape)
-    ASSERT(len(uf_samples) == len(samples))
+    z = np.zeros((len(samples), len(samples)))
+    ASSERT(len(uf_samples) + len(sample_filter) == len(samples))
     for samp_ind, samp in enumerate(samples):
-        uf_ind = uf_samples.index(samp)
-        for other_ind, other_samp in enumerate(samples):
-            uf_other_ind = uf_samples.index(other_samp)
-            z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
+        if samp not in sample_filter:
+            uf_ind = uf_samples.index(samp)
+            for other_ind, other_samp in enumerate(samples):
+                uf_other_ind = uf_samples.index(other_samp)
+                z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
     return z
 
-def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None):
+def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
+    if sample_filter == None:
+        sample_filter = []
+    if otu_filter == None:
+        otu_filter = []
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         from cogent.maths.unifrac.fast_unifrac import fast_unifrac
@@ -106,13 +120,14 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None):
     else:
         tree = tree_arg
 
-    data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus)
+    data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter)
     unifrac = fast_unifrac(tree, data_dict, weighted=True)
-    mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples)
+    DEBUG("Unifrac results: {0}".format(unifrac))
+    mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
     return mat
 
-def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None):
-    return unifrac_distance_rows(data.transpose(), samples_arg, otus_arg, tree_arg)
+def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
+    return unifrac_distance_rows(data.transpose(), samples_arg, otus_arg, tree_arg, sample_filter, otu_filter)
 
 def dissimilarity_from_correlation(correlation):
     ones = np.ones(correlation.shape)
@@ -129,7 +144,7 @@ def pearson_distance_rows(data):
 def pearson_distance_cols(data):
     return pearson_distance_rows(data.transpose())
 
-def euclideane_distance_rows(data):
+def euclidean_distance_rows(data):
     def _dist(vec1, vec2):
         from math import sqrt
         s = 0
@@ -146,23 +161,24 @@ def euclideane_distance_rows(data):
 def euclidean_distance_cols(data):
     return euclidean_distance_rows(data.transpose())
 
-def get_distance_matrices(data, samples=None, tree=None, otus=None):
-    cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree)
+def get_distance_matrices(data, samples=None, tree=None, otus=None, sample_filter=None, otu_filter=None):
+    cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree, sample_filter=sample_filter, otu_filter=otu_filter)
+    # TODO: Apply filter for rows distance matrix as well
     rows_dist = pearson_distance_rows(data)
     return rows_dist, cols_dist
 
 def test():
-    data, otus, samples = get_sample_biom_table()
-    tree = get_gg_97_otu_tree()
-    #samples = get_default_samples()
-    #otus = get_default_otus()
-    #tree = get_default_tree(otus)
-    #data = get_default_data(otus, samples)
-    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, otus)
-    #print "Tree:\n" + tree.asciiArt()
+    #data, otus, samples = get_sample_biom_table()
+    #tree = get_gg_97_otu_tree()
+    samples = get_default_samples()
+    otus = get_default_otus()
+    tree = get_default_tree(otus)
+    data = get_default_data(otus, samples)
+    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, otus, otu_filter=['raiphael'])
+    print "Tree:\n" + tree.asciiArt()
     print "Samples:\n" + str(samples)
     print "OTUs:\n" + str(otus)
-    #print "Data:\n" + str(data)
+    print "Data:\n" + str(data)
     print "Rows Matrix:\n" + str(rows_dist)
     print "Cols Matrix:\n" + str(cols_dist)
 
