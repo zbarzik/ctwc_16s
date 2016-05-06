@@ -2,7 +2,7 @@
 
 import logging, pdb
 
-LOG_LEVEL_CONSOLE = logging.DEBUG
+LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
 
 LOG_FILE = "ctwc_logger.log"

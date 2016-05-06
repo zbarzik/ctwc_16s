@@ -82,7 +82,6 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
     uf_dist_mat = unifrac_output[0]
     uf_samples = unifrac_output[1]
     z = np.zeros((len(samples), len(samples)))
-    ASSERT(len(uf_samples) + len(sample_filter) == len(samples))
     for samp_ind, samp in enumerate(samples):
         if samp not in sample_filter:
             uf_ind = uf_samples.index(samp)
