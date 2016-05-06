@@ -133,7 +133,21 @@ def dissimilarity_from_correlation(correlation):
     ones = np.ones(correlation.shape)
     return ones - abs(correlation)
 
-def pearson_distance_rows(data):
+def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
+    cols_filter = [ samples.index(samp) for samp in ( sample_filter if sample_filter else [] ) ]
+    rows_filter = [ otus.index(otu) for otu in ( otu_filter if otu_filter else [] ) ]
+    data = np.copy(data)
+    for col in cols_filter:
+        DEBUG("Data before: {0}".format(data))
+        DEBUG("Clearing column {0}".format(col))
+        data[:, col] = 0
+        DEBUG("Data after: {0}".format(data))
+    for row in rows_filter:
+        DEBUG("Data before: {0}".format(data))
+        DEBUG("Clearing row {0}".format(row))
+        data[row, :] = 0
+        DEBUG("Data after: {0}".format(data))
+
     correlation = np.corrcoef(data)
     for i in range(correlation.shape[0]):
         for j in range(correlation.shape[1]):
@@ -141,8 +155,8 @@ def pearson_distance_rows(data):
                 correlation[i][j] = 0
     return dissimilarity_from_correlation(correlation)
 
-def pearson_distance_cols(data):
-    return pearson_distance_rows(data.transpose())
+def pearson_distance_cols(data, samples, otus, sample_filter, otu_filter):
+    return pearson_distance_rows(data.transpose(), samples, otus, sample_filter, otu_filter)
 
 def euclidean_distance_rows(data):
     def _dist(vec1, vec2):
@@ -163,8 +177,9 @@ def euclidean_distance_cols(data):
 
 def get_distance_matrices(data, samples=None, tree=None, otus=None, sample_filter=None, otu_filter=None):
     cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree, sample_filter=sample_filter, otu_filter=otu_filter)
+
     # TODO: Apply filter for rows distance matrix as well
-    rows_dist = pearson_distance_rows(data)
+    rows_dist = pearson_distance_rows(data, samples, otus, sample_filter, otu_filter)
     return rows_dist, cols_dist
 
 def test():
@@ -174,7 +189,7 @@ def test():
     otus = get_default_otus()
     tree = get_default_tree(otus)
     data = get_default_data(otus, samples)
-    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, otus, otu_filter=['raiphael'])
+    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, otus, otu_filter=['raphael', 'april'])
     print "Tree:\n" + tree.asciiArt()
     print "Samples:\n" + str(samples)
     print "OTUs:\n" + str(otus)
