@@ -19,7 +19,7 @@ def join_submatrices(mat_a, mat_b):
 
 def ctwc_iteration(data, rows_dist, cols_dist):
     LOG("Now running on data size: {0}".format(data.shape))
-    filtered_data, filtered_dist_matrix, picked_indices, last_rank, filtered_data_compliment, filtered_dist_matrix_compliment = rank_cluster.filter_rows_by_top_rank(
+    picked_indices, last_rank, filtered_data, filtered_dist_matrix, filtered_data_compliment, filtered_dist_matrix_compliment = rank_cluster.filter_rows_by_top_rank(
                                                                                                                                                      data, rows_dist)
     if len(filtered_data_compliment) == 0:
         LOG("Didn't filter out anything. last_rank = {0}".format(last_rank))
@@ -47,7 +47,7 @@ def ctwc(data, rows_dist, cols_dist):
 def test():
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
     tree = create_distance_matrix.get_gg_97_otu_tree()
-    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
+    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
 
     sorted_data = ctwc(data, rows_dist, cols_dist)
 

@@ -56,7 +56,7 @@ def plot_num_clusters_by_eps(data, cols_dist, rows_dist):
         if cur_size > largest_set:
             best_i = i
             largest_set = cur_size
-        print "eps = {0} largest_set = {1}".format(1.0/i, cur_size)
+        DEBUG("eps = {0} largest_set = {1}".format(1.0/i, cur_size))
         vec.append([1.0/i, cur_size])
     plot_results(vec)
 
@@ -73,11 +73,11 @@ def test():
 
     #data = inject_col_pattern_to_data(data)
 
-    print "Original data:\n{0}\n\n".format(data)
+    DEBUG("Original data:\n{0}\n\n".format(data))
 
     tree = create_distance_matrix.get_gg_97_otu_tree()
 
-    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
+    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
 
     ASSERT(rows_dist.shape[0] == rows_dist.shape[1])
     ASSERT(cols_dist.shape[0] == cols_dist.shape[1])
@@ -85,29 +85,29 @@ def test():
     ASSERT(rows_dist.shape[0] == data.shape[0])
     ASSERT(cols_dist.shape[0] == data.shape[1])
 
-    print "Original rows distance matrix:\n{0}\n\n".format(rows_dist)
+    DEBUG("Original rows distance matrix:\n{0}\n\n".format(rows_dist))
 
     clust, labels, _ = cluster_rows(data, rows_dist)
 
     st = "Labels:\n"
     for i in range(labels.shape[0]):
         st += str(labels[i]) + " "
-    print st + "\n\n"
+    DEBUG(st + "\n\n")
 
-    print "Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust)
+    DEBUG("Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
     #plot_distnace_matrix(data)
     #plot_distnace_matrix(clust)
 
-    print "Original cols distance matrix:\n{0}\n\n".format(cols_dist)
+    DEBUG("Original cols distance matrix:\n{0}\n\n".format(cols_dist))
 
     clust, labels, _ = cluster_rows(data.transpose(), cols_dist)
 
     st = "Labels:\n"
     for i in range(labels.shape[0]):
         st += str(labels[i]) + " "
-    print st + "\n\n"
+    DEBUG(st + "\n\n")
 
-    print "Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust.transpose())
+    DEBUG("Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust.transpose()))
     #plot_distnace_matrix(data)
     #plot_distnace_matrix(clust.transpose())
 

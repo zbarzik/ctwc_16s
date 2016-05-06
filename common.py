@@ -7,9 +7,13 @@ LOG_LEVEL_FILE = logging.DEBUG
 
 LOG_FILE = "ctwc_logger.log"
 logger = None
+MAX_PRINT_SIZE = 5000
 
 def DEBUG(message):
-    logger.debug(message)
+    if len(str(message)) > MAX_PRINT_SIZE:
+        logger.debug(message[:MAX_PRINT_SIZE/2] + "\n(>>>)\n" + message[-MAX_PRINT_SIZE/2:])
+    else:
+        logger.debug(message)
 
 def ERROR(message):
     logger.error(message)

@@ -144,14 +144,18 @@ def filter_rows_by_top_rank(data, rows_dist, debug=False):
 
     filtered_dist_matrix_compliment = [row for ind, row in enumerate(rows_dist) if ind not in picked_indices]
 
-    return fix(filtered_data), fix(filtered_dist_matrix), picked_indices, max_rank[1], fix(filtered_data_compliment), fix(filtered_dist_matrix_compliment)
+    return picked_indices, max_rank[1], fix(filtered_data), fix(filtered_dist_matrix), fix(filtered_data_compliment), fix(filtered_dist_matrix_compliment)
+
+def filter_cols_by_top_rank(data, cols_dist, debug=False):
+    data = data.transpose()
+    return filter_rows_by_top_rank(data, cols_dist, debug)
 
 def test():
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
     tree = create_distance_matrix.get_gg_97_otu_tree()
-    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, samples, tree, otus)
+    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
 
-    filtered_data, filtered_dist_matrix, picked_indices, max_rank, _ , _ = filter_rows_by_top_rank(data, rows_dist, True)
+    picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_rows_by_top_rank(data, rows_dist, True)
 
     ASSERT(len(picked_indices) == len(filtered_data))
 

@@ -134,8 +134,19 @@ def dissimilarity_from_correlation(correlation):
     return ones - abs(correlation)
 
 def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
-    cols_filter = [ samples.index(samp) for samp in ( sample_filter if sample_filter else [] ) ]
-    rows_filter = [ otus.index(otu) for otu in ( otu_filter if otu_filter else [] ) ]
+    try:
+        if samples is not list:
+            samples = samples.tolist()
+        cols_filter = [ samples.index(samp) for samp in ( sample_filter if sample_filter else [] ) ]
+    except ValueError as e:
+        FATAL("Trying to filter out non-existing samples: {0}".format(str(e)))
+    try:
+        if otus is not list:
+            otus = otus.tolist()
+        rows_filter = [ otus.index(otu) for otu in ( otu_filter if otu_filter else [] ) ]
+    except ValueError as e:
+        FATAL("Trying to filter out non-existing OTUs: {0}".format(str(e)))
+
     data = np.copy(data)
     for col in cols_filter:
         DEBUG("Data before: {0}".format(data))
@@ -175,7 +186,7 @@ def euclidean_distance_rows(data):
 def euclidean_distance_cols(data):
     return euclidean_distance_rows(data.transpose())
 
-def get_distance_matrices(data, samples=None, tree=None, otus=None, sample_filter=None, otu_filter=None):
+def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_filter=None):
     cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree, sample_filter=sample_filter, otu_filter=otu_filter)
 
     # TODO: Apply filter for rows distance matrix as well
@@ -183,19 +194,19 @@ def get_distance_matrices(data, samples=None, tree=None, otus=None, sample_filte
     return rows_dist, cols_dist
 
 def test():
-    #data, otus, samples = get_sample_biom_table()
-    #tree = get_gg_97_otu_tree()
-    samples = get_default_samples()
-    otus = get_default_otus()
-    tree = get_default_tree(otus)
-    data = get_default_data(otus, samples)
-    rows_dist, cols_dist = get_distance_matrices(data, samples, tree, otus, otu_filter=['raphael', 'april'])
-    print "Tree:\n" + tree.asciiArt()
-    print "Samples:\n" + str(samples)
-    print "OTUs:\n" + str(otus)
-    print "Data:\n" + str(data)
-    print "Rows Matrix:\n" + str(rows_dist)
-    print "Cols Matrix:\n" + str(cols_dist)
+    data, otus, samples = get_sample_biom_table()
+    tree = get_gg_97_otu_tree()
+    #samples = get_default_samples()
+    #otus = get_default_otus()
+    #tree = get_default_tree(otus)
+    #data = get_default_data(otus, samples)
+    rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus)#, otu_filter=['raphael', 'april'])
+    DEBUG("Tree:\n" + tree.asciiArt())
+    DEBUG("Samples:\n" + str(samples))
+    DEBUG("OTUs:\n" + str(otus))
+    DEBUG("Data:\n" + str(data))
+    DEBUG("Rows Matrix:\n" + str(rows_dist))
+    DEBUG("Cols Matrix:\n" + str(cols_dist))
 
 if __name__ == '__main__':
     test()
