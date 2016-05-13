@@ -3,10 +3,14 @@
 import numpy as np
 from common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP
 import warnings
+import sys
 
 import math
 import create_distance_matrix
 import cluster_matrix_1d
+
+RECURSION_LIMIT = 100000
+
 
 def get_left_child(children, node, n_leaves):
     return children[node - n_leaves][0]
@@ -14,36 +18,54 @@ def get_left_child(children, node, n_leaves):
 def get_right_child(children, node, n_leaves):
     return children[node - n_leaves][1]
 
-def get_node_depth(node, children, n_leaves):
+def get_node_depth(node, children, n_leaves, in_recursive=False):
     if node < n_leaves:
         return 0.0
     else:
-        left = get_node_depth(get_left_child(children, node, n_leaves), children, n_leaves)
-        right = get_node_depth(get_right_child(children, node, n_leaves), children, n_leaves)
-        return 1 + left if left > right else 1 + right
+        if not in_recursive:
+            old_recursion_limit = sys.getrecursionlimit()
+            sys.setrecursionlimit(RECURSION_LIMIT)
+        left = get_node_depth(get_left_child(children, node, n_leaves), children, n_leaves, True)
+        right = get_node_depth(get_right_child(children, node, n_leaves), children, n_leaves, True)
+        ret = 1 + left if left > right else 1 + right
+        if not in_recursive:
+            sys.setrecursionlimit(old_recursion_limit)
+        return ret
 
-def get_node_children_count(node, children, n_leaves):
+def get_node_children_count(node, children, n_leaves, in_recursive=False):
     if node < n_leaves:
         return 0.0
+    if not in_recursive:
+        old_recursion_limit = sys.getrecursionlimit()
+        sys.setrecursionlimit(RECURSION_LIMIT)
     count = 0.0;
     if get_left_child(children, node, n_leaves) != None:
-        count += 1 + get_node_children_count(get_left_child(children, node, n_leaves), children, n_leaves)
+        count += 1 + get_node_children_count(get_left_child(children, node, n_leaves), children, n_leaves, True)
     if get_right_child(children, node, n_leaves) != None:
-        count += 1 + get_node_children_count(get_right_child(children, node, n_leaves), children, n_leaves)
+        count += 1 + get_node_children_count(get_right_child(children, node, n_leaves), children, n_leaves, True)
+    if not in_recursive:
+        sys.setrecursionlimit(old_recursion_limit)
     return count
 
-def get_all_labels_for_node(node, children, n_leaves, labels):
+def get_all_labels_for_node(node, children, n_leaves, labels, in_recursive=False):
     if node < n_leaves:
         l = set([labels[node]])
     else:
+        if not in_recursive:
+            old_recursion_limit = sys.getrecursionlimit()
+            sys.setrecursionlimit(RECURSION_LIMIT)
         right_children = get_all_labels_for_node(get_right_child(children, node, n_leaves),
                                                  children,
                                                  n_leaves,
-                                                 labels)
+                                                 labels,
+                                                 True)
         left_children = get_all_labels_for_node(get_left_child(children, node, n_leaves),
                                                 children,
                                                 n_leaves,
-                                                labels)
+                                                labels,
+                                                True)
+        if not in_recursive:
+            sys.setrecursionlimit(old_recursion_limit)
         l = right_children | left_children
     return l
 

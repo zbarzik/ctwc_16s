@@ -82,7 +82,7 @@ def ctwc_select(data, tree, samples, otus):
 
 def test():
     np.seterr(all="ignore")
-    samples, otus, tree, data = create_distance_matrix.get_data(False)
+    samples, otus, tree, data = create_distance_matrix.get_data(True)
 
     #rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
     #sorted_data = ctwc_bicluster(data, rows_dist, cols_dist)

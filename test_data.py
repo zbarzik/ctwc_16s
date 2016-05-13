@@ -57,8 +57,34 @@ def get_randomly_pre_generated_data():
                         [1, 0, 0, 1, 1],
                         [1, 0, 0, 1, 0],
                         [0, 0, 0, 1, 1]])
-
     return data
+
+def get_tree_from_file(path):
+    from cogent.parse.tree import DndParser
+    from cogent.maths.unifrac.fast_tree import UniFracTreeNode
+    f = open(path, 'r')
+    tr = DndParser(f.read(), UniFracTreeNode)
+    return tr
+
+def get_gg_97_otu_tree():
+    tr = get_tree_from_file('97_otus.tree')
+    return tr
+
+def get_biom_table_from_file(path):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from biom import parse_table
+    with open(path) as f:
+        table = parse_table(f)
+        return table
+    return None
+
+def get_sample_biom_table():
+    #table = get_biom_table_from_file('305_otu_table.json')
+    table = get_biom_table_from_file('486_otu_table.json')
+    if table is not None:
+        return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
+    return None
 
 def test():
     samples = get_default_samples()

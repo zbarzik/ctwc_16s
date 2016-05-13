@@ -4,35 +4,9 @@ import warnings
 import test_data
 
 import numpy as np
+import math
 
 REAL_DATA = False
-
-def get_tree_from_file(path):
-    from cogent.parse.tree import DndParser
-    from cogent.maths.unifrac.fast_tree import UniFracTreeNode
-    f = open(path, 'r')
-    tr = DndParser(f.read(), UniFracTreeNode)
-    return tr
-
-def get_gg_97_otu_tree():
-    tr = get_tree_from_file('97_otus.tree')
-    return tr
-
-def get_biom_table_from_file(path):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        from biom import parse_table
-    with open(path) as f:
-        table = parse_table(f)
-        return table
-    return None
-
-def get_sample_biom_table():
-    table = get_biom_table_from_file('305_otu_table.json')
-    #table = get_biom_table_from_file('486_otu_table.json')
-    if table is not None:
-        return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
-    return None
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
     num_samples, num_otus_in_sample = data.shape
@@ -97,6 +71,14 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
     unifrac = fast_unifrac(tree, data_dict, weighted=True)
     DEBUG("Unifrac results: {0}".format(unifrac))
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
+    found_nans = set([])
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            if math.isinf(mat[i][j]) or math.isnan(mat[i][j]):
+                found_nans.add(str(mat[i][j]))
+                mat[i][j] = 0.0
+    if len(found_nans) > 0:
+        WARN("Found {0} value(s) in unifrac matrix".format("".join(str(x) for x in found_nans)))
     return mat
 
 def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
@@ -167,8 +149,8 @@ def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_fil
 def get_data(use_real_data):
     if use_real_data:
         INFO("Using real data")
-        data, otus, samples = get_sample_biom_table()
-        tree = get_gg_97_otu_tree()
+        data, otus, samples = test_data.get_sample_biom_table()
+        tree = test_data.get_gg_97_otu_tree()
     else:
         INFO("Using synthetic data")
         samples = test_data.get_default_samples()
