@@ -1,17 +1,11 @@
 #!/usr/bin/python
 from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 import warnings
+import test_data
 
 import numpy as np
 
-def get_default_tree(otus):
-    from cogent.parse.tree import DndParser
-    from cogent.maths.unifrac.fast_tree import UniFracTreeNode
-    tree_str = "(((A:0.15)B:0.2,(C:0.3,D:0.4)E:0.6)F:0.1)G;"
-    for i, otu in enumerate(otus):
-        tree_str = tree_str.replace(chr(ord('A') + i), otu)
-    tr = DndParser(tree_str, UniFracTreeNode)
-    return tr
+REAL_DATA = False
 
 def get_tree_from_file(path):
     from cogent.parse.tree import DndParser
@@ -39,26 +33,6 @@ def get_sample_biom_table():
     if table is not None:
         return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
     return None
-
-def get_default_samples():
-    return ['mouth', 'butt', 'leg', 'armpit', 'foot']
-
-def get_default_otus():
-    return ['donatello', 'leonardo', 'raphael', 'michelangelo', 'splinter', 'shredder', 'april']
-
-def get_default_data(otus, samples):
-    #num_otu = len(otus)
-    #num_samp = len(samples)
-    #data = np.random.randint(low=0, high=2, size=(num_otu, num_samp))
-    data = np.array([   [0, 1, 1, 1, 1],
-                        [1, 1, 0, 1, 1],
-                        [0, 0, 1, 1, 0],
-                        [1, 1, 0, 1, 1],
-                        [1, 0, 0, 1, 1],
-                        [1, 0, 0, 1, 0],
-                        [0, 0, 0, 1, 1]])
-
-    return data
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
     num_samples, num_otus_in_sample = data.shape
@@ -187,18 +161,24 @@ def euclidean_distance_cols(data):
 
 def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_filter=None):
     cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree, sample_filter=sample_filter, otu_filter=otu_filter)
-
-    # TODO: Apply filter for rows distance matrix as well
     rows_dist = pearson_distance_rows(data, samples, otus, sample_filter, otu_filter)
     return rows_dist, cols_dist
 
+def get_data(use_real_data):
+    if use_real_data:
+        INFO("Using real data")
+        data, otus, samples = get_sample_biom_table()
+        tree = get_gg_97_otu_tree()
+    else:
+        INFO("Using synthetic data")
+        samples = test_data.get_default_samples()
+        otus = test_data.get_default_otus()
+        tree = test_data.get_default_tree(otus)
+        data = test_data.get_default_data(otus, samples)
+    return samples, otus, tree, data
+
 def test():
-    data, otus, samples = get_sample_biom_table()
-    tree = get_gg_97_otu_tree()
-    #samples = get_default_samples()
-    #otus = get_default_otus()
-    #tree = get_default_tree(otus)
-    #data = get_default_data(otus, samples)
+    samples, otus, tree, data = get_data(REAL_DATA)
     rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus)#, otu_filter=['raphael', 'april'])
     DEBUG("Tree:\n" + tree.asciiArt())
     DEBUG("Samples:\n" + str(samples))

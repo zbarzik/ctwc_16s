@@ -117,7 +117,7 @@ def get_index_list_for_label_filter(label_filter, labels):
 def fix(array_like):
     return np.squeeze(np.asarray(array_like))
 
-def filter_rows_by_top_rank(data, rows_dist, debug=False):
+def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
     log_func = INFO if debug else DEBUG
     clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
     ranks_list = get_ranks(ag)
@@ -129,14 +129,14 @@ def filter_rows_by_top_rank(data, rows_dist, debug=False):
                                                     ag.children_,
                                                     ag.n_leaves_,
                                                     labels)
-    log_func("Labels in top cluster: {0}".format(labels_in_top_cluster))
-    log_func("Labels overall: {0}".format(set(labels)))
-
     picked_indices = get_index_list_for_label_filter(labels_in_top_cluster, labels)
-
     log_func("Picked indices: {0}".format(picked_indices))
 
     filtered_data = [row for ind, row in enumerate(data) if ind in picked_indices]
+
+    if entry_names is not None:
+        entries = [ entry for ind, entry in enumerate(entry_names) if ind in picked_indices ]
+        log_func("Picked entries: {0}".format(entries))
 
     filtered_data_compliment = [ row for ind, row in enumerate(data) if ind not in picked_indices]
 
@@ -146,16 +146,16 @@ def filter_rows_by_top_rank(data, rows_dist, debug=False):
 
     return picked_indices, max_rank[1], fix(filtered_data), fix(filtered_dist_matrix), fix(filtered_data_compliment), fix(filtered_dist_matrix_compliment)
 
-def filter_cols_by_top_rank(data, cols_dist, debug=False):
+def filter_cols_by_top_rank(data, cols_dist, samples=None, debug=False):
     data = data.transpose()
-    return filter_rows_by_top_rank(data, cols_dist, debug)
+    return filter_rows_by_top_rank(data, cols_dist, samples, debug)
 
 def test():
     data, otus, samples = create_distance_matrix.get_sample_biom_table()
     tree = create_distance_matrix.get_gg_97_otu_tree()
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
 
-    picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_rows_by_top_rank(data, rows_dist, True)
+    picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_rows_by_top_rank(data, rows_dist, otus, True)
 
     ASSERT(len(picked_indices) == len(filtered_data))
 

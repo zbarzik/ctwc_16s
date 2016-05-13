@@ -56,33 +56,33 @@ def ctwc_select(data, tree, samples, otus):
     INFO("Preparing distance matrices for full data...")
     rows_dist_1, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
     INFO("Iteration 1: Picking rows...")
-    picked_indices_1, last_rank_1, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_1)
+    picked_indices_1, last_rank_1, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_1, otus)
     selected_rows_filter_1, compliment_rows_filter_1 = prepare_otu_filters_from_indices(picked_indices_1, otus)
 
     INFO("Iteration 1.1: Picking columns from selected rows...")
     _, cols_dist_1_1 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, otu_filter=selected_rows_filter_1)
-    picked_indices_1_1, last_rank_1_1, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1_1)
+    picked_indices_1_1, last_rank_1_1, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1_1, samples)
 
     INFO("Iteration 1.2: Picking columns from rows compliment...")
     _, cols_dist_1_2 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, otu_filter=compliment_rows_filter_1)
-    picked_indices_1_2, last_rank_1_2, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1_2)
+    picked_indices_1_2, last_rank_1_2, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1_2, samples)
     selected_cols_filter_1_2, compliment_cols_filter_1_2 = prepare_sample_filters_from_indices(picked_indices_1_2, samples)
 
     INFO("Iteration 2: Picking rows based on selected columns...")
     selected_cols_filter_1_1, compliment_cols_filter_1_1 = prepare_sample_filters_from_indices(picked_indices_1_1, samples)
     rows_dist_2, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, sample_filter=selected_cols_filter_1_1)
-    picked_indices_2, last_rank_2, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_2)
+    picked_indices_2, last_rank_2, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_2, otus)
     selected_rows_filter_2, compliment_rows_filter_2 = prepare_otu_filters_from_indices(picked_indices_2, otus)
 
-    output = { "Iteration 1.1" : (compliment_rows_filter_1, compliment_cols_filter_1_1),
+    output = { "Iteration 1"   : (selected_rows_filter_1, samples),
+               "Iteration 1.1" : (compliment_rows_filter_1, compliment_cols_filter_1_1),
                "Iteration 1.2" : (selected_rows_filter_1, compliment_cols_filter_1_2),
                "Iteration 2"   : (compliment_rows_filter_2, compliment_cols_filter_1_1) }
     return output
 
 def test():
     np.seterr(all="ignore")
-    data, otus, samples = create_distance_matrix.get_sample_biom_table()
-    tree = create_distance_matrix.get_gg_97_otu_tree()
+    samples, otus, tree, data = create_distance_matrix.get_data(False)
 
     #rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
     #sorted_data = ctwc_bicluster(data, rows_dist, cols_dist)
