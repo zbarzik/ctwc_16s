@@ -81,7 +81,8 @@ def get_biom_table_from_file(path):
 
 def get_sample_biom_table():
     #table = get_biom_table_from_file('305_otu_table.json')
-    table = get_biom_table_from_file('486_otu_table.json')
+    #table = get_biom_table_from_file('486_otu_table.json')
+    table = get_biom_table_from_file('milk_3574_otu_table.json')
     if table is not None:
         return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
     return None
