@@ -6,7 +6,7 @@ import test_data
 import numpy as np
 import math
 
-REAL_DATA = False
+REAL_DATA = True
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
     num_samples, num_otus_in_sample = data.shape
@@ -159,15 +159,29 @@ def get_data(use_real_data):
         data = test_data.get_default_data(otus, samples)
     return samples, otus, tree, data
 
+def check_line(dist_matrix, index):
+    l = len(dist_matrix[index].tolist())
+    vec = dist_matrix[index].tolist()
+    sum1 = 0
+    sum2 = 0
+    for i in range(len(vec) / 2):
+        sum1 += vec[i]
+        sum2 += vec[len(vec) / 2 + i]
+    return sum1 < sum2
+
 def test():
     samples, otus, tree, data = get_data(REAL_DATA)
     rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus)#, otu_filter=['raphael', 'april'])
-    DEBUG("Tree:\n" + tree.asciiArt())
-    DEBUG("Samples:\n" + str(samples))
-    DEBUG("OTUs:\n" + str(otus))
-    DEBUG("Data:\n" + str(data))
-    DEBUG("Rows Matrix:\n" + str(rows_dist))
-    DEBUG("Cols Matrix:\n" + str(cols_dist))
+    for i, col in enumerate(cols_dist):
+        res = check_line(cols_dist, i)
+        if res: INFO("{0} checks out".format(i))
+        else: INFO("{0} doesn't check out".format(i))
+    #INFO("Tree:\n" + tree.asciiArt())
+    #INFO("Samples:\n" + str(samples))
+    #INFO("OTUs:\n" + str(otus))
+    #INFO("Data:\n" + str(data))
+    #INFO("Rows Matrix:\n" + str(rows_dist))
+    #INFO("Cols Matrix:\n" + str(cols_dist))
 
 if __name__ == '__main__':
     test()

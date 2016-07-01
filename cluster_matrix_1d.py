@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AgglomerativeClustering
-import create_distance_matrix
+import create_distance_matrix, test_data
 
 
 # Constants
@@ -67,7 +67,7 @@ def plot_distnace_matrix(dist_mat):
     plt.show()
 
 def test():
-    data, otus, samples = create_distance_matrix.get_sample_biom_table()
+    data, otus, samples = test_data.get_sample_biom_table()
 
     #data = inject_row_pattern_to_data(data)
 
@@ -75,7 +75,7 @@ def test():
 
     DEBUG("Original data:\n{0}\n\n".format(data))
 
-    tree = create_distance_matrix.get_gg_97_otu_tree()
+    tree = test_data.get_gg_97_otu_tree()
 
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
 

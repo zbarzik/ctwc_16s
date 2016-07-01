@@ -8,15 +8,16 @@ import sys
 import math
 import create_distance_matrix
 import cluster_matrix_1d
+import test_data
 
 RECURSION_LIMIT = 100000
 
 
 def get_left_child(children, node, n_leaves):
-    return children[node - n_leaves][0]
+    return children[int(node - n_leaves)][0]
 
 def get_right_child(children, node, n_leaves):
-    return children[node - n_leaves][1]
+    return children[int(node - n_leaves)][1]
 
 def get_node_depth(node, children, n_leaves, in_recursive=False):
     if node < n_leaves:
@@ -140,8 +141,12 @@ def fix(array_like):
     return np.squeeze(np.asarray(array_like))
 
 def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
-    log_func = INFO if debug else DEBUG
     clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
+    BP()
+    return _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names, debug)
+
+def _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=None, debug=False):
+    log_func = INFO if debug else DEBUG
     ranks_list = get_ranks(ag)
     log_func("Lables: {0}".format(labels))
     log_func("Ranks: {0}".format(ranks_list))
@@ -173,8 +178,8 @@ def filter_cols_by_top_rank(data, cols_dist, samples=None, debug=False):
     return filter_rows_by_top_rank(data, cols_dist, samples, debug)
 
 def test():
-    data, otus, samples = create_distance_matrix.get_sample_biom_table()
-    tree = create_distance_matrix.get_gg_97_otu_tree()
+    data, otus, samples = test_data.get_sample_biom_table()
+    tree = test_data.get_gg_97_otu_tree()
     rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
 
     picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_rows_by_top_rank(data, rows_dist, otus, True)

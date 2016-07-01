@@ -79,13 +79,23 @@ def get_biom_table_from_file(path):
         return table
     return None
 
+def add_suffix_to_sample_ids(table, suffix):
+    for ind, samp in enumerate(table._sample_ids):
+        samp_ = samp + suffix
+        table._sample_ids[ind] = samp_
+        table._sample_index[samp_] = table._sample_index[samp]
+        table._sample_index.pop(samp, None)
+
 def get_sample_biom_table():
     #table = get_biom_table_from_file('305_otu_table.json')
     #table = get_biom_table_from_file('486_otu_table.json')
-    table = get_biom_table_from_file('milk_3574_otu_table.json')
-    if table is not None:
-        return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
-    return None
+    table1 = get_biom_table_from_file('milk_3574_otu_table.json')
+    add_suffix_to_sample_ids(table1, "_July")
+    table2 = get_biom_table_from_file('milk_3575_otu_table.json')
+    add_suffix_to_sample_ids(table2, "_Feb")
+    table = table1.merge(table2)
+    INFO("Dataset size: {0}".format(table.shape))
+    return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
 
 def test():
     samples = get_default_samples()
