@@ -142,7 +142,6 @@ def fix(array_like):
 
 def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
     clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
-    BP()
     return _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names, debug)
 
 def _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=None, debug=False):

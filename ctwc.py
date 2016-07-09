@@ -54,30 +54,31 @@ def prepare_sample_filters_from_indices(picked_indices, samples):
 
 def ctwc_select(data, tree, samples, otus):
     INFO("Preparing distance matrices for full data...")
-    rows_dist_1, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
-    INFO("Iteration 1: Picking rows...")
-    picked_indices_1, last_rank_1, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_1, otus)
-    selected_rows_filter_1, compliment_rows_filter_1 = prepare_otu_filters_from_indices(picked_indices_1, otus)
+    rows_dist_1, cols_dist_1 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
+    INFO("Iteration 1: Picking samples based on unifrac distance...")
+    picked_indices_1, last_rank_1, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1, samples)
+    selected_cols_filter_1, compliment_cols_filter_1 = prepare_sample_filters_from_indices(picked_indices_1, samples)
 
-    INFO("Iteration 1.1: Picking columns from selected rows...")
-    _, cols_dist_1_1 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, otu_filter=selected_rows_filter_1)
-    picked_indices_1_1, last_rank_1_1, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1_1, samples)
+    INFO("Iteration 1.1: Picking OTUs from selected samples...")
+    rows_dist_1_1, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, sample_filter=selected_cols_filter_1)
+    picked_indices_1_1, last_rank_1_1, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_1_1, otus)
+    selected_rows_filter_1_1, compliment_rows_filter_1_1 = prepare_otu_filters_from_indices(picked_indices_1_1, otus)
 
-    INFO("Iteration 1.2: Picking columns from rows compliment...")
-    _, cols_dist_1_2 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, otu_filter=compliment_rows_filter_1)
-    picked_indices_1_2, last_rank_1_2, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1_2, samples)
-    selected_cols_filter_1_2, compliment_cols_filter_1_2 = prepare_sample_filters_from_indices(picked_indices_1_2, samples)
+    INFO("Iteration 1.2: Picking OTUs from selected samples compliment...")
+    rows_dist_1_2, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, sample_filter=compliment_cols_filter_1)
+    picked_indices_1_2, last_rank_1_2, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_1_2, otus)
+    selected_rows_filter_1_2, compliment_rows_filter_1_2 = prepare_otu_filters_from_indices(picked_indices_1_2, otus)
 
-    INFO("Iteration 2: Picking rows based on selected columns...")
-    selected_cols_filter_1_1, compliment_cols_filter_1_1 = prepare_sample_filters_from_indices(picked_indices_1_1, samples)
-    rows_dist_2, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, sample_filter=selected_cols_filter_1_1)
-    picked_indices_2, last_rank_2, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_2, otus)
-    selected_rows_filter_2, compliment_rows_filter_2 = prepare_otu_filters_from_indices(picked_indices_2, otus)
+    INFO("Iteration 2: Re-picking samples based on compliment OTUs in step 1.1...")
+    selected_rows_filter_1_1, compliment_rows_filter_1_1 = prepare_otu_filters_from_indices(picked_indices_1_1, otus)
+    _, cols_dist_2 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, otu_filter=compliment_rows_filter_1_1)
+    picked_indices_2, last_rank_2, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_2, samples)
+    selected_cols_filter_2, compliment_cols_filter_2 = prepare_sample_filters_from_indices(picked_indices_2, samples)
 
-    output = { "Iteration 1"   : (selected_rows_filter_1, samples),
-               "Iteration 1.1" : (compliment_rows_filter_1, compliment_cols_filter_1_1),
-               "Iteration 1.2" : (selected_rows_filter_1, compliment_cols_filter_1_2),
-               "Iteration 2"   : (compliment_rows_filter_2, compliment_cols_filter_1_1) }
+    output = { "Iteration 1"   : (otus, selected_cols_filter_1),
+               "Iteration 1.1" : (selected_rows_filter_1_1, selected_cols_filter_1),
+               "Iteration 1.2" : (selected_rows_filter_1_2, compliment_cols_filter_1),
+               "Iteration 2"   : (compliment_rows_filter_1_1, selected_cols_filter_2) }
     return output
 
 def test():
