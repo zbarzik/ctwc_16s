@@ -141,9 +141,13 @@ def euclidean_distance_rows(data):
 def euclidean_distance_cols(data):
     return euclidean_distance_rows(data.transpose())
 
-def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_filter=None):
-    cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree, sample_filter=sample_filter, otu_filter=otu_filter)
-    rows_dist = pearson_distance_rows(data, samples, otus, sample_filter, otu_filter)
+def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_filter=None, skip_cols=False, skip_rows=False):
+    cols_dist = None
+    rows_dist = None
+    if not skip_cols:
+        cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree, sample_filter=sample_filter, otu_filter=otu_filter)
+    if not skip_rows:
+        rows_dist = pearson_distance_rows(data, samples, otus, sample_filter, otu_filter)
     return rows_dist, cols_dist
 
 def get_data(use_real_data):
