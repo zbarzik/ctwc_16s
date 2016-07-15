@@ -20,23 +20,15 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 ])
 
 def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
-    a = data.tolist()
-    ag = AgglomerativeClustering(n_clusters=n_clusters if n_clusters < len(a) else len(a),
+    ag = AgglomerativeClustering(n_clusters=n_clusters if n_clusters < len(dist_matrix) else len(dist_matrix),
                                  linkage="complete",
-                                 affinity="l2",
+                                 affinity="precomputed",
                                  compute_full_tree=True).fit(dist_matrix)
-    #for i in range(len(a)): a[i].insert(0, ag.labels_[i])
-    #a.sort()
-    #for i in range(len(a)): del a[i][0]
-    return np.array(a), ag.labels_, ag
+    return data, ag.labels_, ag
 
 def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
-    a = data.tolist()
     db = DBSCAN(eps=eps, metric="precomputed", min_samples=3).fit(dist_matrix)
-    #for i in range(len(a)): a[i].insert(0, db.labels_[i])
-    #a.sort()
-    #for i in range(len(a)): del a[i][0]
-    return np.array(a), db.labels_
+    return data, db.labels_, db
 
 def cluster_rows(data, dist_matrix):
     return cluster_rows_agglomerative(data, dist_matrix)
