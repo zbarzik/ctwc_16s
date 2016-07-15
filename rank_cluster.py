@@ -94,9 +94,9 @@ def get_node_rank__size_of_sibling(node, children, n_leaves):
     parent = get_parent(children, node, n_leaves)
     if parent is not None:
         parent_count = get_node_children_count(parent, children, n_leaves)
-        return count / parent_count
+        return (count, (count / parent_count))
     else:
-        return 0.0
+        return (count, 0.0)
 
 def get_node_rank__depth_to_log_children(node, children, n_leaves):
     depth = get_node_depth(node, children, n_leaves)
@@ -146,15 +146,35 @@ def generate_dummy_data():
     DEBUG(str([{'node_id': next(ii), 'left': x[0], 'right':x[1]} for x in model.children_]))
     return model, model.labels_
 
+def is_greater(val1, val2):
+    if not hasattr(val1, '__iter__'):
+        return val1 > val2
+    for i in range(len(val1)):
+        if val1[i] == val2[i]:
+            continue
+        else:
+            return val1[i] > val2[i]
+    return False
+
+def get_max_value_in_array(array):
+    max_val = None
+    max_ind = 0
+    for i, val in enumerate(array):
+        if max_val is None:
+            max_val = val
+            max_ind = i
+        elif is_greater(val, max_val):
+            max_val = val
+            max_ind = i
+    return max_ind, max_val
+
 def get_nth_top_cluster_base_node(ranks_list, n=1):
     ranks_array = np.array(ranks_list)
     nth_max_index = -1
     for i in range(n):
         if nth_max_index >= 0:
             ranks_array = np.delete(ranks_array, nth_max_index, axis=0)
-        max_indices = ranks_array.argmax(axis=0)
-        nth_max_index = max_indices[3]
-        nth_max_rank = ranks_array[nth_max_index][3]
+        nth_max_index, nth_max_rank = get_max_value_in_array(ranks_array)
     nth_max_node = ranks_array[nth_max_index][0]
     return nth_max_node, nth_max_rank, ranks_array[nth_max_index]
 

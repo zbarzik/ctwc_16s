@@ -59,7 +59,8 @@ def ctwc_select(data, tree, samples, otus):
     picked_indices_1, last_rank_1, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1, samples)
     selected_cols_filter_1, compliment_cols_filter_1 = prepare_sample_filters_from_indices(picked_indices_1, samples)
 
-    INFO("Selected {0} samples".format(len(picked_indices_1)))
+    INFO("Selected {0} samples:".format(len(picked_indices_1)))
+    INFO(picked_indices_1)
 
     INFO("Iteration 1.1: Picking OTUs from selected samples...")
     rows_dist_1_1, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
