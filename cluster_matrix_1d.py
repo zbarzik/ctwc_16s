@@ -21,9 +21,8 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
 
 def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
     ag = AgglomerativeClustering(n_clusters=n_clusters if n_clusters < len(dist_matrix) else len(dist_matrix),
-                                 linkage="complete",
-                                 affinity="precomputed",
-                                 compute_full_tree=True).fit(dist_matrix)
+                                 linkage="average",
+                                 affinity="precomputed").fit(dist_matrix)
     return data, ag.labels_, ag
 
 def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
@@ -31,6 +30,7 @@ def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
     return data, db.labels_, db
 
 def cluster_rows(data, dist_matrix):
+    #return cluster_rows_dbscan(data, dist_matrix)
     return cluster_rows_agglomerative(data, dist_matrix)
 
 def plot_results(vec):
@@ -58,7 +58,19 @@ def plot_distnace_matrix(dist_mat):
     plt.matshow(mat, cmap=plt.cm.Blues)
     plt.show()
 
+def test_agglomerative_clustering():
+    _, labels, ag = cluster_rows_agglomerative(None, sample_dist_matrix, 2)
+    import rank_cluster
+    ranks_list = rank_cluster.get_ranks(ag)
+    rank_cluster.get_nth_top_cluster_base_node(ranks_list)
+
+def test_dbscan_clustering(data, dist_matrix):
+    _, labels, ag = cluster_rows_dbscan(None, dist_matrix)
+    BP()
+
 def test():
+    test_agglomerative_clustering()
+
     data, otus, samples = test_data.get_sample_biom_table()
 
     #data = inject_row_pattern_to_data(data)
@@ -78,6 +90,8 @@ def test():
     ASSERT(cols_dist.shape[0] == data.shape[1])
 
     DEBUG("Original rows distance matrix:\n{0}\n\n".format(rows_dist))
+
+    test_dbscan_clustering(data, cols_dist)
 
     clust, labels, _ = cluster_rows(data, rows_dist)
 

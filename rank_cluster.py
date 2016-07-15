@@ -12,6 +12,12 @@ import test_data
 
 RECURSION_LIMIT = 100000
 
+def get_parent(children, node, n_leaves):
+    for i in range(n_leaves, len(children) + n_leaves):
+        if (get_left_child(children, i, n_leaves) == node or
+            get_right_child(children, i, n_leaves) == node):
+            return i
+    return None
 
 def get_left_child(children, node, n_leaves):
     return children[int(node - n_leaves)][0]
@@ -70,11 +76,33 @@ def get_all_labels_for_node(node, children, n_leaves, labels, in_recursive=False
         l = right_children | left_children
     return l
 
+def verify_node(node, children, n_leaves):
+    parent = get_parent(children, node, n_leaves)
+    root = len(children) + n_leaves - 1
+    ASSERT(parent is None and node == root or
+           parent is not None)
+    ASSERT(parent is None or
+           get_left_child(children, parent, n_leaves) == node or
+           get_right_child(children, parent, n_leaves) == node)
+
 def get_node_rank(node, children, n_leaves):
+    #return get_node_rank__depth_to_log_children(node, children, n_leaves)
+    get_node_rank__size_of_sibling(node, children, n_leaves)
+
+def get_node_rank__size_of_sibling(node, children, n_leaves):
+    count = get_node_children_count(node, children, n_leaves)
+    parent = get_parent(children, node, n_leaves)
+    if parent is not None:
+        parent_count = get_node_children_count(parent, children, n_leaves)
+        return count / parent_count
+    else:
+        return 0.0
+
+def get_node_rank__depth_to_log_children(node, children, n_leaves):
     depth = get_node_depth(node, children, n_leaves)
     count = get_node_children_count(node, children, n_leaves)
     if count == 0.0 or count == 1.0:
-        return 0.0 + count / 2
+        return 0.0 + count / 2.0
     rank = depth / math.log(count, 2)
     return rank
 
@@ -150,6 +178,8 @@ def _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=Non
     log_func("Lables: {0}".format(labels))
     log_func("Ranks: {0}".format(ranks_list))
     max_rank = get_nth_top_cluster_base_node(ranks_list)
+    if max_rank[0] == len(ranks_list) - 1:
+        max_rank = get_nth_top_cluster_base_node(ranks_list, 2)
     log_func("Max node: {0} rank: {1}".format(max_rank[0], max_rank[1]))
     labels_in_top_cluster = get_all_labels_for_node(max_rank[0],
                                                     ag.children_,
@@ -179,17 +209,10 @@ def filter_cols_by_top_rank(data, cols_dist, samples=None, debug=False):
 def test():
     data, otus, samples = test_data.get_sample_biom_table()
     tree = test_data.get_gg_97_otu_tree()
-    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
+    _, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
+    picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_cols_by_top_rank(data, cols_dist, otus, True)
 
-    picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_rows_by_top_rank(data, rows_dist, otus, True)
-
-    ASSERT(len(picked_indices) == len(filtered_data))
-
-    ASSERT(len(picked_indices) == len(filtered_dist_matrix))
-
-    for row in filtered_data:
-        ASSERT(row in data)
-
+    INFO("Picked {0} indices".format(len(picked_indices)))
     clust, labels, ag = cluster_matrix_1d.cluster_rows(filtered_data.transpose(), cols_dist)
 
 if __name__ == "__main__":

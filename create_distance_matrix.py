@@ -175,17 +175,11 @@ def check_line(dist_matrix, index):
 
 def test():
     samples, otus, tree, data = get_data(REAL_DATA)
-    rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus)#, otu_filter=['raphael', 'april'])
+    _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     for i, col in enumerate(cols_dist):
         res = check_line(cols_dist, i)
         if res: INFO("{0} checks out".format(i))
         else: INFO("{0} doesn't check out".format(i))
-    #INFO("Tree:\n" + tree.asciiArt())
-    #INFO("Samples:\n" + str(samples))
-    #INFO("OTUs:\n" + str(otus))
-    #INFO("Data:\n" + str(data))
-    #INFO("Rows Matrix:\n" + str(rows_dist))
-    #INFO("Cols Matrix:\n" + str(cols_dist))
 
 if __name__ == '__main__':
     test()
