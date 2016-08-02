@@ -9,9 +9,9 @@ import create_distance_matrix, test_data
 
 
 # Constants
-N_CLUSTERS = 100
+N_CLUSTERS = 16
 
-# Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1). 
+# Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1).
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 [ 0.9, 0.0, 0.9, 0.1, 0.9 ],
                                 [ 0.1, 0.9, 0.0, 0.9, 0.1 ],
@@ -21,7 +21,7 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
 
 def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
     ag = AgglomerativeClustering(n_clusters=n_clusters if n_clusters < len(dist_matrix) else len(dist_matrix),
-                                 linkage="average",
+                                 linkage="complete",
                                  affinity="precomputed").fit(dist_matrix)
     return data, ag.labels_, ag
 
@@ -66,18 +66,17 @@ def test_agglomerative_clustering():
 
 def test_dbscan_clustering(data, dist_matrix):
     _, labels, ag = cluster_rows_dbscan(None, dist_matrix)
-    BP()
 
 def test():
-    test_agglomerative_clustering()
+    #test_agglomerative_clustering()
 
     data, otus, samples = test_data.get_sample_biom_table()
 
     #data = inject_row_pattern_to_data(data)
 
-    #data = inject_col_pattern_to_data(data)
+    data = inject_col_pattern_to_data(data)
 
-    DEBUG("Original data:\n{0}\n\n".format(data))
+    INFO("Original data:\n{0}\n\n".format(data))
 
     tree = test_data.get_gg_97_otu_tree()
 
@@ -89,31 +88,31 @@ def test():
     ASSERT(rows_dist.shape[0] == data.shape[0])
     ASSERT(cols_dist.shape[0] == data.shape[1])
 
-    DEBUG("Original rows distance matrix:\n{0}\n\n".format(rows_dist))
+    INFO("Original cols distance matrix:\n{0}\n\n".format(cols_dist))
 
-    test_dbscan_clustering(data, cols_dist)
-
-    clust, labels, _ = cluster_rows(data, rows_dist)
-
-    st = "Labels:\n"
-    for i in range(labels.shape[0]):
-        st += str(labels[i]) + " "
-    DEBUG(st + "\n\n")
-
-    DEBUG("Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
-    #plot_distnace_matrix(data)
-    #plot_distnace_matrix(clust)
-
-    DEBUG("Original cols distance matrix:\n{0}\n\n".format(cols_dist))
+    #test_dbscan_clustering(data, cols_dist)
 
     clust, labels, _ = cluster_rows(data.transpose(), cols_dist)
 
     st = "Labels:\n"
     for i in range(labels.shape[0]):
         st += str(labels[i]) + " "
-    DEBUG(st + "\n\n")
+    INFO(st + "\n\n")
 
-    DEBUG("Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust.transpose()))
+    INFO("Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
+    #plot_distnace_matrix(data)
+    #plot_distnace_matrix(clust)
+
+    INFO("Original rows distance matrix:\n{0}\n\n".format(rows_dist))
+
+    clust, labels, _ = cluster_rows(data, rows_dist)
+
+    st = "Labels:\n"
+    for i in range(labels.shape[0]):
+        st += str(labels[i]) + " "
+    INFO(st + "\n\n")
+
+    INFO("Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
     #plot_distnace_matrix(data)
     #plot_distnace_matrix(clust.transpose())
 
@@ -128,12 +127,9 @@ def inject_row_pattern_to_data(data):
 
 def inject_col_pattern_to_data(data):
     z = np.zeros(data.shape)
-    for col in range(6):
+    for col in range(30):
         for row in range(data.shape[0]): # Flooding to create a false relationship between rows
-            if row != col:
-               z[row, col] = data[row, 0] - data[row, col]
-            else:
-               z[row, col] = data[row, 0] + 1
+            z[row, col] = data[row, 0] - data[row, col]
     return data + z
 
 if __name__ == "__main__":

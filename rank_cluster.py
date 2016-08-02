@@ -86,8 +86,8 @@ def verify_node(node, children, n_leaves):
            get_right_child(children, parent, n_leaves) == node)
 
 def get_node_rank(node, children, n_leaves):
-    #return get_node_rank__depth_to_log_children(node, children, n_leaves)
-    get_node_rank__size_of_sibling(node, children, n_leaves)
+    return get_node_rank__depth_to_log_children(node, children, n_leaves)
+    #get_node_rank__size_of_sibling(node, children, n_leaves)
 
 def get_node_rank__size_of_sibling(node, children, n_leaves):
     count = get_node_children_count(node, children, n_leaves)
@@ -190,12 +190,13 @@ def fix(array_like):
 
 def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
     clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
+    INFO("Clustered labels: {0}".format(labels))
     return _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names, debug)
 
 def _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=None, debug=False):
     log_func = INFO if debug else DEBUG
     ranks_list = get_ranks(ag)
-    log_func("Lables: {0}".format(labels))
+    log_func("Labels: {0}".format(labels))
     log_func("Ranks: {0}".format(ranks_list))
     max_rank = get_nth_top_cluster_base_node(ranks_list)
     if max_rank[0] == len(ranks_list) - 1:

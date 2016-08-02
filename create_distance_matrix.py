@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from multiprocessing import Pool
 import warnings
 import test_data
 
@@ -8,6 +9,16 @@ import math
 
 REAL_DATA = True
 
+def __unifrac_prepare_entry_for_dictionary(args):
+    data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
+    samp_dict = {}
+    for samp_ind, samp in enumerate(samples):
+        if samp in sample_filter or otu in otu_filter:
+            samp_dict[samp] = 0
+        else:
+            samp_dict[samp] = data[samp_ind, otu_ind]
+    return {otu:samp_dict}
+
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
     num_samples, num_otus_in_sample = data.shape
     if num_samples != len(samples):
@@ -15,15 +26,14 @@ def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_fi
     if num_otus_in_sample != len(otus):
         FATAL("Number of otus labels {0} does not match number of samples {1}".format(num_otus_in_sample, len(otus)))
     full_dict = {}
+    args = []
     for otu_ind, otu in enumerate(otus):
-        samp_dict = {}
-        for samp_ind, samp in enumerate(samples):
-            if samp in sample_filter or otu in otu_filter:
-                samp_dict[samp] = 0
-            else:
-                samp_dict[samp] = data[samp_ind, otu_ind]
-        full_dict[otu] = samp_dict
-    DEBUG("Full dictionary: {0}".format(full_dict))
+        args.append((data, otu_ind, otu, otus, otu_filter, samples, sample_filter))
+    p = Pool(16)
+    retvals = p.map(__unifrac_prepare_entry_for_dictionary, args)
+    for retVal in retvals:
+        full_dict.update(retVal)
+    p.terminate()
     return full_dict
 
 def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, samples, sample_filter, otu_filter):
@@ -68,7 +78,7 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
         tree = tree_arg
 
     data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter)
-    unifrac = fast_unifrac(tree, data_dict, weighted=True)
+    unifrac = fast_unifrac(tree, data_dict, weighted=False)
     DEBUG("Unifrac results: {0}".format(unifrac))
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
     found_nans = set([])
