@@ -80,18 +80,18 @@ def add_suffix_to_sample_ids(table, suffix):
         table._sample_index.pop(samp, None)
 
 def get_sample_biom_table():
-    table1 = get_biom_table_from_file('305_otu_table.json')
-    INFO("First dataset size: {0}".format(table1.shape))
-    #table = table.merge(get_biom_table_from_file('486_otu_table.json'))
-    #table1 = get_biom_table_from_file('milk_3574_otu_table.json')
-    #add_suffix_to_sample_ids(table1, "_July")
-    table2 = get_biom_table_from_file('milk_3575_otu_table.json')
-    INFO("Second dataset size: {0}".format(table2.shape))
-    #table3 = get_biom_table_from_file('milk_3537_otu_table.json')
-    #add_suffix_to_sample_ids(table2, "_Feb")
-    table = table1.merge(table2)
-    #table = table1.merge(table2).merge(table3)
-    INFO("Dataset size: {0}".format(table.shape))
+    tables = []
+    tables.append(get_biom_table_from_file('milk_3572_otu_table.json'))
+    tables.append(get_biom_table_from_file('milk_3573_otu_table.json'))
+    tables.append(get_biom_table_from_file('milk_3574_otu_table.json'))
+    tables.append(get_biom_table_from_file('milk_3575_otu_table.json'))
+    tables.append(get_biom_table_from_file('milk_3576_otu_table.json'))
+    table = tables[0]
+    for ind, tab in enumerate(tables, 1):
+        INFO("Dataset part {0} size: {1}".format(ind, tab.shape))
+        if ind != 1:
+            table = table.merge(tab)
+    INFO("Complete dataset size: {0}".format(table.shape))
     return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
 
 def test():

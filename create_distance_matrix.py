@@ -9,6 +9,11 @@ import math
 
 REAL_DATA = True
 
+SAMPLE_THRESHOLD = 2
+USE_LOG_XFORM = True
+WEIGHTED_UNIFRAC = False
+NUM_THREADS = 16
+
 def __unifrac_prepare_entry_for_dictionary(args):
     data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
     samp_dict = {}
@@ -16,7 +21,8 @@ def __unifrac_prepare_entry_for_dictionary(args):
         if samp in sample_filter or otu in otu_filter:
             samp_dict[samp] = 0
         else:
-            samp_dict[samp] = data[samp_ind, otu_ind]
+            if USE_LOG_XFORM:
+                samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
     return {otu:samp_dict}
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
@@ -29,7 +35,7 @@ def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_fi
     args = []
     for otu_ind, otu in enumerate(otus):
         args.append((data, otu_ind, otu, otus, otu_filter, samples, sample_filter))
-    p = Pool(16)
+    p = Pool(NUM_THREADS)
     retvals = p.map(__unifrac_prepare_entry_for_dictionary, args)
     for retVal in retvals:
         full_dict.update(retVal)
@@ -78,7 +84,7 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
         tree = tree_arg
 
     data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter)
-    unifrac = fast_unifrac(tree, data_dict, weighted=False)
+    unifrac = fast_unifrac(tree, data_dict, weighted=WEIGHTED_UNIFRAC)
     DEBUG("Unifrac results: {0}".format(unifrac))
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
     found_nans = set([])
@@ -96,7 +102,8 @@ def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None, 
 
 def dissimilarity_from_correlation(correlation):
     ones = np.ones(correlation.shape)
-    return ones - abs(correlation)
+    dis = ones - abs(correlation)
+    return np.nan_to_num(dis)
 
 def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
     try:
@@ -114,21 +121,14 @@ def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
 
     data = np.copy(data)
     for col in cols_filter:
-        DEBUG("Data before: {0}".format(data))
-        DEBUG("Clearing column {0}".format(col))
         data[:, col] = 0
-        DEBUG("Data after: {0}".format(data))
     for row in rows_filter:
-        DEBUG("Data before: {0}".format(data))
-        DEBUG("Clearing row {0}".format(row))
         data[row, :] = 0
-        DEBUG("Data after: {0}".format(data))
+
+    data[data < SAMPLE_THRESHOLD] = 0.0
+    data = np.ma.log2(data)
 
     correlation = np.corrcoef(data)
-    for i in range(correlation.shape[0]):
-        for j in range(correlation.shape[1]):
-            if correlation[i][j] != correlation[i][j]:
-                correlation[i][j] = 0
     return dissimilarity_from_correlation(correlation)
 
 def pearson_distance_cols(data, samples, otus, sample_filter, otu_filter):
@@ -173,23 +173,10 @@ def get_data(use_real_data):
         data = test_data.get_default_data(otus, samples)
     return samples, otus, tree, data
 
-def check_line(dist_matrix, index):
-    l = len(dist_matrix[index].tolist())
-    vec = dist_matrix[index].tolist()
-    sum1 = 0
-    sum2 = 0
-    for i in range(len(vec) / 2):
-        sum1 += vec[i]
-        sum2 += vec[len(vec) / 2 + i]
-    return sum1 < sum2
-
 def test():
     samples, otus, tree, data = get_data(REAL_DATA)
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
-    for i, col in enumerate(cols_dist):
-        res = check_line(cols_dist, i)
-        if res: INFO("{0} checks out".format(i))
-        else: INFO("{0} doesn't check out".format(i))
+    rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
 
 if __name__ == '__main__':
     test()
