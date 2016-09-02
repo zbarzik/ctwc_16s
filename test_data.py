@@ -92,6 +92,7 @@ def get_sample_biom_table():
         if ind != 1:
             table = table.merge(tab)
     INFO("Complete dataset size: {0}".format(table.shape))
+    BP()
     return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
 
 def test():
@@ -103,6 +104,8 @@ def test():
     DEBUG("Samples:\n" + str(samples))
     DEBUG("OTUs:\n" + str(otus))
     DEBUG("Data:\n" + str(data))
+    get_sample_biom_table()
+
 
 if __name__ == "__main__":
     test()

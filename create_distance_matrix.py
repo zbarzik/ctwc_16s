@@ -15,6 +15,9 @@ WEIGHTED_UNIFRAC = False
 NUM_THREADS = 16
 GENERATE_FILE_COLS = True
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
+UNIFRAC_DIST_FILE = './unifrac_dist_mat.pkl'
+UNIFRAC_HASH_FILE = './unifrac_dist_mat.hash'
+SQUARE_UNIFRAC_DISTANCE = False
 
 
 def __unifrac_prepare_entry_for_dictionary(args):
@@ -57,7 +60,47 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
                 z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
     return z
 
+def __get_precalculated_unifrac_file_if_exists():
+    import pickle
+    try:
+        with open(UNIFRAC_DIST_FILE, 'rb') as fn:
+            try:
+                mat = pickle.load(fn)
+                return mat
+            except Exception as e:
+                WARN("Got an exception trying to read Unifrac distance matrix:\n" + str(e))
+    except IOError:
+        DEBUG("Couldn't open pre-calculated Unifrac distance matrix")
+    return None
+
+def __calculate_hash_for_data(data, sample_filter, otu_filter):
+    return hash(hash(data.tostring()) + hash(str(sample_filter)) + hash(str(otu_filter))) # eh close enough
+
+def __get_precalculated_unifrac_file_if_exists_for_data(data, sample_filter, otu_filter):
+    h = __calculate_hash_for_data(data, sample_filter, otu_filter)
+    try:
+        with open(UNIFRAC_HASH_FILE, 'rb') as fn:
+            hash_in_file = fn.readline()
+            try:
+                if long(hash_in_file) == h:
+                    return __get_precalculated_unifrac_file_if_exists()
+            except Exception as e:
+                WARN("Got an exception trying to read Unifrac hash:\n" + str(e))
+    except IOError:
+        DEBUG("Couldn't open pre-calculated Unifrac hash")
+    return None
+
+def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_filter, mat):
+    DEBUG("Saving calculated Unifrac distance matrix to file...")
+    with open(UNIFRAC_HASH_FILE,'wb+') as fn:
+        h = __calculate_hash_for_data(data, sample_filter, otu_filter)
+        fn.write(str(h))
+    with open(UNIFRAC_DIST_FILE, 'wb+') as fn:
+        import pickle
+        pickle.dump(mat, fn)
+
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
+
     DEBUG("Starting unifrac_distance_rows...")
     if sample_filter == None:
         sample_filter = []
@@ -87,6 +130,11 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
     else:
         tree = tree_arg
 
+    mat = __get_precalculated_unifrac_file_if_exists_for_data(data, sample_filter, otu_filter)
+    if mat is not None:
+        DEBUG("Found previously calculated Unifrac data")
+        return mat
+
     DEBUG("Preparing data dictionary...")
     data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter)
     DEBUG("Running fast_unifrac...")
@@ -96,6 +144,10 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
     DEBUG("Fixing NaN/inf values...")
     mat = np.nan_to_num(mat)
+    if SQUARE_UNIFRAC_DISTANCE:
+        mat = np.multiply(mat, mat)
+
+    __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_filter, mat)
     DEBUG("Finished calculating Samples distance matrix.")
     return mat
 
