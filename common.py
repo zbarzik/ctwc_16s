@@ -39,7 +39,10 @@ def BP():
     pdb.set_trace()
 
 def init_logger():
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
     file_handler = logging.FileHandler(filename=LOG_FILE, mode='a')
+    file_handler.setFormatter(formatter)
     console_handler = logging.StreamHandler()
     file_handler.setLevel(LOG_LEVEL_FILE)
     console_handler.setLevel(LOG_LEVEL_CONSOLE)

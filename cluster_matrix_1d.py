@@ -20,9 +20,11 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 ])
 
 def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
+    DEBUG("Starting Agglomerative clustering...")
     ag = AgglomerativeClustering(n_clusters=n_clusters if n_clusters < len(dist_matrix) else len(dist_matrix),
                                  linkage="complete",
                                  affinity="precomputed").fit(dist_matrix)
+    DEBUG("Finished Agglomerative clustering.")
     return data, ag.labels_, ag
 
 def cluster_rows_dbscan(data, dist_matrix, eps=0.5):

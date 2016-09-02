@@ -13,6 +13,9 @@ SAMPLE_THRESHOLD = 2
 USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
 NUM_THREADS = 16
+GENERATE_FILE_COLS = True
+COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
+
 
 def __unifrac_prepare_entry_for_dictionary(args):
     data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
@@ -55,6 +58,7 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
     return z
 
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
+    DEBUG("Starting unifrac_distance_rows...")
     if sample_filter == None:
         sample_filter = []
     if otu_filter == None:
@@ -83,18 +87,16 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
     else:
         tree = tree_arg
 
+    DEBUG("Preparing data dictionary...")
     data_dict = __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter)
+    DEBUG("Running fast_unifrac...")
     unifrac = fast_unifrac(tree, data_dict, weighted=WEIGHTED_UNIFRAC)
     DEBUG("Unifrac results: {0}".format(unifrac))
+    DEBUG("Reordering results...")
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
-    found_nans = set([])
-    for i in range(mat.shape[0]):
-        for j in range(mat.shape[1]):
-            if math.isinf(mat[i][j]) or math.isnan(mat[i][j]):
-                found_nans.add(str(mat[i][j]))
-                mat[i][j] = 0.0
-    if len(found_nans) > 0:
-        WARN("Found {0} value(s) in unifrac matrix".format("".join(str(x) for x in found_nans)))
+    DEBUG("Fixing NaN/inf values...")
+    mat = np.nan_to_num(mat)
+    DEBUG("Finished calculating Samples distance matrix.")
     return mat
 
 def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
@@ -106,30 +108,37 @@ def dissimilarity_from_correlation(correlation):
     return np.nan_to_num(dis)
 
 def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
+    DEBUG("Starting pearson_distance_rows...")
+    data = np.copy(data)
+    DEBUG("Filtering Samples...")
     try:
         if samples is not list:
             samples = samples.tolist()
         cols_filter = [ samples.index(samp) for samp in ( sample_filter if sample_filter else [] ) ]
     except ValueError as e:
         FATAL("Trying to filter out non-existing samples: {0}".format(str(e)))
+    for col in cols_filter:
+        data[:, col] = 0
+    DEBUG("Filtering OTUs...")
     try:
         if otus is not list:
             otus = otus.tolist()
         rows_filter = [ otus.index(otu) for otu in ( otu_filter if otu_filter else [] ) ]
     except ValueError as e:
         FATAL("Trying to filter out non-existing OTUs: {0}".format(str(e)))
-
-    data = np.copy(data)
-    for col in cols_filter:
-        data[:, col] = 0
     for row in rows_filter:
         data[row, :] = 0
 
+    DEBUG("Log transform OTU abundance...")
     data[data < SAMPLE_THRESHOLD] = 0.0
     data = np.ma.log2(data)
 
+    DEBUG("Calculating correlation...")
     correlation = np.corrcoef(data)
-    return dissimilarity_from_correlation(correlation)
+    DEBUG("Calculating dissimilarity...")
+    res = dissimilarity_from_correlation(correlation)
+    DEBUG("Finished calculating OTU distance matrix.")
+    return res
 
 def pearson_distance_cols(data, samples, otus, sample_filter, otu_filter):
     return pearson_distance_rows(data.transpose(), samples, otus, sample_filter, otu_filter)
@@ -177,6 +186,11 @@ def test():
     samples, otus, tree, data = get_data(REAL_DATA)
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
+    if GENERATE_FILE_COLS:
+        with open(COL_DISTANCE_MATRIX_FILE, 'w') as fn:
+            for r, _ in enumerate(cols_dist):
+                for c in range(r):
+                    fn.write("{0} {1} {2}\n".format(r, c, cols_dist[r][c]))
 
 if __name__ == '__main__':
     test()
