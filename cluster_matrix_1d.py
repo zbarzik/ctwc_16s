@@ -10,6 +10,9 @@ import create_distance_matrix, test_data
 
 # Constants
 N_CLUSTERS = 16
+SPC_BINARY_PATH = './SPC/'
+SPC_BINARY_EXE = './SW'
+SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
 
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1).
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
@@ -18,6 +21,96 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 [ 0.1, 0.9, 0.9, 0.0, 0.9 ],
                                 [ 0.1, 0.9, 0.1, 0.9, 0.0 ]
                                 ])
+
+def __spc__prepare_run_file(n_data_points):
+    run_file = """
+NumberOfPoints: {0}
+DataFile: {1}.dat
+Dimentions: 0
+MinTemp:         0.10
+MaxTemp:         1.0
+TempStep:        0.01
+OutFile:          {1}.out
+SWCycles:        2000
+KNearestNeighbours:    11
+MSTree|
+DirectedGrowth|
+SaveSuscept|
+WriteLables|
+WriteCorFile~
+DataIsMatrix: 1""".format(n_data_points, SPC_TMP_FILES_PREFIX)
+    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".run", "w+") as run_fn:
+        run_fn.write(run_file)
+
+def __spc_prepare_dat_file(dist_matrix):
+    n_data_points = create_distance_matrix.generate_spc_output_files(dist_matrix, SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat")
+    return n_data_points
+
+def __spc_run_and_wait_for_completion():
+    from subprocess import call
+    args = [SPC_BINARY_EXE, SPC_TMP_FILES_PREFIX + ".run"]
+    call(args, cwd=SPC_BINARY_PATH)
+
+def __spc_parse_temperature_results():
+    import collections
+
+    NUM_CLUSTERS_IND = 3
+    TEMP_IND = 1
+    lines = []
+    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".out.dg_01", "r") as out_dg_fn:
+        lines = out_dg_fn.readlines()
+    DEBUG("SPC output:")
+    for line in lines:
+        DEBUG(line)
+    num_clusters = []
+    for line in lines:
+        num_clusters.append(int(line.split()[NUM_CLUSTERS_IND]))
+    counter=collections.Counter(num_clusters)
+    candidates = counter.most_common(3)
+    # most common might be completely frozen or completely dissolved.
+    # 3 cases should include one sequence from the middle as well.
+    candidate = candidates[0]
+    for candidate in candidates:
+        n_clusters, score = candidate
+        if (n_clusters == int(lines[0].split()[NUM_CLUSTERS_IND]) or
+            n_clusters == int(lines[-1].split()[NUM_CLUSTERS_IND])):
+            continue # assuming that temperature range exceeds dynamic range - it's either frozen or dissolved
+    for line in lines:
+        if int(line.split()[NUM_CLUSTERS_IND]) == n_clusters:
+            break
+    temperature = float(line.split()[TEMP_IND])
+
+    INFO("Most stable temperature: {0}. Number of clusters: {1}. Score: {2}".format(temperature, n_clusters, score))
+    return temperature
+
+def __spc_get_clusters_by_temperature(t):
+    TEMP_IND = 1
+    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".out.dg_01.lab", "r") as out_dg_lab_fn:
+        lines = out_dg_lab_fn.readlines()
+    for line in lines:
+        if float(line.split()[TEMP_IND]) == t:
+            break
+    return map(int, line.split()[TEMP_IND + 1:])
+
+def __spc_get_cluster_members_by_cluster_id(clusters, cluster_id):
+    clust = []
+    for i, val in enumerate(clusters):
+        if val == cluster_id:
+            clust.append(i)
+    return clust
+
+def cluster_rows_spc(data, dist_matrix):
+    DEBUG("Starting Super-Paramagnetic clustering...")
+    n_data_points = __spc_prepare_dat_file(dist_matrix)
+    __spc__prepare_run_file(n_data_points)
+    __spc_run_and_wait_for_completion()
+    t = __spc_parse_temperature_results()
+    clusters = __spc_get_clusters_by_temperature(t)
+    top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, 0)
+    DEBUG("Top cluster: {0}".format(top_cluster))
+    DEBUG("Finished Super-Paramagnetic clustering.")
+    return data, top_cluster, None
+
 
 def cluster_rows_agglomerative(data, dist_matrix, n_clusters=N_CLUSTERS):
     DEBUG("Starting Agglomerative clustering...")
@@ -33,7 +126,8 @@ def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
 
 def cluster_rows(data, dist_matrix):
     #return cluster_rows_dbscan(data, dist_matrix)
-    return cluster_rows_agglomerative(data, dist_matrix)
+    #return cluster_rows_agglomerative(data, dist_matrix)
+    return cluster_rows_spc(data, dist_matrix)
 
 def plot_results(vec):
     import matplotlib.pyplot as plt
@@ -76,7 +170,7 @@ def test():
 
     #data = inject_row_pattern_to_data(data)
 
-    data = inject_col_pattern_to_data(data)
+    #data = inject_col_pattern_to_data(data)
 
     INFO("Original data:\n{0}\n\n".format(data))
 
@@ -91,6 +185,9 @@ def test():
     ASSERT(cols_dist.shape[0] == data.shape[1])
 
     INFO("Original cols distance matrix:\n{0}\n\n".format(cols_dist))
+
+    cluster_rows_spc(data, cols_dist)
+
 
     #test_dbscan_clustering(data, cols_dist)
 

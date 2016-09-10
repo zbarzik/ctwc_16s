@@ -14,7 +14,9 @@ USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
 NUM_THREADS = 16
 GENERATE_FILE_COLS = True
+GENERATE_FILE_ROWS = True
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
+ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
 UNIFRAC_DIST_FILE = './unifrac_dist_mat.pkl'
 UNIFRAC_HASH_FILE = './unifrac_dist_mat.hash'
 SQUARE_UNIFRAC_DISTANCE = False
@@ -234,15 +236,30 @@ def get_data(use_real_data):
         data = test_data.get_default_data(otus, samples)
     return samples, otus, tree, data
 
+def get_output_filename_by_type(mat_type):
+    if mat_type == 'col':
+        return COL_DISTANCE_MATRIX_FILE
+    elif mat_type == 'row':
+        return ROW_DISTANCE_MATRIX_FILE
+    else:
+        FATAL('Unknown matrix type')
+
+def generate_spc_output_files(dist_mat, output_filename):
+    with open(output_filename, 'w+') as fn:
+        for r, _ in enumerate(dist_mat):
+            for c in range(r):
+                fn.write("{0} {1} {2}\n".format(r, c, dist_mat[r][c]))
+    return r
+
 def test():
     samples, otus, tree, data = get_data(REAL_DATA)
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
     if GENERATE_FILE_COLS:
-        with open(COL_DISTANCE_MATRIX_FILE, 'w') as fn:
-            for r, _ in enumerate(cols_dist):
-                for c in range(r):
-                    fn.write("{0} {1} {2}\n".format(r, c, cols_dist[r][c]))
+        generate_spc_output_files(cols_dist, get_output_filename_by_type('col'))
+    if GENERATE_FILE_ROWS:
+        generate_spc_output_files(rows_dist, get_output_filename_by_type('row'))
+
 
 if __name__ == '__main__':
     test()

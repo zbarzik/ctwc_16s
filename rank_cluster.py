@@ -106,7 +106,7 @@ def get_node_rank__depth_to_log_children(node, children, n_leaves):
     rank = depth / math.log(count, 2)
     return rank
 
-def get_ranks(ag):
+def get_ranks_agglomerative(ag):
     n_samples = ag.children_.shape[0] + ag.n_leaves_
     l = []
     for i in range(n_samples):
@@ -196,18 +196,22 @@ def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
 
 def _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=None, debug=False):
     log_func = INFO if debug else DEBUG
-    ranks_list = get_ranks(ag)
-    log_func("Labels: {0}".format(labels))
-    log_func("Ranks: {0}".format(ranks_list))
-    max_rank = get_nth_top_cluster_base_node(ranks_list)
-    if max_rank[0] == len(ranks_list) - 1:
-        max_rank = get_nth_top_cluster_base_node(ranks_list, 2)
-    log_func("Max node: {0} rank: {1}".format(max_rank[0], max_rank[1]))
-    labels_in_top_cluster = get_all_labels_for_node(max_rank[0],
-                                                    ag.children_,
-                                                    ag.n_leaves_,
-                                                    labels)
-    picked_indices = get_index_list_for_label_filter(labels_in_top_cluster, labels)
+    if ag is not None:
+        ranks_list = get_ranks_agglomerative(ag)
+        log_func("Labels: {0}".format(labels))
+        log_func("Ranks: {0}".format(ranks_list))
+        max_rank = get_nth_top_cluster_base_node(ranks_list)
+        if max_rank[0] == len(ranks_list) - 1:
+            max_rank = get_nth_top_cluster_base_node(ranks_list, 2)
+        log_func("Max node: {0} rank: {1}".format(max_rank[0], max_rank[1]))
+        labels_in_top_cluster = get_all_labels_for_node(max_rank[0],
+                                                        ag.children_,
+                                                        ag.n_leaves_,
+                                                        labels)
+        picked_indices = get_index_list_for_label_filter(labels_in_top_cluster, labels)
+    else:
+        max_rank = (-1, -1)
+        picked_indices = labels
     log_func("Picked indices: {0}".format(picked_indices))
 
     filtered_data = [row for ind, row in enumerate(data) if ind in picked_indices]

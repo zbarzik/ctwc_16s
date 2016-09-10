@@ -94,6 +94,17 @@ def get_sample_biom_table():
     INFO("Complete dataset size: {0}".format(table.shape))
     return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
 
+def get_otus_by_indices(indices, table):
+    otus = []
+    def __get_otu_by_index(index, table):
+        for obs in table._obs_index:
+            if table._obs_index[obs] == index:
+                return obs
+
+    for index in indices:
+        otus.append(__get_otu_by_index(index, table))
+    return map(int, otus)
+
 def test():
     samples = get_default_samples()
     otus = get_default_otus()
