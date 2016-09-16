@@ -10,7 +10,8 @@ logger = None
 MAX_PRINT_SIZE = 5000
 
 def DEBUG(message):
-    if len(str(message)) > MAX_PRINT_SIZE:
+    message = str(message)
+    if len(message) > MAX_PRINT_SIZE:
         logger.debug(message[:MAX_PRINT_SIZE/2] + "\n(>>>)\n" + message[-MAX_PRINT_SIZE/2:])
     else:
         logger.debug(message)

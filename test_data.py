@@ -92,7 +92,19 @@ def get_sample_biom_table():
         if ind != 1:
             table = table.merge(tab)
     INFO("Complete dataset size: {0}".format(table.shape))
-    return table.matrix_data.todense(), table.ids('observation'), table.ids('sample')
+    return table.matrix_data.todense(), table.ids('observation'), table.ids('sample'), table
+
+def get_samples_by_indices(indices, table):
+    samples = []
+    def __get_sample_by_index(index, table):
+        for samp in table._sample_index:
+            if table._sample_index[samp] == index:
+                return samp
+        return None
+
+    for index in indices:
+        samples.append(__get_sample_by_index(index, table))
+    return map(str, samples)
 
 def get_otus_by_indices(indices, table):
     otus = []
@@ -100,10 +112,33 @@ def get_otus_by_indices(indices, table):
         for obs in table._obs_index:
             if table._obs_index[obs] == index:
                 return obs
+        return None
 
     for index in indices:
         otus.append(__get_otu_by_index(index, table))
-    return map(int, otus)
+    return map(str, otus)
+
+def get_collection_dates_for_samples(samples):
+    dates = []
+    for samp in samples:
+        dates.append(get_sample_colletion_date(samp))
+    return dates
+
+def get_sample_colletion_date(sample):
+    import csv
+    with open('10485_20160420-093403.txt', 'r') as md_file:
+        metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
+        timestamp_index = -1
+        for row in metadata:
+            if timestamp_index == -1:
+                for index, item in enumerate(row):
+                    if item == "collection_timestamp":
+                        timestamp_index = index
+                        break
+            else:
+                ts = row[timestamp_index].strip()
+                return ts
+    return None
 
 def test():
     samples = get_default_samples()

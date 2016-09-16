@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
-import create_distance_matrix, rank_cluster
+import create_distance_matrix, rank_cluster, test_data
 import numpy as np
 
 
@@ -52,7 +52,7 @@ def prepare_sample_filters_from_indices(picked_indices, samples):
     compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
     return selected_cols_filter, compliment_cols_filter
 
-def ctwc_select(data, tree, samples, otus):
+def ctwc_select(data, tree, samples, otus, table):
     INFO("Preparing distance matrices for full data...")
     _, cols_dist_1 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     INFO("Iteration 1: Picking samples based on unifrac distance...")
@@ -60,7 +60,14 @@ def ctwc_select(data, tree, samples, otus):
     selected_cols_filter_1, compliment_cols_filter_1 = prepare_sample_filters_from_indices(picked_indices_1, samples)
 
     INFO("Selected {0} samples:".format(len(picked_indices_1)))
-    INFO(picked_indices_1)
+    DEBUG(picked_indices_1)
+    if table is not None:
+        picked_samples_1 = test_data.get_samples_by_indices(picked_indices_1, table)
+        DEBUG(picked_samples_1)
+        dates = test_data.get_collection_dates_for_samples(picked_samples_1)
+        INFO("Collection dates for selected samples:")
+        for row in dates:
+            INFO(row)
 
     INFO("Iteration 1.1: Picking OTUs from selected samples...")
     rows_dist_1_1, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
@@ -92,12 +99,12 @@ def ctwc_select(data, tree, samples, otus):
 
 def test():
     np.seterr(all="ignore")
-    samples, otus, tree, data = create_distance_matrix.get_data(True)
+    samples, otus, tree, data, table = create_distance_matrix.get_data(True)
 
     #rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
     #sorted_data = ctwc_bicluster(data, rows_dist, cols_dist)
 
-    output = ctwc_select(data, tree, samples, otus)
+    output = ctwc_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
     for elem in output:
         INFO("{0}: {1} X {2}".format(elem, len(output[elem][0]), len(output[elem][1])))

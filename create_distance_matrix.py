@@ -17,8 +17,7 @@ GENERATE_FILE_COLS = True
 GENERATE_FILE_ROWS = True
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
-UNIFRAC_DIST_FILE = './unifrac_dist_mat.pkl'
-UNIFRAC_HASH_FILE = './unifrac_dist_mat.hash'
+UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pkl'
 SQUARE_UNIFRAC_DISTANCE = False
 
 
@@ -62,10 +61,10 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
                 z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
     return z
 
-def __get_precalculated_unifrac_file_if_exists():
+def __get_precalculated_unifrac_file_if_exists(h):
     import pickle
     try:
-        with open(UNIFRAC_DIST_FILE, 'rb') as fn:
+        with open(UNIFRAC_DIST_FILE.format(h), 'rb') as fn:
             try:
                 mat = pickle.load(fn)
                 return mat
@@ -80,24 +79,12 @@ def __calculate_hash_for_data(data, sample_filter, otu_filter):
 
 def __get_precalculated_unifrac_file_if_exists_for_data(data, sample_filter, otu_filter):
     h = __calculate_hash_for_data(data, sample_filter, otu_filter)
-    try:
-        with open(UNIFRAC_HASH_FILE, 'rb') as fn:
-            hash_in_file = fn.readline()
-            try:
-                if long(hash_in_file) == h:
-                    return __get_precalculated_unifrac_file_if_exists()
-            except Exception as e:
-                WARN("Got an exception trying to read Unifrac hash:\n" + str(e))
-    except IOError:
-        DEBUG("Couldn't open pre-calculated Unifrac hash")
-    return None
+    return __get_precalculated_unifrac_file_if_exists(h)
 
 def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_filter, mat):
     DEBUG("Saving calculated Unifrac distance matrix to file...")
-    with open(UNIFRAC_HASH_FILE,'wb+') as fn:
-        h = __calculate_hash_for_data(data, sample_filter, otu_filter)
-        fn.write(str(h))
-    with open(UNIFRAC_DIST_FILE, 'wb+') as fn:
+    h = __calculate_hash_for_data(data, sample_filter, otu_filter)
+    with open(UNIFRAC_DIST_FILE.format(h), 'wb+') as fn:
         import pickle
         pickle.dump(mat, fn)
 
@@ -226,7 +213,7 @@ def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_fil
 def get_data(use_real_data):
     if use_real_data:
         INFO("Using real data")
-        data, otus, samples = test_data.get_sample_biom_table()
+        data, otus, samples, table = test_data.get_sample_biom_table()
         tree = test_data.get_gg_97_otu_tree()
     else:
         INFO("Using synthetic data")
@@ -234,7 +221,8 @@ def get_data(use_real_data):
         otus = test_data.get_default_otus()
         tree = test_data.get_default_tree(otus)
         data = test_data.get_default_data(otus, samples)
-    return samples, otus, tree, data
+        table = None
+    return samples, otus, tree, data, table
 
 def get_output_filename_by_type(mat_type):
     if mat_type == 'col':

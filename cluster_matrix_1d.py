@@ -75,6 +75,8 @@ def __spc_parse_temperature_results():
         if (n_clusters == int(lines[0].split()[NUM_CLUSTERS_IND]) or
             n_clusters == int(lines[-1].split()[NUM_CLUSTERS_IND])):
             continue # assuming that temperature range exceeds dynamic range - it's either frozen or dissolved
+        else:
+            break
     for line in lines:
         if int(line.split()[NUM_CLUSTERS_IND]) == n_clusters:
             break
