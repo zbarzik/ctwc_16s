@@ -91,7 +91,6 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
         pickle.dump(mat, fn)
 
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
-
     DEBUG("Starting unifrac_distance_rows...")
     if sample_filter == None:
         sample_filter = []
@@ -172,9 +171,10 @@ def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
     for row in rows_filter:
         data[row, :] = 0
 
-    DEBUG("Log transform OTU abundance...")
-    data[data < SAMPLE_THRESHOLD] = 0.0
-    data = np.ma.log2(data)
+    if USE_LOG_XFORM:
+        DEBUG("Log transform OTU abundance...")
+        data[data < SAMPLE_THRESHOLD] = 0.0
+        data = np.ma.log2(data)
 
     DEBUG("Calculating correlation...")
     correlation = np.corrcoef(data)
