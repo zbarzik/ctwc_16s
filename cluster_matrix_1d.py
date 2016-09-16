@@ -99,7 +99,14 @@ def __spc_get_cluster_members_by_cluster_id(clusters, cluster_id):
             clust.append(i)
     return clust
 
+def __spc_clear_temporary_files():
+    from glob import glob
+    import os
+    map(os.remove, glob(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + '*'))
+
 def cluster_rows_spc(data, dist_matrix):
+    DEBUG("Clearing temporary files from previous runs...")
+    __spc_clear_temporary_files()
     DEBUG("Starting Super-Paramagnetic clustering...")
     n_data_points = __spc_prepare_dat_file(dist_matrix)
     __spc__prepare_run_file(n_data_points)
