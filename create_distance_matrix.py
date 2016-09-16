@@ -30,6 +30,8 @@ def __unifrac_prepare_entry_for_dictionary(args):
         else:
             if USE_LOG_XFORM:
                 samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
+            else:
+                samp_dict[samp] = data[samp_ind, otu_ind]
     return {otu:samp_dict}
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
@@ -75,7 +77,7 @@ def __get_precalculated_unifrac_file_if_exists(h):
     return None
 
 def __calculate_hash_for_data(data, sample_filter, otu_filter):
-    return hash(hash(data.tostring()) + hash(str(sample_filter)) + hash(str(otu_filter))) # eh close enough
+    return hash(str([ hash(data.tostring()), hash(str(sample_filter)), hash(str(otu_filter)) ]) ) # eh close enough
 
 def __get_precalculated_unifrac_file_if_exists_for_data(data, sample_filter, otu_filter):
     h = __calculate_hash_for_data(data, sample_filter, otu_filter)

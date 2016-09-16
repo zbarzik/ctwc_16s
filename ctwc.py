@@ -91,6 +91,14 @@ def ctwc_select(data, tree, samples, otus, table):
     picked_indices_2, last_rank_2, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_2, samples)
     selected_cols_filter_2, compliment_cols_filter_2 = prepare_sample_filters_from_indices(picked_indices_2, samples)
 
+    if table is not None:
+        picked_samples_2 = test_data.get_samples_by_indices(picked_indices_2, table)
+        DEBUG(picked_samples_2)
+        dates = test_data.get_collection_dates_for_samples(picked_samples_2)
+        INFO("Collection dates for selected samples:")
+        for row in dates:
+            INFO(row)
+
     output = { "Iteration 1"   : (otus, selected_cols_filter_1),
                "Iteration 1.1" : (selected_rows_filter_1_1, selected_cols_filter_1),
                "Iteration 1.2" : (selected_rows_filter_1_2, compliment_cols_filter_1),
