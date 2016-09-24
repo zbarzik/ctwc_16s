@@ -135,7 +135,7 @@ def get_sample_colletion_date(sample):
                     if item == "collection_timestamp":
                         timestamp_index = index
                         break
-            else:
+            elif sample in row:
                 ts = row[timestamp_index].strip()
                 return ts
     return None

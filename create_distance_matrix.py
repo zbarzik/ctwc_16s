@@ -90,6 +90,12 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
         import pickle
         pickle.dump(mat, fn)
 
+def __increase_distance_for_filtered_samples(mat, filt):
+    mat[ filt ] = float('Inf')
+    mat[ : , filt ] = float('Inf')
+    mat[mat == 0] = float('Inf')
+    return mat
+
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
     DEBUG("Starting unifrac_distance_rows...")
     if sample_filter is None:
@@ -132,8 +138,14 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
     DEBUG("Unifrac results: {0}".format(unifrac))
     DEBUG("Reordering results...")
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
+
+    DEBUG("Setting distances for filtered items to large values...")
+    filter_indices = [ ind for ind, samp in enumerate(samples) if samp in sample_filter ]
+    mat = __increase_distance_for_filtered_samples(mat, filter_indices)
+
     DEBUG("Fixing NaN/inf values...")
     mat = np.nan_to_num(mat)
+
     if SQUARE_UNIFRAC_DISTANCE:
         mat = np.multiply(mat, mat)
 
@@ -241,9 +253,9 @@ def get_output_filename_by_type(mat_type):
 def generate_spc_output_files(dist_mat, output_filename):
     with open(output_filename, 'w+') as fn:
         for r, _ in enumerate(dist_mat):
-            for c in range(r):
+            for c, _ in enumerate(dist_mat):
                 fn.write("{0} {1} {2}\n".format(r, c, dist_mat[r][c]))
-    return r
+    return r+1
 
 def test():
     samples, otus, tree, data, table = get_data(REAL_DATA)

@@ -69,6 +69,21 @@ def ctwc_select(data, tree, samples, otus, table):
         for row in dates:
             INFO(row)
 
+    INFO("Iteration 4: Re-picking samples after filtering out the cluster picked in Iteration 1...")
+    _, cols_dist_4 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+                                                                  sample_filter=compliment_cols_filter_1,
+                                                                  skip_rows=True)
+    picked_indices_4, last_rank_4, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_4, samples)
+    selected_cols_filter_4, compliment_cols_filter_4 = prepare_sample_filters_from_indices(picked_indices_4, samples)
+
+    if table is not None:
+        picked_samples_4 = test_data.get_samples_by_indices(picked_indices_4, table)
+        DEBUG(picked_samples_4)
+        dates = test_data.get_collection_dates_for_samples(picked_samples_4)
+        INFO("Collection dates for selected samples:")
+        for row in dates:
+            INFO(row)
+
     INFO("Iteration 1.1: Picking OTUs from selected samples...")
     rows_dist_1_1, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                     sample_filter=selected_cols_filter_1,
@@ -126,20 +141,7 @@ def ctwc_select(data, tree, samples, otus, table):
         for row in dates:
             INFO(row)
 
-    INFO("Iteration 4: Re-picking samples after filtering out the cluster picked in Iteration 1...")
-    _, cols_dist_4 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                  sample_filter=compliment_cols_filter_1,
-                                                                  skip_rows=True)
-    picked_indices_4, last_rank_4, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_4, samples)
-    selected_cols_filter_4, compliment_cols_filter_4 = prepare_sample_filters_from_indices(picked_indices_4, samples)
 
-    if table is not None:
-        picked_samples_4 = test_data.get_samples_by_indices(picked_indices_4, table)
-        DEBUG(picked_samples_4)
-        dates = test_data.get_collection_dates_for_samples(picked_samples_4)
-        INFO("Collection dates for selected samples:")
-        for row in dates:
-            INFO(row)
 
     output = { "Iteration 1"   : (otus, picked_indices_1),
                "Iteration 1.1" : (picked_indices_1_1, picked_indices_1),
