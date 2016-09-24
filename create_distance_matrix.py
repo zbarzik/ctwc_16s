@@ -12,9 +12,9 @@ REAL_DATA = True
 SAMPLE_THRESHOLD = 2
 USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
-NUM_THREADS = 16
-GENERATE_FILE_COLS = True
-GENERATE_FILE_ROWS = True
+NUM_THREADS = 32
+GENERATE_FILE_COLS = False
+GENERATE_FILE_ROWS = False
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
 UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pkl'
@@ -92,9 +92,9 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
 
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
     DEBUG("Starting unifrac_distance_rows...")
-    if sample_filter == None:
+    if sample_filter is None:
         sample_filter = []
-    if otu_filter == None:
+    if otu_filter is None:
         otu_filter = []
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -156,7 +156,9 @@ def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
     try:
         if samples is not list:
             samples = samples.tolist()
-        cols_filter = [ samples.index(samp) for samp in ( sample_filter if sample_filter else [] ) ]
+        if sample_filter is None:
+            sample_filter = []
+        cols_filter = [ samples.index(samp) for samp in sample_filter ]
     except ValueError as e:
         FATAL("Trying to filter out non-existing samples: {0}".format(str(e)))
     for col in cols_filter:
@@ -165,7 +167,9 @@ def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
     try:
         if otus is not list:
             otus = otus.tolist()
-        rows_filter = [ otus.index(otu) for otu in ( otu_filter if otu_filter else [] ) ]
+        if otu_filter is None:
+            otu_filter = []
+        rows_filter = [ otus.index(otu) for otu in otu_filter ]
     except ValueError as e:
         FATAL("Trying to filter out non-existing OTUs: {0}".format(str(e)))
     for row in rows_filter:
@@ -242,14 +246,16 @@ def generate_spc_output_files(dist_mat, output_filename):
     return r
 
 def test():
-    samples, otus, tree, data = get_data(REAL_DATA)
+    samples, otus, tree, data, table = get_data(REAL_DATA)
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
     if GENERATE_FILE_COLS:
         generate_spc_output_files(cols_dist, get_output_filename_by_type('col'))
     if GENERATE_FILE_ROWS:
         generate_spc_output_files(rows_dist, get_output_filename_by_type('row'))
-
+    otu_filter = otus
+    sample_filter = samples
+    rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus, otu_filter=otu_filter, sample_filter=sample_filter)
 
 if __name__ == '__main__':
     test()
