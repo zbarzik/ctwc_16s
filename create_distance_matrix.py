@@ -91,9 +91,11 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
         pickle.dump(mat, fn)
 
 def __increase_distance_for_filtered_samples(mat, filt):
-    mat[ filt ] = float('Inf')
-    mat[ : , filt ] = float('Inf')
-    mat[mat == 0] = float('Inf')
+    D = 100 # float('Inf')
+    mat[ filt ] = D
+    mat[ : , filt ] = D
+    mat[mat == 0] = D
+    np.fill_diagonal(mat, 0.0)
     return mat
 
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
@@ -250,21 +252,21 @@ def get_output_filename_by_type(mat_type):
     else:
         FATAL('Unknown matrix type')
 
-def generate_spc_output_files(dist_mat, output_filename):
+def generate_spc_input_files(dist_mat, output_filename):
     with open(output_filename, 'w+') as fn:
-        for r, _ in enumerate(dist_mat):
-            for c, _ in enumerate(dist_mat):
+        for r in range(dist_mat.shape[0]):
+            for c in range(dist_mat.shape[1]):
                 fn.write("{0} {1} {2}\n".format(r, c, dist_mat[r][c]))
-    return r+1
+    return dist_mat.shape[0]
 
 def test():
     samples, otus, tree, data, table = get_data(REAL_DATA)
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
     if GENERATE_FILE_COLS:
-        generate_spc_output_files(cols_dist, get_output_filename_by_type('col'))
+        generate_spc_input_files(cols_dist, get_output_filename_by_type('col'))
     if GENERATE_FILE_ROWS:
-        generate_spc_output_files(rows_dist, get_output_filename_by_type('row'))
+        generate_spc_input_files(rows_dist, get_output_filename_by_type('row'))
     otu_filter = otus
     sample_filter = samples
     rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus, otu_filter=otu_filter, sample_filter=sample_filter)

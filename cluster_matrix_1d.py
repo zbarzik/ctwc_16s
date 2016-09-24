@@ -28,40 +28,76 @@ NumberOfPoints: {0}
 DataFile: {1}.dat
 Dimentions: 0
 MinTemp:         0.10
-MaxTemp:         1.0
+MaxTemp:         1.00
 TempStep:        0.01
 OutFile:          {1}.out
 SWCycles:        2000
-KNearestNeighbours:    11
+KNearestNeighbours:   11
 MSTree|
 DirectedGrowth|
 SaveSuscept|
 WriteLables|
 WriteCorFile~
 DataIsMatrix: 1""".format(n_data_points, SPC_TMP_FILES_PREFIX)
-    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".run", "w+") as run_fn:
-        run_fn.write(run_file)
+    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".run", "w+") as run_f:
+        run_f.write(run_file)
 
 def __spc_prepare_dat_file(dist_matrix):
-    n_data_points = create_distance_matrix.generate_spc_output_files(dist_matrix, SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat")
+    n_data_points = create_distance_matrix.generate_spc_input_files(dist_matrix, SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat")
     return n_data_points
+
+def __spc_prepare_edge_file(n):
+    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
+        for r in range(n):
+            for c in range(n):
+                edge_f.write("{0} {1}\n".format(r + 1, c + 1))
 
 def __spc_run_and_wait_for_completion():
     from subprocess import call
     args = [SPC_BINARY_EXE, SPC_TMP_FILES_PREFIX + ".run"]
     call(args, cwd=SPC_BINARY_PATH)
 
-def __spc_parse_temperature_results():
+def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_threshold=float('Inf')):
     import collections
-
-    NUM_CLUSTERS_IND = 3
-    TEMP_IND = 1
-    lines = []
-    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".out.dg_01", "r") as out_dg_fn:
-        lines = out_dg_fn.readlines()
-    DEBUG("SPC output:")
+    LARGEST_CLUSTER_IND = 4
+    largest_cluster_sizes = []
     for line in lines:
-        DEBUG(line)
+        largest_cluster_sizes.append(int(line.split()[LARGEST_CLUSTER_IND]))
+    counter=collections.Counter(largest_cluster_sizes)
+    candidates = counter.most_common(10)
+    # most common might be completely frozen or completely dissolved.
+    # 3 cases should include one sequence from the middle as well.
+    candidate = candidates[0]
+    found = False
+    for candidate in candidates:
+        largest_cluster, score = candidate
+        if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
+            largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND]) or
+            largest_cluster < lower_threshold or
+            largest_cluster > upper_threshold or
+            score < 3):
+            continue # assuming that temperature range exceeds dynamic range - it's either frozen or dissolved
+        found = True
+        break
+
+    if not found: # we didn't find anything that matches the thresholds, return something good enough
+        candidates = counter.most_common()
+        candidate = candidates[0]
+        for candidate in candidates:
+            largest_cluster, score = candidate
+            if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
+                largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND])):
+                continue
+            break
+
+    for line in lines:
+        if int(line.split()[LARGEST_CLUSTER_IND]) == largest_cluster:
+            break
+    return line
+
+def __pick_line_by_num_clusters(lines):
+    import collections
+    NUM_CLUSTERS_IND = 3
     num_clusters = []
     for line in lines:
         num_clusters.append(int(line.split()[NUM_CLUSTERS_IND]))
@@ -75,14 +111,26 @@ def __spc_parse_temperature_results():
         if (n_clusters == int(lines[0].split()[NUM_CLUSTERS_IND]) or
             n_clusters == int(lines[-1].split()[NUM_CLUSTERS_IND])):
             continue # assuming that temperature range exceeds dynamic range - it's either frozen or dissolved
-        else:
-            break
+        break
     for line in lines:
         if int(line.split()[NUM_CLUSTERS_IND]) == n_clusters:
             break
+    return line
+
+def __spc_parse_temperature_results(data_points):
+    TEMP_IND = 1
+    lines = []
+    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".out.dg_01", "r") as out_dg_fn:
+        lines = out_dg_fn.readlines()
+    DEBUG("SPC output:")
+    for line in lines:
+        DEBUG(line)
+
+    #line = __pick_line_by_num_clusters(lines)
+    line = __pick_line_by_most_stable_largest_cluster(lines, 30.0, data_points)
     temperature = float(line.split()[TEMP_IND])
 
-    INFO("Most stable temperature: {0}. Number of clusters: {1}. Score: {2}".format(temperature, n_clusters, score))
+    INFO("Most stable temperature: {0}".format(temperature))
     return temperature
 
 def __spc_get_clusters_by_temperature(t):
@@ -111,9 +159,10 @@ def cluster_rows_spc(data, dist_matrix):
     __spc_clear_temporary_files()
     DEBUG("Starting Super-Paramagnetic clustering...")
     n_data_points = __spc_prepare_dat_file(dist_matrix)
+    __spc_prepare_edge_file(n_data_points)
     __spc__prepare_run_file(n_data_points)
     __spc_run_and_wait_for_completion()
-    t = __spc_parse_temperature_results()
+    t = __spc_parse_temperature_results(n_data_points)
     clusters = __spc_get_clusters_by_temperature(t)
     top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, 0)
     DEBUG("Top cluster: {0}".format(top_cluster))
