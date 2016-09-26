@@ -22,19 +22,19 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 [ 0.1, 0.9, 0.1, 0.9, 0.0 ]
                                 ])
 
-def __spc__prepare_run_file(n_data_points):
+
+def __spc_prepare_run_file(n_data_points):
     run_file = """
 NumberOfPoints: {0}
 NumberOfEdges: {2}
 DataFile: {1}.dat
-EdgeFile: {1}.edge
-MinTemp: 0.1
-MaxTemp: 1.0
+MinTemp: 0.00
+MaxTemp: 1.00
 TempStep: 0.01
 OutFile: {1}.out
 SWCycles: 2000
 KNearestNeighbours: 11
-DataIsMatrix: 1
+Dimension: 0
 NearestNeighbours|
 DirectedGrowth|
 SaveSuscept|
@@ -45,9 +45,19 @@ WriteCorFile|
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".run", "w+") as run_f:
         run_f.write(run_file)
 
-def __spc_prepare_dat_file(dist_matrix):
-    n_data_points = create_distance_matrix.generate_spc_input_files(dist_matrix, SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat")
-    return n_data_points
+def __spc_prepare_dat_file(dist_mat, output_filename):
+    with open(output_filename, 'w+') as fn:
+        for r in range(dist_mat.shape[0]):
+            for c in range(dist_mat.shape[1]):
+                fn.write("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
+    return dist_mat.shape[0]
+
+def __spc_prepare_dat_file(dist_mat):
+    with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat", 'w+') as fn:
+        for r in range(dist_mat.shape[0]):
+            for c in range(dist_mat.shape[1]):
+                fn.write("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
+    return dist_mat.shape[0]
 
 def __spc_prepare_edge_file(n):
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
@@ -163,7 +173,7 @@ def cluster_rows_spc(data, dist_matrix):
     DEBUG("Starting Super-Paramagnetic clustering...")
     n_data_points = __spc_prepare_dat_file(dist_matrix)
     __spc_prepare_edge_file(n_data_points)
-    __spc__prepare_run_file(n_data_points)
+    __spc_prepare_run_file(n_data_points)
     __spc_run_and_wait_for_completion()
     t = __spc_parse_temperature_results(n_data_points)
     clusters = __spc_get_clusters_by_temperature(t)
@@ -225,7 +235,7 @@ def test_dbscan_clustering(data, dist_matrix):
     _, labels, ag = cluster_rows_dbscan(None, dist_matrix)
 
 def test_spc_clustering():
-    SIZE = 50
+    SIZE = 100
     z = np.zeros((SIZE, SIZE))
     for i in range(0, SIZE):
         for j in range(0, SIZE):

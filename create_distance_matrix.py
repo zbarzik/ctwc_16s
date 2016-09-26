@@ -13,8 +13,6 @@ SAMPLE_THRESHOLD = 2
 USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
 NUM_THREADS = 32
-GENERATE_FILE_COLS = False
-GENERATE_FILE_ROWS = False
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
 UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pkl'
@@ -252,21 +250,10 @@ def get_output_filename_by_type(mat_type):
     else:
         FATAL('Unknown matrix type')
 
-def generate_spc_input_files(dist_mat, output_filename):
-    with open(output_filename, 'w+') as fn:
-        for r in range(dist_mat.shape[0]):
-            for c in range(dist_mat.shape[1]):
-                fn.write("{0} {1} {2}\n".format(r, c, dist_mat[r][c]))
-    return dist_mat.shape[0]
-
 def test():
     samples, otus, tree, data, table = get_data(REAL_DATA)
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
-    if GENERATE_FILE_COLS:
-        generate_spc_input_files(cols_dist, get_output_filename_by_type('col'))
-    if GENERATE_FILE_ROWS:
-        generate_spc_input_files(rows_dist, get_output_filename_by_type('row'))
     otu_filter = otus
     sample_filter = samples
     rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus, otu_filter=otu_filter, sample_filter=sample_filter)
