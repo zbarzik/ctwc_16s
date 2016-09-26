@@ -25,20 +25,23 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
 def __spc__prepare_run_file(n_data_points):
     run_file = """
 NumberOfPoints: {0}
+NumberOfEdges: {2}
 DataFile: {1}.dat
-Dimentions: 0
-MinTemp:         0.10
-MaxTemp:         1.00
-TempStep:        0.01
-OutFile:          {1}.out
-SWCycles:        2000
-KNearestNeighbours:   11
-MSTree|
+EdgeFile: {1}.edge
+MinTemp: 0.1
+MaxTemp: 1.0
+TempStep: 0.01
+OutFile: {1}.out
+SWCycles: 2000
+KNearestNeighbours: 11
+DataIsMatrix: 1
+NearestNeighbours|
 DirectedGrowth|
 SaveSuscept|
 WriteLables|
-WriteCorFile~
-DataIsMatrix: 1""".format(n_data_points, SPC_TMP_FILES_PREFIX)
+WriteCorFile|
+""".format(n_data_points, SPC_TMP_FILES_PREFIX, n_data_points**2/2)
+    INFO(run_file)
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".run", "w+") as run_f:
         run_f.write(run_file)
 
@@ -48,9 +51,9 @@ def __spc_prepare_dat_file(dist_matrix):
 
 def __spc_prepare_edge_file(n):
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
-        for r in range(n):
-            for c in range(n):
-                edge_f.write("{0} {1}\n".format(r + 1, c + 1))
+        for r in range(1, n):
+            for c in range(1, r):
+                edge_f.write("{0} {1}\n".format(r, c))
 
 def __spc_run_and_wait_for_completion():
     from subprocess import call
@@ -221,7 +224,22 @@ def test_agglomerative_clustering():
 def test_dbscan_clustering(data, dist_matrix):
     _, labels, ag = cluster_rows_dbscan(None, dist_matrix)
 
+def test_spc_clustering():
+    SIZE = 50
+    z = np.zeros((SIZE, SIZE))
+    for i in range(0, SIZE):
+        for j in range(0, SIZE):
+            z[i][j] = 0.1 if (i+j) % 2 == 0 else 0.8
+            if i == j:
+                z[i][j] = 0.0
+    INFO(z)
+    _, top_cluster, _ = cluster_rows_spc(None, z)
+    INFO(top_cluster)
+
 def test():
+    test_spc_clustering()
+    return
+
     #test_agglomerative_clustering()
 
     data, otus, samples = test_data.get_sample_biom_table()
