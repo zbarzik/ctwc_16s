@@ -28,9 +28,9 @@ def __spc_prepare_run_file(n_data_points):
 NumberOfPoints: {0}
 NumberOfEdges: {2}
 DataFile: {1}.dat
-MinTemp: 0.00
-MaxTemp: 1.00
-TempStep: 0.01
+MinTemp: 0.0
+MaxTemp: 0.3
+TempStep: 0.001
 OutFile: {1}.out
 SWCycles: 2000
 KNearestNeighbours: 11
