@@ -222,7 +222,7 @@ def __jaccard_distance(data):
     row_sums = intersect_mat.diagonal()
     union_mat = row_sums[:,None] + row_sums - intersect_mat
     jaccard_mat = np.divide(intersect_mat, union_mat)
-    jaccard_mat[np.isnan(jaccard_mat)] = 1 # by definition
+    jaccard_mat[np.isnan(jaccard_mat)] = 0 # it's 1 by definition but we want to ignore zero vectors
     DEBUG("Calculating Jaccard dissimilarity...")
     res = dissimilarity_from_correlation(jaccard_mat)
     return res
