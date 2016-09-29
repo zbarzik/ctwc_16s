@@ -162,7 +162,13 @@ def dissimilarity_from_correlation(correlation):
     return np.nan_to_num(dis)
 
 def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
-    DEBUG("Starting pearson_distance_rows...")
+    return __calculate_distance_rows(data, samples, otus, sample_filter, otu_filter, 'pearson')
+
+def jaccard_distance_rows(data, samples, otus, sample_filter, otu_filter):
+    return __calculate_distance_rows(data, samples, otus, sample_filter, otu_filter, 'jaccard')
+
+def __calculate_distance_rows(data, samples, otus, sample_filter, otu_filter, metric):
+    DEBUG("Starting distance calculation using {0} as a metric...".format(metric))
     data = np.copy(data)
     DEBUG("Filtering Samples...")
     try:
@@ -191,13 +197,38 @@ def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
         DEBUG("Log transform OTU abundance...")
         data[data < SAMPLE_THRESHOLD] = 0.0
         data = np.ma.log2(data)
+    if metric == 'pearson':
+        res = __pearson_distance(data)
+    elif metric == 'jaccard':
+        res = __jaccard_distance(data)
+    else:
+        FATAL("Unknown metric requested: {0}".format(metric))
 
-    DEBUG("Calculating correlation...")
-    correlation = np.corrcoef(data)
-    DEBUG("Calculating dissimilarity...")
-    res = dissimilarity_from_correlation(correlation)
     DEBUG("Finished calculating OTU distance matrix.")
     return res
+
+def __pearson_distance(data):
+    DEBUG("Calculating Pearson correlation...")
+    correlation = np.corrcoef(data)
+    DEBUG("Calculating Pearson dissimilarity...")
+    res = dissimilarity_from_correlation(correlation)
+    return res
+
+def __jaccard_distance(data):
+    DEBUG("Calculating Jaccard Index...")
+    bin_mat = np.zeros(data.shape)
+    bin_mat[data > 0] = 1
+    intersect_mat = np.dot(bin_mat, bin_mat.transpose()) # every cell is the number of common values, Jaccard nominator
+    row_sums = intersect_mat.diagonal()
+    union_mat = row_sums[:,None] + row_sums - intersect_mat
+    jaccard_mat = np.divide(intersect_mat, union_mat)
+    jaccard_mat[np.isnan(jaccard_mat)] = 1 # by definition
+    DEBUG("Calculating Jaccard dissimilarity...")
+    res = dissimilarity_from_correlation(jaccard_mat)
+    return res
+
+def jaccard_distance_cols(data, samples, otus, sample_filter, otu_filter):
+    return jaccard_distance_rows(data.transpose(), samples, otus, sample_filter, otu_filter)
 
 def pearson_distance_cols(data, samples, otus, sample_filter, otu_filter):
     return pearson_distance_rows(data.transpose(), samples, otus, sample_filter, otu_filter)
@@ -225,7 +256,7 @@ def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_fil
     if not skip_cols:
         cols_dist = unifrac_distance_cols(data=data, samples_arg=samples, otus_arg=otus, tree_arg=tree, sample_filter=sample_filter, otu_filter=otu_filter)
     if not skip_rows:
-        rows_dist = pearson_distance_rows(data, samples, otus, sample_filter, otu_filter)
+        rows_dist = jaccard_distance_rows(data, samples, otus, sample_filter, otu_filter)
     return rows_dist, cols_dist
 
 def get_data(use_real_data):
