@@ -141,7 +141,7 @@ def ctwc_select(data, tree, samples, otus, table):
         for row in dates:
             INFO(row)
 
-    INFO("Iteration 5: Picking OTUs from full dataset based on correlation...")
+    INFO("Iteration 5: Picking OTUs from full dataset...")
     rows_dist_5, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_cols=True)
     picked_indices_5, last_rank_5, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_5, otus)
     selected_rows_filter_5, compliment_rows_filter_5 = prepare_otu_filters_from_indices(picked_indices_5, otus)

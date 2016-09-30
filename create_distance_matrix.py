@@ -159,15 +159,17 @@ def unifrac_distance_cols(data, samples_arg=None, otus_arg=None, tree_arg=None, 
 def dissimilarity_from_correlation(correlation):
     ones = np.ones(correlation.shape)
     dis = ones - abs(correlation)
-    return np.nan_to_num(dis)
+    dis = np.nan_to_num(dis)
+    np.fill_diagonal(dis, 0.0)
+    return dis
 
 def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
-    return __calculate_distance_rows(data, samples, otus, sample_filter, otu_filter, 'pearson')
+    return __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter, 'pearson')
 
 def jaccard_distance_rows(data, samples, otus, sample_filter, otu_filter):
-    return __calculate_distance_rows(data, samples, otus, sample_filter, otu_filter, 'jaccard')
+    return __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter, 'jaccard')
 
-def __calculate_distance_rows(data, samples, otus, sample_filter, otu_filter, metric):
+def __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter, metric):
     DEBUG("Starting distance calculation using {0} as a metric...".format(metric))
     data = np.copy(data)
     DEBUG("Filtering Samples...")
