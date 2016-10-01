@@ -93,9 +93,10 @@ def ctwc_select(data, tree, samples, otus, table):
 
     if table is not None:
         picked_otus_1_1 = test_data.get_otus_by_indices(picked_indices_1_1, table)
+        taxonomies = test_data.get_taxonomies_for_otus(picked_otus_1_1)
         INFO("Picked OTUs:")
-        for otu in picked_otus_1_1:
-            INFO(otu)
+        for taxonomy in taxonomies:
+            INFO(taxonomy)
 
     INFO("Iteration 1.2: Picking OTUs from selected samples compliment...")
     rows_dist_1_2, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
@@ -106,9 +107,10 @@ def ctwc_select(data, tree, samples, otus, table):
 
     if table is not None:
         picked_otus_1_2 = test_data.get_otus_by_indices(picked_indices_1_2, table)
+        taxonomies = test_data.get_taxonomies_for_otus(picked_otus_1_2)
         INFO("Picked OTUs:")
-        for otu in picked_otus_1_2:
-            INFO(otu)
+        for taxonomy in taxonomies:
+            INFO(taxonomy)
 
     INFO("Iteration 3: Re-picking samples based on the compliment for OTUs in step 1.1...")
     selected_rows_filter_1_1, compliment_rows_filter_1_1 = prepare_otu_filters_from_indices(picked_indices_1_1, otus)
@@ -148,9 +150,10 @@ def ctwc_select(data, tree, samples, otus, table):
 
     if table is not None:
         picked_otus_5 = test_data.get_otus_by_indices(picked_indices_5, table)
+        taxonomies = test_data.get_taxonomies_for_otus(picked_otus_5)
         INFO("Picked OTUs:")
-        for otu in picked_otus_5:
-            INFO(otu)
+        for taxonomy in taxonomies:
+            INFO(taxonomy)
 
     INFO("Iteration 5.1: Picking samples based on selected OTUs...")
     _, cols_dist_5_1 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,

@@ -140,6 +140,20 @@ def get_sample_colletion_date(sample):
                 return ts
     return None
 
+def get_taxonomies_for_otus(otus):
+    taxonomies = []
+    for otu in otus:
+        taxonomies.append(get_otu_taxonomy(otu))
+    return taxonomies
+
+def get_otu_taxonomy(otu):
+    with open('97_otu_taxonomy.txt', 'r') as tax_fn:
+        lines = tax_fn.readlines()
+    for line in lines:
+        if int(line.split()[0]) == int(otu):
+            return line
+
+
 def test():
     samples = get_default_samples()
     otus = get_default_otus()
