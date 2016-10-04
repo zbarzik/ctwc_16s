@@ -2,7 +2,7 @@
 from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 from multiprocessing import Pool
 import warnings
-import test_data
+import ctwc__data_handler
 
 import numpy as np
 import math
@@ -264,14 +264,14 @@ def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_fil
 def get_data(use_real_data):
     if use_real_data:
         INFO("Using real data")
-        data, otus, samples, table = test_data.get_sample_biom_table()
-        tree = test_data.get_gg_97_otu_tree()
+        data, otus, samples, table = ctwc__data_handler.get_sample_biom_table()
+        tree = ctwc__data_handler.get_gg_97_otu_tree()
     else:
         INFO("Using synthetic data")
-        samples = test_data.get_default_samples()
-        otus = test_data.get_default_otus()
-        tree = test_data.get_default_tree(otus)
-        data = test_data.get_default_data(otus, samples)
+        samples = ctwc__data_handler.get_default_samples()
+        otus = ctwc__data_handler.get_default_otus()
+        tree = ctwc__data_handler.get_default_tree(otus)
+        data = ctwc__data_handler.get_default_data(otus, samples)
         table = None
     return samples, otus, tree, data, table
 

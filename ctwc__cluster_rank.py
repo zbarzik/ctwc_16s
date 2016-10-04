@@ -6,9 +6,9 @@ import warnings
 import sys
 
 import math
-import create_distance_matrix
-import cluster_matrix_1d
-import test_data
+import ctwc__distnace_matrix
+import ctwc__cluster_1d
+import ctwc__data_handler
 
 RECURSION_LIMIT = 100000
 
@@ -190,7 +190,7 @@ def fix(array_like):
 
 def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
     DEBUG("Starting to cluster data...")
-    clust, labels, ag = cluster_matrix_1d.cluster_rows(data, rows_dist)
+    clust, labels, ag = ctwc__cluster_1d.cluster_rows(data, rows_dist)
     INFO("Clustered labels: {0}".format(labels))
     return _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names, debug)
 
@@ -233,13 +233,13 @@ def filter_cols_by_top_rank(data, cols_dist, samples=None, debug=False):
     return filter_rows_by_top_rank(data, cols_dist, samples, debug)
 
 def test():
-    data, otus, samples = test_data.get_sample_biom_table()
-    tree = test_data.get_gg_97_otu_tree()
-    _, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
+    data, otus, samples = ctwc__data_handler.get_sample_biom_table()
+    tree = ctwc__data_handler.get_gg_97_otu_tree()
+    _, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_cols_by_top_rank(data, cols_dist, otus, True)
 
     INFO("Picked {0} indices".format(len(picked_indices)))
-    clust, labels, ag = cluster_matrix_1d.cluster_rows(filtered_data.transpose(), cols_dist)
+    clust, labels, ag = ctwc__cluster_1d.cluster_rows(filtered_data.transpose(), cols_dist)
 
 if __name__ == "__main__":
     test()

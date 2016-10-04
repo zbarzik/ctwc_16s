@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AgglomerativeClustering
-import create_distance_matrix, test_data
+import ctwc__distnace_matrix, ctwc__data_handler
 
 
 # Constants
@@ -229,9 +229,9 @@ def plot_distnace_matrix(dist_mat):
 
 def test_agglomerative_clustering():
     _, labels, ag = cluster_rows_agglomerative(None, sample_dist_matrix, 2)
-    import rank_cluster
-    ranks_list = rank_cluster.get_ranks(ag)
-    rank_cluster.get_nth_top_cluster_base_node(ranks_list)
+    import ctwc__cluster_rank
+    ranks_list = ctwc__cluster_rank.get_ranks(ag)
+    ctwc__cluster_rank.get_nth_top_cluster_base_node(ranks_list)
 
 def test_dbscan_clustering(data, dist_matrix):
     _, labels, ag = cluster_rows_dbscan(None, dist_matrix)
@@ -254,7 +254,7 @@ def test():
 
     #test_agglomerative_clustering()
 
-    data, otus, samples = test_data.get_sample_biom_table()
+    data, otus, samples = ctwc__data_handler.get_sample_biom_table()
 
     #data = inject_row_pattern_to_data(data)
 
@@ -262,9 +262,9 @@ def test():
 
     INFO("Original data:\n{0}\n\n".format(data))
 
-    tree = test_data.get_gg_97_otu_tree()
+    tree = ctwc__data_handler.get_gg_97_otu_tree()
 
-    rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
+    rows_dist, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus)
 
     ASSERT(rows_dist.shape[0] == rows_dist.shape[1])
     ASSERT(cols_dist.shape[0] == cols_dist.shape[1])

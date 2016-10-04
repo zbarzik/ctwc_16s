@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
-import create_distance_matrix, rank_cluster, test_data
+import ctwc__distnace_matrix, ctwc__cluster_rank, ctwc__data_handler
 import numpy as np
 
 
@@ -18,7 +18,7 @@ def join_submatrices(mat_a, mat_b):
 
 def ctwc_bicluster_iteration(data, rows_dist, cols_dist):
     DEBUG("Now running on data size: {0}".format(data.shape))
-    picked_indices, last_rank, filtered_data, filtered_dist_matrix, filtered_data_compliment, filtered_dist_matrix_compliment = rank_cluster.filter_rows_by_top_rank(
+    picked_indices, last_rank, filtered_data, filtered_dist_matrix, filtered_data_compliment, filtered_dist_matrix_compliment = ctwc__cluster_rank.filter_rows_by_top_rank(
                                                                                                                                                      data, rows_dist)
     if len(filtered_data_compliment) == 0:
         DEBUG("Didn't filter out anything. last_rank = {0}".format(last_rank))
@@ -54,133 +54,133 @@ def prepare_sample_filters_from_indices(picked_indices, samples):
 
 def ctwc_select(data, tree, samples, otus, table):
     INFO("Iteration 1: Picking samples based on unifrac distance...")
-    _, cols_dist_1 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
-    picked_indices_1, last_rank_1, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_1, samples)
+    _, cols_dist_1 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
+    picked_indices_1, last_rank_1, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_1, samples)
     selected_cols_filter_1, compliment_cols_filter_1 = prepare_sample_filters_from_indices(picked_indices_1, samples)
 
     INFO("Selected {0} samples:".format(len(picked_indices_1)))
     DEBUG(picked_indices_1)
     if table is not None:
-        picked_samples_1 = test_data.get_samples_by_indices(picked_indices_1, table)
+        picked_samples_1 = ctwc__data_handler.get_samples_by_indices(picked_indices_1, table)
         DEBUG(picked_samples_1)
-        dates = test_data.get_collection_dates_for_samples(picked_samples_1)
+        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_1)
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
 
     INFO("Iteration 2: Re-picking samples after filtering out the cluster picked in Iteration 1...")
-    _, cols_dist_2 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+    _, cols_dist_2 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                   sample_filter=compliment_cols_filter_1,
                                                                   skip_rows=True)
-    picked_indices_2, last_rank_2, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_2, samples)
+    picked_indices_2, last_rank_2, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_2, samples)
     selected_cols_filter_2, compliment_cols_filter_2 = prepare_sample_filters_from_indices(picked_indices_2, samples)
 
     if table is not None:
         INFO("Selected {0} samples:".format(len(picked_indices_2)))
-        picked_samples_2 = test_data.get_samples_by_indices(picked_indices_2, table)
+        picked_samples_2 = ctwc__data_handler.get_samples_by_indices(picked_indices_2, table)
         DEBUG(picked_samples_2)
-        dates = test_data.get_collection_dates_for_samples(picked_samples_2)
+        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_2)
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
 
     INFO("Iteration 1.1: Picking OTUs from selected samples...")
-    rows_dist_1_1, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+    rows_dist_1_1, _ = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                     sample_filter=selected_cols_filter_1,
                                                                     skip_cols=True)
-    picked_indices_1_1, last_rank_1_1, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_1_1, otus)
+    picked_indices_1_1, last_rank_1_1, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data, rows_dist_1_1, otus)
     selected_rows_filter_1_1, compliment_rows_filter_1_1 = prepare_otu_filters_from_indices(picked_indices_1_1, otus)
 
     if table is not None:
-        picked_otus_1_1 = test_data.get_otus_by_indices(picked_indices_1_1, table)
-        taxonomies = test_data.get_taxonomies_for_otus(picked_otus_1_1)
+        picked_otus_1_1 = ctwc__data_handler.get_otus_by_indices(picked_indices_1_1, table)
+        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus_1_1)
         INFO("Picked OTUs:")
         for taxonomy in taxonomies:
             INFO(taxonomy)
 
     INFO("Iteration 1.2: Picking OTUs from selected samples compliment...")
-    rows_dist_1_2, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+    rows_dist_1_2, _ = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                     sample_filter=compliment_cols_filter_1,
                                                                     skip_cols=True)
-    picked_indices_1_2, last_rank_1_2, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_1_2, otus)
+    picked_indices_1_2, last_rank_1_2, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data, rows_dist_1_2, otus)
     selected_rows_filter_1_2, compliment_rows_filter_1_2 = prepare_otu_filters_from_indices(picked_indices_1_2, otus)
 
     if table is not None:
-        picked_otus_1_2 = test_data.get_otus_by_indices(picked_indices_1_2, table)
-        taxonomies = test_data.get_taxonomies_for_otus(picked_otus_1_2)
+        picked_otus_1_2 = ctwc__data_handler.get_otus_by_indices(picked_indices_1_2, table)
+        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus_1_2)
         INFO("Picked OTUs:")
         for taxonomy in taxonomies:
             INFO(taxonomy)
 
     INFO("Iteration 3: Re-picking samples based on the compliment for OTUs in step 1.1...")
     selected_rows_filter_1_1, compliment_rows_filter_1_1 = prepare_otu_filters_from_indices(picked_indices_1_1, otus)
-    _, cols_dist_3 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+    _, cols_dist_3 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                   otu_filter=compliment_rows_filter_1_1,
                                                                   skip_rows=True)
-    picked_indices_3, last_rank_3, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_3, samples)
+    picked_indices_3, last_rank_3, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_3, samples)
     selected_cols_filter_3, compliment_cols_filter_3 = prepare_sample_filters_from_indices(picked_indices_3, samples)
 
     if table is not None:
-        picked_samples_3 = test_data.get_samples_by_indices(picked_indices_3, table)
+        picked_samples_3 = ctwc__data_handler.get_samples_by_indices(picked_indices_3, table)
         DEBUG(picked_samples_3)
-        dates = test_data.get_collection_dates_for_samples(picked_samples_3)
+        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_3)
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
 
     INFO("Iteration 4: Re-picking samples based on the OTUs picked in step 1.1...")
-    _, cols_dist_4 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+    _, cols_dist_4 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                   otu_filter=selected_rows_filter_1_1,
                                                                   skip_rows=True)
-    picked_indices_4, last_rank_4, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_4, samples)
+    picked_indices_4, last_rank_4, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_4, samples)
     selected_cols_filter_4, compliment_cols_filter_4 = prepare_sample_filters_from_indices(picked_indices_4, samples)
 
     if table is not None:
-        picked_samples_4 = test_data.get_samples_by_indices(picked_indices_4, table)
+        picked_samples_4 = ctwc__data_handler.get_samples_by_indices(picked_indices_4, table)
         DEBUG(picked_samples_4)
-        dates = test_data.get_collection_dates_for_samples(picked_samples_4)
+        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_4)
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
 
     INFO("Iteration 5: Picking OTUs from full dataset...")
-    rows_dist_5, _ = create_distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_cols=True)
-    picked_indices_5, last_rank_5, _, _, _, _ = rank_cluster.filter_rows_by_top_rank(data, rows_dist_5, otus)
+    rows_dist_5, _ = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus, skip_cols=True)
+    picked_indices_5, last_rank_5, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data, rows_dist_5, otus)
     selected_rows_filter_5, compliment_rows_filter_5 = prepare_otu_filters_from_indices(picked_indices_5, otus)
 
     if table is not None:
-        picked_otus_5 = test_data.get_otus_by_indices(picked_indices_5, table)
-        taxonomies = test_data.get_taxonomies_for_otus(picked_otus_5)
+        picked_otus_5 = ctwc__data_handler.get_otus_by_indices(picked_indices_5, table)
+        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus_5)
         INFO("Picked OTUs:")
         for taxonomy in taxonomies:
             INFO(taxonomy)
 
     INFO("Iteration 5.1: Picking samples based on selected OTUs...")
-    _, cols_dist_5_1 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+    _, cols_dist_5_1 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                     otu_filter=selected_rows_filter_5,
                                                                     skip_rows=True)
-    picked_indices_5_1, last_rank_5_1, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_5_1, samples)
+    picked_indices_5_1, last_rank_5_1, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_5_1, samples)
     selected_cols_filter_5_1, compliment_cols_filter_5_1 = prepare_sample_filters_from_indices(picked_indices_5_1, samples)
 
     if table is not None:
-        picked_samples_5_1 = test_data.get_samples_by_indices(picked_indices_5_1, table)
+        picked_samples_5_1 = ctwc__data_handler.get_samples_by_indices(picked_indices_5_1, table)
         DEBUG(picked_samples_5_1)
-        dates = test_data.get_collection_dates_for_samples(picked_samples_5_1)
+        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_5_1)
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
 
     INFO("Iteration 5.2: Picking samples based on selected OTUs compliment...")
-    _, cols_dist_5_2 = create_distance_matrix.get_distance_matrices(data, tree, samples, otus,
+    _, cols_dist_5_2 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
                                                                     otu_filter=compliment_rows_filter_5,
                                                                     skip_rows=True)
-    picked_indices_5_2, last_rank_5_2, _, _, _, _ = rank_cluster.filter_cols_by_top_rank(data, cols_dist_5_2, samples)
+    picked_indices_5_2, last_rank_5_2, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_5_2, samples)
     selected_cols_filter_5_2, compliment_cols_filter_5_2 = prepare_sample_filters_from_indices(picked_indices_5_2, samples)
 
     if table is not None:
-        picked_samples_5_2 = test_data.get_samples_by_indices(picked_indices_5_2, table)
+        picked_samples_5_2 = ctwc__data_handler.get_samples_by_indices(picked_indices_5_2, table)
         DEBUG(picked_samples_5_2)
-        dates = test_data.get_collection_dates_for_samples(picked_samples_5_2)
+        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_5_2)
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
@@ -199,9 +199,9 @@ def ctwc_select(data, tree, samples, otus, table):
 
 def test():
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = create_distance_matrix.get_data(True)
+    samples, otus, tree, data, table = ctwc__distnace_matrix.get_data(True)
 
-    #rows_dist, cols_dist = create_distance_matrix.get_distance_matrices(data, tree, samples, otus)
+    #rows_dist, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus)
     #sorted_data = ctwc_bicluster(data, rows_dist, cols_dist)
 
     output = ctwc_select(data, tree, samples, otus, table)
