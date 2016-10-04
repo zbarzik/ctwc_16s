@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP
+from ctwc__common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP
 import warnings
 
 import numpy as np

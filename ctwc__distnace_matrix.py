@@ -1,8 +1,9 @@
 #!/usr/bin/python
-from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 from multiprocessing import Pool
 import warnings
 import ctwc__data_handler
+import ctwc__plot
 
 import numpy as np
 import math
@@ -223,7 +224,8 @@ def __jaccard_distance(data):
     intersect_mat = np.dot(bin_mat, bin_mat.transpose()) # every cell is the number of common values, Jaccard nominator
     row_sums = intersect_mat.diagonal()
     union_mat = row_sums[:,None] + row_sums - intersect_mat
-    jaccard_mat = np.divide(intersect_mat, union_mat)
+    with np.errstate(invalid='ignore'):
+        jaccard_mat = np.divide(intersect_mat, union_mat)
     jaccard_mat[np.isnan(jaccard_mat)] = 0 # it's 1 by definition but we want to ignore zero vectors
     DEBUG("Calculating Jaccard dissimilarity...")
     res = dissimilarity_from_correlation(jaccard_mat)
@@ -285,11 +287,18 @@ def get_output_filename_by_type(mat_type):
 
 def test():
     samples, otus, tree, data, table = get_data(REAL_DATA)
+    INFO("Calculating cols dist")
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
+    INFO("Plotting cols dist")
+    ctwc__plot.plot_mat(cols_dist, "Cols distance")
+    INFO("Calculating rows dist")
     rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
-    otu_filter = otus
-    sample_filter = samples
-    rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus, otu_filter=otu_filter, sample_filter=sample_filter)
+    INFO("Plotting rows dist")
+    ctwc__plot.plot_mat(rows_dist, "Rows distance")
+    ctwc__plot.show_plots()
+    #otu_filter = otus
+    #sample_filter = samples
+    #rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus, otu_filter=otu_filter, sample_filter=sample_filter)
 
 if __name__ == '__main__':
     test()

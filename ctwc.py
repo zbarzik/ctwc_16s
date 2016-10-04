@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
 import ctwc__distnace_matrix, ctwc__cluster_rank, ctwc__data_handler
 import numpy as np
