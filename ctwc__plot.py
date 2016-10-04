@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,B
+from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
 import matplotlib.pyplot as plt
 import numpy as np
