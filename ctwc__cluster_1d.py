@@ -77,7 +77,7 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
     for line in lines:
         largest_cluster_sizes.append(int(line.split()[LARGEST_CLUSTER_IND]))
     counter=collections.Counter(largest_cluster_sizes)
-    candidates = counter.most_common(10)
+    candidates = counter.most_common(50)
     # most common might be completely frozen or completely dissolved.
     # 3 cases should include one sequence from the middle as well.
     candidate = candidates[0]
@@ -141,7 +141,7 @@ def __spc_parse_temperature_results(data_points):
 
     #line = __pick_line_by_num_clusters(lines)
     lower_threshold = max(50.0, data_points / 200.0) # 0.5% or 50
-    upper_threshold = min(1000.0, data_points / 4.0) # 25% or 1000
+    upper_threshold = min(1000.0, data_points / 3.0) # 33% or 1000
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
 

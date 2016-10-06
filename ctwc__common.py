@@ -5,7 +5,7 @@ import logging, pdb
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
 
-LOG_FILE = "ctwc_logger.log"
+LOG_FILE = "ctwc__logger.log"
 logger = None
 MAX_PRINT_SIZE = 5000
 

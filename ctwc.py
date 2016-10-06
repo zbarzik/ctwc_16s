@@ -52,7 +52,142 @@ def prepare_sample_filters_from_indices(picked_indices, samples):
     compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
     return selected_cols_filter, compliment_cols_filter
 
+def run_iteration(title, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
+    if is_rows:
+        return run_iteration__rows(title, data, tree, samples, otus, rows_filter, cols_filter, table)
+    else:
+        return run_iteration__cols(title, data, tree, samples, otus, rows_filter, cols_filter, table)
+
+def run_iteration__rows(title, data, tree, samples, otus, rows_filter, cols_filter, table):
+    INFO(title)
+    rows_dist, _ = ctwc__distnace_matrix.get_distance_matrices(data,
+                                                               tree,
+                                                               samples,
+                                                               otus,
+                                                               sample_filter=cols_filter,
+                                                               otu_filter=rows_filter,
+                                                               skip_cols=True)
+
+    picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data,
+                                                                                       rows_dist,
+                                                                                       otus)
+
+    selected_rows_filter, compliment_rows_filter = prepare_otu_filters_from_indices(picked_indices, otus)
+
+    if table is not None:
+        picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
+        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus)
+        INFO("Picked OTUs:")
+        for taxonomy in taxonomies:
+            INFO(taxonomy)
+
+    num_otus = len(picked_indices)
+    num_samples = len(samples) - len(cols_filter)
+
+    return (num_otus, num_samples), selected_rows_filter, compliment_rows_filter
+
+def run_iteration__cols(title, data, tree, samples, otus, rows_filter, cols_filter, table):
+    INFO(title)
+    _, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data,
+                                                               tree,
+                                                               samples,
+                                                               otus,
+                                                               otu_filter=rows_filter,
+                                                               sample_filter=cols_filter,
+                                                               skip_rows=True)
+
+    picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data,
+                                                                                       cols_dist,
+                                                                                       samples)
+
+    selected_cols_filter, compliment_cols_filter = prepare_sample_filters_from_indices(picked_indices, samples)
+
+    INFO("Selected {0} samples:".format(len(picked_indices)))
+    DEBUG(picked_indices)
+    if table is not None:
+        picked_samples = ctwc__data_handler.get_samples_by_indices(picked_indices, table)
+        DEBUG(picked_samples)
+        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples)
+        INFO("Collection dates for selected samples:")
+        for row in dates:
+            INFO(row)
+
+    num_otus = len(otus) - len(rows_filter)
+    num_samples = len(picked_indices)
+
+    return (num_otus, num_samples), selected_cols_filter, compliment_cols_filter
+
 def ctwc_select(data, tree, samples, otus, table):
+    iteration_results = dict()
+    result, samp_filter, samp_compliment = run_iteration("Iteration 1: Pick samples from full dataset...",
+                                                         data,
+                                                         tree,
+                                                         samples,
+                                                         otus,
+                                                         [],
+                                                         [],
+                                                         table,
+                                                         False)
+    iteration_results["Iteration 1"] = result
+
+    result, otu_filter, otu_compliment = run_iteration("Iteration 1.1: Pick OTUs from selected samples...",
+                                                         data,
+                                                         tree,
+                                                         samples,
+                                                         otus,
+                                                         [],
+                                                         samp_filter,
+                                                         table,
+                                                         True)
+    iteration_results["Iteration 1.1"] = result
+
+    result, otu_filter, otu_compliment = run_iteration("Iteration 1.2: Pick OTUs from compliment of selected samples...",
+                                                         data,
+                                                         tree,
+                                                         samples,
+                                                         otus,
+                                                         [],
+                                                         samp_compliment,
+                                                         table,
+                                                         True)
+    iteration_results["Iteration 1.2"] = result
+
+    result, otu_filter, otu_compliment = run_iteration("Iteration 2: Pick OTUs from full dataset...",
+                                                         data,
+                                                         tree,
+                                                         samples,
+                                                         otus,
+                                                         [],
+                                                         [],
+                                                         table,
+                                                         True)
+    iteration_results["Iteration 2"] = result
+
+    result, samp_filter, samp_compliment = run_iteration("Iteration 2.1: Pick samples from selected OTUs...",
+                                                         data,
+                                                         tree,
+                                                         samples,
+                                                         otus,
+                                                         otu_filter,
+                                                         [],
+                                                         table,
+                                                         False)
+    iteration_results["Iteration 2.1"] = result
+
+    result, samp_filter, samp_compliment = run_iteration("Iteration 2.2: Pick samples from compliment of selected OTUs...",
+                                                         data,
+                                                         tree,
+                                                         samples,
+                                                         otus,
+                                                         otu_compliment,
+                                                         [],
+                                                         table,
+                                                         False)
+    iteration_results["Iteration 2.2"] = result
+
+    return iteration_results
+
+def __ctwc_select__obsolete(data, tree, samples, otus, table):
     INFO("Iteration 1: Picking samples based on unifrac distance...")
     _, cols_dist_1 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     picked_indices_1, last_rank_1, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_1, samples)
@@ -185,15 +320,15 @@ def ctwc_select(data, tree, samples, otus, table):
         for row in dates:
             INFO(row)
 
-    output = { "Iteration 1"   : (otus, picked_indices_1),
-               "Iteration 2"   : (otus, picked_indices_2),
-               "Iteration 1.1" : (picked_indices_1_1, picked_indices_1),
-               "Iteration 1.2" : (picked_indices_1_2, selected_cols_filter_1),
-               "Iteration 3"   : (picked_indices_1_1, picked_indices_3),
-               "Iteration 4"   : (compliment_rows_filter_1_1, picked_indices_4),
-               "Iteration 5"   : (picked_indices_5, samples),
-               "Iteration 5.1" : (picked_indices_5, picked_indices_5_1),
-               "Iteration 5.2" : (compliment_rows_filter_5, picked_indices_5_2),
+    output = { "Iteration 1"   : (len(otus), len(picked_indices_1)),
+               "Iteration 2"   : (len(otus), len(picked_indices_2)),
+               "Iteration 1.1" : (len(picked_indices_1_1), len(picked_indices_1)),
+               "Iteration 1.2" : (len(picked_indices_1_2), len(selected_cols_filter_1)),
+               "Iteration 3"   : (len(picked_indices_1_1), len(picked_indices_3)),
+               "Iteration 4"   : (len(compliment_rows_filter_1_1), len(picked_indices_4)),
+               "Iteration 5"   : (len(picked_indices_5), len(samples)),
+               "Iteration 5.1" : (len(picked_indices_5), len(picked_indices_5_1)),
+               "Iteration 5.2" : (len(compliment_rows_filter_5), len(picked_indices_5_2)),
                }
     return output
 
@@ -207,7 +342,7 @@ def test():
     output = ctwc_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
     for elem in output:
-        INFO("{0}: {1} X {2}".format(elem, len(output[elem][0]), len(output[elem][1])))
+        INFO("{0}: {1} X {2}".format(elem, output[elem][0], output[elem][1]))
 
 if __name__ == "__main__":
     test()
