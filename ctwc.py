@@ -1,46 +1,25 @@
 #!/usr/bin/python
 from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
-import ctwc__distnace_matrix, ctwc__cluster_rank, ctwc__data_handler
+import ctwc__distnace_matrix, ctwc__cluster_rank, ctwc__data_handler, ctwc__plot
 import numpy as np
 
-
-
-def join_submatrices(mat_a, mat_b):
-    if len(mat_b) == 0:
-        return mat_a
-    if len(mat_a) == 0:
-        return mat_b
-    axis = 1 if mat_a.shape[0] == mat_b.shape[0] else 0
+def _join_submatrices_by_axis(mat_a, mat_b, axis):
     ret = np.concatenate((mat_a, mat_b), axis)
     ASSERT(ret.shape[axis] == mat_a.shape[axis] + mat_b.shape[axis])
     return np.squeeze(ret)
 
-def ctwc_bicluster_iteration(data, rows_dist, cols_dist):
-    DEBUG("Now running on data size: {0}".format(data.shape))
-    picked_indices, last_rank, filtered_data, filtered_dist_matrix, filtered_data_compliment, filtered_dist_matrix_compliment = ctwc__cluster_rank.filter_rows_by_top_rank(
-                                                                                                                                                     data, rows_dist)
-    if len(filtered_data_compliment) == 0:
-        DEBUG("Didn't filter out anything. last_rank = {0}".format(last_rank))
-        return join_submatrices(filtered_data, filtered_data_compliment)
+def _join_submatrices_by_rows(mat_a, mat_b):
+    return _join_submatrices_by_axis(mat_a, mat_b, 0)
 
-    DEBUG("Last Rank: {0}".format(last_rank))
-    DEBUG("data size: {0}".format(len(data)))
-    DEBUG("Filtered_data size: {0}".format(len(filtered_data)))
+def _sort_matrix_rows_by_selection(mat, selection):
+    selection_compliment = list(set(range(mat.shape[0])) - set(selection))
+    mat1 = mat[selection]
+    mat2 = mat[selection_compliment]
+    return _join_submatrices_by_rows(mat1, mat2)
 
-    sorted_compliment = ctwc_bicluster_iteration(filtered_data_compliment, filtered_dist_matrix_compliment, cols_dist)
-
-    sub_a = ctwc_bicluster_iteration(np.squeeze(filtered_data.transpose()), cols_dist, filtered_dist_matrix) # Switching the order of cols/rows
-    sub_b = ctwc_bicluster_iteration(np.squeeze(sorted_compliment.transpose()), cols_dist, filtered_dist_matrix_compliment) # Switching the order of cols/rows
-
-    return join_submatrices(np.squeeze(sub_a.transpose()), np.squeeze(sub_b.transpose()))
-
-
-def ctwc_bicluster(data, rows_dist, cols_dist):
-    DEBUG("Running on data: {0}".format(data.shape))
-    sorted_data = ctwc_bicluster_iteration(data, rows_dist, cols_dist)
-    DEBUG("Sorted data: {0}".format(sorted_data.shape))
-    return sorted_data
+def _sort_matrix_cols_by_selection(mat, selection):
+    return _sort_matrix_rows_by_selection(mat.transpose(), selection).transpose()
 
 def prepare_otu_filters_from_indices(picked_indices, otus):
     selected_rows_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
@@ -52,14 +31,14 @@ def prepare_sample_filters_from_indices(picked_indices, samples):
     compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
     return selected_cols_filter, compliment_cols_filter
 
-def run_iteration(title, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
+def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
     if is_rows:
-        return run_iteration__rows(title, data, tree, samples, otus, rows_filter, cols_filter, table)
+        return run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table)
     else:
-        return run_iteration__cols(title, data, tree, samples, otus, rows_filter, cols_filter, table)
+        return run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table)
 
-def run_iteration__rows(title, data, tree, samples, otus, rows_filter, cols_filter, table):
-    INFO(title)
+def run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table):
+    INFO("{0}: {1}".format(title, desc))
     rows_dist, _ = ctwc__distnace_matrix.get_distance_matrices(data,
                                                                tree,
                                                                samples,
@@ -68,11 +47,17 @@ def run_iteration__rows(title, data, tree, samples, otus, rows_filter, cols_filt
                                                                otu_filter=rows_filter,
                                                                skip_cols=True)
 
+    ctwc__plot.plot_mat(rows_dist, header="{0}: {1}".format(title, "OTUs Distance Matrix"))
+
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data,
                                                                                        rows_dist,
                                                                                        otus)
 
     selected_rows_filter, compliment_rows_filter = prepare_otu_filters_from_indices(picked_indices, otus)
+
+    sorted_rows_mat = _sort_matrix_rows_by_selection(rows_dist, picked_indices)
+
+    ctwc__plot.plot_mat(sorted_rows_mat, header="{0}: {1}".format(title, "OTUs Distance Matrix - sorted"))
 
     if table is not None:
         picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
@@ -86,8 +71,8 @@ def run_iteration__rows(title, data, tree, samples, otus, rows_filter, cols_filt
 
     return (num_otus, num_samples), selected_rows_filter, compliment_rows_filter
 
-def run_iteration__cols(title, data, tree, samples, otus, rows_filter, cols_filter, table):
-    INFO(title)
+def run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table):
+    INFO("{0}: {1}".format(title, desc))
     _, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data,
                                                                tree,
                                                                samples,
@@ -96,11 +81,17 @@ def run_iteration__cols(title, data, tree, samples, otus, rows_filter, cols_filt
                                                                sample_filter=cols_filter,
                                                                skip_rows=True)
 
+    ctwc__plot.plot_mat(cols_dist, header="{0}: {1}".format(title, "Samples Distance Matrix"))
+
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data,
                                                                                        cols_dist,
                                                                                        samples)
 
     selected_cols_filter, compliment_cols_filter = prepare_sample_filters_from_indices(picked_indices, samples)
+
+    sorted_cols_mat = _sort_matrix_cols_by_selection(cols_dist, picked_indices)
+
+    ctwc__plot.plot_mat(sorted_cols_mat, header="{0}: {1}".format(title, "Samples Distance Matrix - sorted"))
 
     INFO("Selected {0} samples:".format(len(picked_indices)))
     DEBUG(picked_indices)
@@ -119,7 +110,7 @@ def run_iteration__cols(title, data, tree, samples, otus, rows_filter, cols_filt
 
 def ctwc_select(data, tree, samples, otus, table):
     iteration_results = dict()
-    result, samp_filter, samp_compliment = run_iteration("Iteration 1: Pick samples from full dataset...",
+    result, samp_filter, samp_compliment = run_iteration("Iteration 1", "Pick samples from full dataset...",
                                                          data,
                                                          tree,
                                                          samples,
@@ -130,7 +121,7 @@ def ctwc_select(data, tree, samples, otus, table):
                                                          False)
     iteration_results["Iteration 1"] = result
 
-    result, otu_filter, otu_compliment = run_iteration("Iteration 1.1: Pick OTUs from selected samples...",
+    result, otu_filter, otu_compliment = run_iteration("Iteration 1.1", "Pick OTUs from selected samples...",
                                                          data,
                                                          tree,
                                                          samples,
@@ -141,7 +132,7 @@ def ctwc_select(data, tree, samples, otus, table):
                                                          True)
     iteration_results["Iteration 1.1"] = result
 
-    result, otu_filter, otu_compliment = run_iteration("Iteration 1.2: Pick OTUs from compliment of selected samples...",
+    result, otu_filter, otu_compliment = run_iteration("Iteration 1.2", "Pick OTUs from compliment of selected samples...",
                                                          data,
                                                          tree,
                                                          samples,
@@ -152,7 +143,7 @@ def ctwc_select(data, tree, samples, otus, table):
                                                          True)
     iteration_results["Iteration 1.2"] = result
 
-    result, otu_filter, otu_compliment = run_iteration("Iteration 2: Pick OTUs from full dataset...",
+    result, otu_filter, otu_compliment = run_iteration("Iteration 2", "Pick OTUs from full dataset...",
                                                          data,
                                                          tree,
                                                          samples,
@@ -163,7 +154,7 @@ def ctwc_select(data, tree, samples, otus, table):
                                                          True)
     iteration_results["Iteration 2"] = result
 
-    result, samp_filter, samp_compliment = run_iteration("Iteration 2.1: Pick samples from selected OTUs...",
+    result, samp_filter, samp_compliment = run_iteration("Iteration 2.1", "Pick samples from selected OTUs...",
                                                          data,
                                                          tree,
                                                          samples,
@@ -174,7 +165,7 @@ def ctwc_select(data, tree, samples, otus, table):
                                                          False)
     iteration_results["Iteration 2.1"] = result
 
-    result, samp_filter, samp_compliment = run_iteration("Iteration 2.2: Pick samples from compliment of selected OTUs...",
+    result, samp_filter, samp_compliment = run_iteration("Iteration 2.2", "Pick samples from compliment of selected OTUs...",
                                                          data,
                                                          tree,
                                                          samples,
@@ -335,9 +326,6 @@ def __ctwc_select__obsolete(data, tree, samples, otus, table):
 def test():
     np.seterr(all="ignore")
     samples, otus, tree, data, table = ctwc__distnace_matrix.get_data(True)
-
-    #rows_dist, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus)
-    #sorted_data = ctwc_bicluster(data, rows_dist, cols_dist)
 
     output = ctwc_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
