@@ -13,6 +13,8 @@ N_CLUSTERS = 16
 SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
 SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
+SPC_CLUSTER_FILE = './spc_cluster-{0}.pkl'
+
 
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1).
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
@@ -35,6 +37,7 @@ OutFile: {1}.out
 SWCycles: 2000
 KNearestNeighbours: 11
 Dimension: 0
+MSTree|
 NearestNeighbours|
 DirectedGrowth|
 SaveSuscept|
@@ -84,7 +87,7 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
     found = False
     for candidate in candidates:
         largest_cluster, score = candidate
-        if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
+        if (#largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
             largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND]) or
             largest_cluster < lower_threshold or
             largest_cluster > upper_threshold or
@@ -146,7 +149,7 @@ def __spc_parse_temperature_results(data_points):
     temperature = float(line.split()[TEMP_IND])
 
     INFO("Most stable temperature: {0}".format(temperature))
-    return temperature
+    return temperature, lines
 
 def __spc_get_clusters_by_temperature(t):
     TEMP_IND = 1
@@ -169,7 +172,43 @@ def __spc_clear_temporary_files():
     import os
     map(os.remove, glob(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + '*'))
 
+def __get_precalculated_spc_file_if_exists(h):
+    import pickle
+    try:
+        with open(SPC_CLUSTER_FILE.format(h), 'rb') as fn:
+            try:
+                mat, log = pickle.load(fn)
+                return mat, log
+            except Exception as e:
+                WARN("Got an exception trying to read SPC cluster results:\n" + str(e))
+    except IOError:
+        DEBUG("Couldn't open pre-calculated SPC cluster results")
+    return None
+
+def __calculate_hash_for_data(data, dist_matrix):
+    return hash(str([ hash(data.tostring()), hash(str(dist_matrix)) ]) ) # eh close enough
+
+def __get_precalculated_spc_file_if_exists_for_data(data, dist_matrix):
+    h = __calculate_hash_for_data(data, dist_matrix)
+    return __get_precalculated_spc_file_if_exists(h)
+
+def __save_calculated_spc_file_and_hash_for_data(data, dist_matrix, cluster, log):
+    DEBUG("Saving calculated SPC cluster to file...")
+    h = __calculate_hash_for_data(data, dist_matrix)
+    with open(SPC_CLUSTER_FILE.format(h), 'wb+') as fn:
+        import pickle
+        pickle.dump((cluster, log), fn)
+
 def cluster_rows_spc(data, dist_matrix):
+    DEBUG("Checking for cached results...")
+    cached_results = __get_precalculated_spc_file_if_exists_for_data(data, dist_matrix)
+    if cached_results is not None:
+        cached_cluster, log = cached_results
+        INFO("Using pre-cached SPC results for input")
+        for line in log:
+            INFO(line)
+        return data, cached_cluster, None
+
     DEBUG("Clearing temporary files from previous runs...")
     __spc_clear_temporary_files()
     DEBUG("Starting Super-Paramagnetic clustering...")
@@ -177,10 +216,12 @@ def cluster_rows_spc(data, dist_matrix):
     __spc_prepare_edge_file(n_data_points)
     __spc_prepare_run_file(n_data_points)
     __spc_run_and_wait_for_completion()
-    t = __spc_parse_temperature_results(n_data_points)
+    t, log = __spc_parse_temperature_results(n_data_points)
     clusters = __spc_get_clusters_by_temperature(t)
     top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, 0)
     DEBUG("Top cluster: {0}".format(top_cluster))
+    DEBUG("Saving results in cache...")
+    __save_calculated_spc_file_and_hash_for_data(data, dist_matrix, top_cluster, log)
     DEBUG("Finished Super-Paramagnetic clustering.")
     return data, top_cluster, None
 
@@ -198,8 +239,6 @@ def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
     return data, db.labels_, db
 
 def cluster_rows(data, dist_matrix):
-    #return cluster_rows_dbscan(data, dist_matrix)
-    #return cluster_rows_agglomerative(data, dist_matrix)
     return cluster_rows_spc(data, dist_matrix)
 
 def plot_results(vec):
@@ -252,13 +291,7 @@ def test():
     test_spc_clustering()
     return
 
-    #test_agglomerative_clustering()
-
     data, otus, samples = ctwc__data_handler.get_sample_biom_table()
-
-    #data = inject_row_pattern_to_data(data)
-
-    #data = inject_col_pattern_to_data(data)
 
     INFO("Original data:\n{0}\n\n".format(data))
 
@@ -276,9 +309,6 @@ def test():
 
     cluster_rows_spc(data, cols_dist)
 
-
-    #test_dbscan_clustering(data, cols_dist)
-
     clust, labels, _ = cluster_rows(data.transpose(), cols_dist)
 
     st = "Labels:\n"
@@ -287,8 +317,6 @@ def test():
     INFO(st + "\n\n")
 
     INFO("Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
-    #plot_distnace_matrix(data)
-    #plot_distnace_matrix(clust)
 
     INFO("Original rows distance matrix:\n{0}\n\n".format(rows_dist))
 
@@ -300,8 +328,6 @@ def test():
     INFO(st + "\n\n")
 
     INFO("Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
-    #plot_distnace_matrix(data)
-    #plot_distnace_matrix(clust.transpose())
 
 def inject_row_pattern_to_data(data):
     z = np.zeros(data.shape)

@@ -89,7 +89,7 @@ def run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, col
 
     selected_cols_filter, compliment_cols_filter = prepare_sample_filters_from_indices(picked_indices, samples)
 
-    sorted_cols_mat = _sort_matrix_cols_by_selection(cols_dist, picked_indices)
+    sorted_cols_mat = _sort_matrix_rows_by_selection(cols_dist, picked_indices)
 
     ctwc__plot.plot_mat(sorted_cols_mat, header="{0}: {1}".format(title, "Samples Distance Matrix - sorted"))
 
