@@ -109,6 +109,8 @@ def run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, col
     return (num_otus, num_samples), selected_cols_filter, compliment_cols_filter
 
 def ctwc_select(data, tree, samples, otus, table):
+    ctwc__plot.init()
+
     iteration_results = dict()
     result, samp_filter, samp_compliment = run_iteration("Iteration 1", "Pick samples from full dataset...",
                                                          data,
@@ -175,6 +177,8 @@ def ctwc_select(data, tree, samples, otus, table):
                                                          table,
                                                          False)
     iteration_results["Iteration 2.2"] = result
+
+    ctwc__plot.wait_for_user()
 
     return iteration_results
 

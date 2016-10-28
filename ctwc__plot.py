@@ -1,11 +1,14 @@
 #!/usr/bin/python
 from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
-import matplotlib.pyplot as plt
 import numpy as np
 
+INITIALIZED = False
+
 def plot_mat(mat, xlabel=None, ylabel=None, header=None):
-    plt.set_cmap('hot_r')
+    if not INITIALIZED:
+        return
+
     plt.matshow(mat)
     if xlabel is not None:
         plt.xlabel(xlabel)
@@ -21,7 +24,17 @@ def show_plots():
     raw_input("Press [Enter] to close all plots...")
 
 def init():
-    plt.ion()
+    try:
+        import matplotlib.pyplot as plt
+        plt.ion()
+        plt.set_cmap('hot')
+        INITIALIZED = True
+    except Exception:
+        INITIALIZED = False
+
+def wait_for_user():
+    if INITIALIZED:
+        raw_input("Press Enter to continue...")
 
 def test():
     init()
