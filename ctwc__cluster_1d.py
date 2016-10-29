@@ -142,7 +142,7 @@ def __spc_parse_temperature_results(data_points):
 
     #line = __pick_line_by_num_clusters(lines)
     lower_threshold = max(50.0, data_points / 200.0) # 0.5% or 50
-    upper_threshold = min(10000.0, data_points / 3.0) # 33% or 1000
+    upper_threshold = min(10000.0, data_points / 2.0) # 50% or 10000
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
 
