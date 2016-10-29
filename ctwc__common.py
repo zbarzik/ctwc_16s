@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import logging, pdb
+import cPickle, gzip
 
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
@@ -38,6 +39,30 @@ def ASSERT(condition):
 
 def BP():
     pdb.set_trace()
+
+def save_to_file(obj_to_save, filename):
+    try:
+        fn = gzip.GzipFile(filename, 'wb+')
+        try:
+            cPickle.dump(obj_to_save, fn, -1)
+        except Exception:
+            WARN("Error trying to write object to file {0}".format(filename))
+        fn.close()
+    except Exception:
+        WARN("Error writing to file {0}".format(filename))
+
+def load_from_file(filename):
+    obj = None
+    try:
+        fn = gzip.GzipFile(filename, 'rb')
+        try:
+            obj = cPickle.load(fn)
+        except Exception:
+            DEBUG("Error trying to read object from file {0}".format(filename))
+        fn.close()
+    except Exception:
+        DEBUG("Error trying to read file {0}".format(filename))
+    return obj
 
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',

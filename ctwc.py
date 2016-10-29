@@ -56,8 +56,9 @@ def run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, col
     selected_rows_filter, compliment_rows_filter = prepare_otu_filters_from_indices(picked_indices, otus)
 
     sorted_rows_mat = _sort_matrix_rows_by_selection(rows_dist, picked_indices)
+    sorted_mat = _sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
 
-    ctwc__plot.plot_mat(sorted_rows_mat, header="{0}: {1}".format(title, "OTUs Distance Matrix - sorted"))
+    ctwc__plot.plot_mat(sorted_mat, header="{0}: {1}".format(title, "OTUs Distance Matrix - sorted"))
 
     if table is not None:
         picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
@@ -89,9 +90,10 @@ def run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, col
 
     selected_cols_filter, compliment_cols_filter = prepare_sample_filters_from_indices(picked_indices, samples)
 
-    sorted_cols_mat = _sort_matrix_rows_by_selection(cols_dist, picked_indices)
+    sorted_rows_mat = _sort_matrix_rows_by_selection(cols_dist, picked_indices)
+    sorted_mat = _sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
 
-    ctwc__plot.plot_mat(sorted_cols_mat, header="{0}: {1}".format(title, "Samples Distance Matrix - sorted"))
+    ctwc__plot.plot_mat(sorted_mat, header="{0}: {1}".format(title, "Samples Distance Matrix - sorted"))
 
     INFO("Selected {0} samples:".format(len(picked_indices)))
     DEBUG(picked_indices)

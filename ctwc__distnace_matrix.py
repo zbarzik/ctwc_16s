@@ -1,9 +1,8 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,save_to_file,load_from_file
 from multiprocessing import Pool
 import warnings
 import ctwc__data_handler
-import ctwc__plot
 
 import numpy as np
 import math
@@ -16,7 +15,7 @@ WEIGHTED_UNIFRAC = False
 NUM_THREADS = 32
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
-UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pkl'
+UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pklz'
 SQUARE_UNIFRAC_DISTANCE = False
 
 
@@ -63,17 +62,7 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
     return z
 
 def __get_precalculated_unifrac_file_if_exists(h):
-    import pickle
-    try:
-        with open(UNIFRAC_DIST_FILE.format(h), 'rb') as fn:
-            try:
-                mat = pickle.load(fn)
-                return mat
-            except Exception as e:
-                WARN("Got an exception trying to read Unifrac distance matrix:\n" + str(e))
-    except IOError:
-        DEBUG("Couldn't open pre-calculated Unifrac distance matrix")
-    return None
+    return load_from_file(UNIFRAC_DIST_FILE.format(h))
 
 def __calculate_hash_for_data(data, sample_filter, otu_filter):
     return hash(str([ hash(data.tostring()), hash(str(sample_filter)), hash(str(otu_filter)) ]) ) # eh close enough
@@ -85,9 +74,7 @@ def __get_precalculated_unifrac_file_if_exists_for_data(data, sample_filter, otu
 def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_filter, mat):
     DEBUG("Saving calculated Unifrac distance matrix to file...")
     h = __calculate_hash_for_data(data, sample_filter, otu_filter)
-    with open(UNIFRAC_DIST_FILE.format(h), 'wb+') as fn:
-        import pickle
-        pickle.dump(mat, fn)
+    save_to_file(mat, UNIFRAC_DIST_FILE.format(h))
 
 def __increase_distance_for_filtered_samples(mat, filt):
     D = 100 # float('Inf')
@@ -289,13 +276,8 @@ def test():
     samples, otus, tree, data, table = get_data(REAL_DATA)
     INFO("Calculating cols dist")
     _, cols_dist = get_distance_matrices(data, tree, samples, otus, skip_rows=True)
-    INFO("Plotting cols dist")
-    ctwc__plot.plot_mat(cols_dist, "Cols distance")
     INFO("Calculating rows dist")
     rows_dist, _ = get_distance_matrices(data, tree, samples, otus, skip_cols=True)
-    INFO("Plotting rows dist")
-    ctwc__plot.plot_mat(rows_dist, "Rows distance")
-    ctwc__plot.show_plots()
     #otu_filter = otus
     #sample_filter = samples
     #rows_dist, cols_dist = get_distance_matrices(data, tree, samples, otus, otu_filter=otu_filter, sample_filter=sample_filter)

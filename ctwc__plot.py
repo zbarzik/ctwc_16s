@@ -1,13 +1,21 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,save_to_file,load_from_file
 
 import numpy as np
 
 INITIALIZED = False
+PLOT_RAW_FILE = './plot_raw-{0}.pklz'
 
 def plot_mat(mat, xlabel=None, ylabel=None, header=None):
+    sanitized_hdr = ''.join(e for e in header if e.isalnum())
+    save_to_file((mat, xlabel, ylabel, header), PLOT_RAW_FILE.format(sanitized_hdr))
+    _plot_mat(mat, xlabel, ylabel, header)
+
+def _plot_mat(mat, xlabel, ylabel, header):
     if not INITIALIZED:
         return
+
+    import matplotlib.pyplot as plt
 
     plt.matshow(mat)
     if xlabel is not None:
@@ -28,13 +36,20 @@ def init():
         import matplotlib.pyplot as plt
         plt.ion()
         plt.set_cmap('hot')
-        INITIALIZED = True
+        globals()['INITIALIZED'] = True
     except Exception:
-        INITIALIZED = False
+        globals()['INITIALIZED'] = False
 
 def wait_for_user():
     if INITIALIZED:
         raw_input("Press Enter to continue...")
+
+def plot_from_file(filename):
+    pack = load_from_file(filename)
+    if pack is None:
+        return
+    mat, xlabel, ylabel, header = pack
+    _plot_mat(mat, xlabel, ylabel, header)
 
 def test():
     init()
@@ -45,4 +60,12 @@ def test():
     show_plots()
 
 if __name__ == '__main__':
+    import sys
+    if len(sys.argv) > 1:
+        init()
+        for filename in sys.argv[1:]:
+            plot_from_file(filename)
+        wait_for_user()
+        exit(0)
+
     test()

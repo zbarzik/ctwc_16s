@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP
+from ctwc__common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP,save_to_file,load_from_file
 import warnings
 
 import numpy as np
@@ -13,7 +13,7 @@ N_CLUSTERS = 16
 SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
 SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
-SPC_CLUSTER_FILE = './spc_cluster-{0}.pkl'
+SPC_CLUSTER_FILE = './spc_cluster-{0}.pklz'
 
 
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1).
@@ -80,14 +80,13 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
     for line in lines:
         largest_cluster_sizes.append(int(line.split()[LARGEST_CLUSTER_IND]))
     counter=collections.Counter(largest_cluster_sizes)
-    candidates = counter.most_common(50)
+    candidates = counter.most_common(200)
     # most common might be completely frozen or completely dissolved.
     # 3 cases should include one sequence from the middle as well.
-    candidate = candidates[0]
     found = False
     for candidate in candidates:
         largest_cluster, score = candidate
-        if (#largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
+        if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
             largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND]) or
             largest_cluster < lower_threshold or
             largest_cluster > upper_threshold or
@@ -97,8 +96,7 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
         break
 
     if not found: # we didn't find anything that matches the thresholds, return something good enough
-        candidates = counter.most_common()
-        candidate = candidates[0]
+        candidates = counter.most_common(200)
         for candidate in candidates:
             largest_cluster, score = candidate
             if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
@@ -144,7 +142,7 @@ def __spc_parse_temperature_results(data_points):
 
     #line = __pick_line_by_num_clusters(lines)
     lower_threshold = max(50.0, data_points / 200.0) # 0.5% or 50
-    upper_threshold = min(1000.0, data_points / 3.0) # 33% or 1000
+    upper_threshold = min(10000.0, data_points / 3.0) # 33% or 1000
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
 
@@ -173,17 +171,7 @@ def __spc_clear_temporary_files():
     map(os.remove, glob(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + '*'))
 
 def __get_precalculated_spc_file_if_exists(h):
-    import pickle
-    try:
-        with open(SPC_CLUSTER_FILE.format(h), 'rb') as fn:
-            try:
-                mat, log = pickle.load(fn)
-                return mat, log
-            except Exception as e:
-                WARN("Got an exception trying to read SPC cluster results:\n" + str(e))
-    except IOError:
-        DEBUG("Couldn't open pre-calculated SPC cluster results")
-    return None
+    return load_from_file(SPC_CLUSTER_FILE.format(h))
 
 def __calculate_hash_for_data(data, dist_matrix):
     return hash(str([ hash(data.tostring()), hash(str(dist_matrix)) ]) ) # eh close enough
@@ -195,9 +183,7 @@ def __get_precalculated_spc_file_if_exists_for_data(data, dist_matrix):
 def __save_calculated_spc_file_and_hash_for_data(data, dist_matrix, cluster, log):
     DEBUG("Saving calculated SPC cluster to file...")
     h = __calculate_hash_for_data(data, dist_matrix)
-    with open(SPC_CLUSTER_FILE.format(h), 'wb+') as fn:
-        import pickle
-        pickle.dump((cluster, log), fn)
+    save_to_file((cluster, log), SPC_CLUSTER_FILE.format(h))
 
 def cluster_rows_spc(data, dist_matrix):
     DEBUG("Checking for cached results...")
@@ -240,31 +226,6 @@ def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
 
 def cluster_rows(data, dist_matrix):
     return cluster_rows_spc(data, dist_matrix)
-
-def plot_results(vec):
-    import matplotlib.pyplot as plt
-    plt.plot(vec)
-    plt.show()
-
-def plot_num_clusters_by_eps(data, cols_dist, rows_dist):
-    best_i = 1
-    largest_set = 0
-    vec = []
-    for i in range(2, 20000, 100):
-        clust, labels = cluster_rows_dbscan(data.transpose(), cols_dist, eps=1.0/i)
-        cur_size = len(set(labels))
-        if cur_size > largest_set:
-            best_i = i
-            largest_set = cur_size
-        DEBUG("eps = {0} largest_set = {1}".format(1.0/i, cur_size))
-        vec.append([1.0/i, cur_size])
-    plot_results(vec)
-
-def plot_distnace_matrix(dist_mat):
-    mat = dist_mat.tolist()
-    import matplotlib.pyplot as plt
-    plt.matshow(mat, cmap=plt.cm.Blues)
-    plt.show()
 
 def test_agglomerative_clustering():
     _, labels, ag = cluster_rows_agglomerative(None, sample_dist_matrix, 2)
