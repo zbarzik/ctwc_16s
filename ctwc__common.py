@@ -40,19 +40,27 @@ def ASSERT(condition):
 def BP():
     pdb.set_trace()
 
-def save_to_file(obj_to_save, filename):
+def save_to_file(obj_to_save, filename, mat=None, mat_fn=None):
     try:
         fn = gzip.GzipFile(filename, 'wb+')
         try:
             cPickle.dump(obj_to_save, fn, -1)
-        except Exception:
-            WARN("Error trying to write object to file {0}".format(filename))
+        except Exception as ex:
+            WARN("Error trying to write object to file {0}: {1}".format(filename, str(ex)))
         fn.close()
-    except Exception:
-        WARN("Error writing to file {0}".format(filename))
+        if mat is not None and mat_fn is not None:
+            try:
+                with open(mat_fn, 'wb+') as fn:
+                    numpy.savez_compressed(fn, mat)
+            except Exception as ex:
+                WARN("Error writing matrix to file {0}: {1}".format(mat_fn, str(ex)))
 
-def load_from_file(filename):
+    except Exception as ex:
+        WARN("Error writing to file {0}: {1}".format(filename, str(ex)))
+
+def load_from_file(filename, with_mat=False, mat_fn=None):
     obj = None
+    mat = None
     try:
         fn = gzip.GzipFile(filename, 'rb')
         try:
@@ -62,7 +70,14 @@ def load_from_file(filename):
         fn.close()
     except Exception:
         DEBUG("Error trying to read file {0}".format(filename))
-    return obj
+    if not with_mat:
+        return obj
+    try:
+        with open(mat_fn, 'rb') as fn:
+            mat = numpy.load(fn)
+    except Exception as ex:
+        DEBUG("Error trying to read mat_{0} file: {1}:".format(mat_fn, str(ex)))
+    return obj, mat
 
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',

@@ -5,10 +5,11 @@ import numpy as np
 
 INITIALIZED = False
 PLOT_RAW_FILE = './plot_raw-{0}.pklz'
+PLOT_MAT_RAW_FILE = './plot_raw_mat-{0}.npz'
 
 def plot_mat(mat, xlabel=None, ylabel=None, header=None):
     sanitized_hdr = ''.join(e for e in header if e.isalnum())
-    save_to_file((mat, xlabel, ylabel, header), PLOT_RAW_FILE.format(sanitized_hdr))
+    save_to_file((xlabel, ylabel, header), PLOT_RAW_FILE.format(sanitized_hdr), mat, PLOT_MAT_RAW_FILE.format(sanitized_hdr))
     _plot_mat(mat, xlabel, ylabel, header)
 
 def _plot_mat(mat, xlabel, ylabel, header):
@@ -44,11 +45,12 @@ def wait_for_user():
     if INITIALIZED:
         raw_input("Press Enter to continue...")
 
-def plot_from_file(filename):
-    pack = load_from_file(filename)
+def plot_from_file(filename, mat_filename):
+    pack = load_from_file(filename, True, mat_filename)
     if pack is None:
         return
-    mat, xlabel, ylabel, header = pack
+    metadata, mat = pack
+    xlabel, ylabel, header = metadata
     _plot_mat(mat, xlabel, ylabel, header)
 
 def test():
@@ -63,8 +65,8 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
         init()
-        for filename in sys.argv[1:]:
-            plot_from_file(filename)
+        for desc in sys.argv[1:]:
+            plot_from_file(PLOT_RAW_FILE.format(desc), PLOT_MAT_RAW_FILE.format(desc))
         wait_for_user()
         exit(0)
 
