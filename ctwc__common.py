@@ -2,6 +2,7 @@
 
 import logging, pdb
 import cPickle, gzip
+import numpy
 
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
