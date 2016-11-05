@@ -75,7 +75,8 @@ def load_from_file(filename, with_mat=False, mat_fn=None):
         return obj
     try:
         with open(mat_fn, 'rb') as fn:
-            mat = numpy.load(fn)
+            data = numpy.load(fn)
+            mat = data['arr_0']
     except Exception as ex:
         DEBUG("Error trying to read mat_{0} file: {1}:".format(mat_fn, str(ex)))
     return obj, mat
