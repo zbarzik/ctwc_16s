@@ -21,14 +21,20 @@ def _sort_matrix_rows_by_selection(mat, selection):
 def _sort_matrix_cols_by_selection(mat, selection):
     return _sort_matrix_rows_by_selection(mat.transpose(), selection).transpose()
 
-def prepare_otu_filters_from_indices(picked_indices, otus):
+def prepare_otu_filters_from_indices(picked_indices, otus, prev_otu_filter = []):
     selected_rows_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
     compliment_rows_filter = [ otu for index, otu in enumerate(otus) if index in picked_indices ]
+    if len(prev_otu_filter) > 0:
+        selected_rows_filter = [ otu for otu in selected_rows_filter if otu not in prev_otu_filter ]
+        compliment_rows_filter = [ otu for otu in compliment_rows_filter if otu not in prev_otu_filter ]
     return selected_rows_filter, compliment_rows_filter
 
-def prepare_sample_filters_from_indices(picked_indices, samples):
+def prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_filter = []):
     selected_cols_filter = [ samp for index, samp in enumerate(samples) if index not in picked_indices ]
     compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
+    if len(prev_samp_filter) > 0:
+        selected_cols_filter = [ samp for samp in selected_cols_filter if samp not in prev_samp_filter ]
+        compliment_cols_filter = [ samp for samp in compliment_cols_filter if samp not in prev_samp_filter ]
     return selected_cols_filter, compliment_cols_filter
 
 def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
@@ -53,7 +59,7 @@ def run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, col
                                                                                        rows_dist,
                                                                                        otus)
 
-    selected_rows_filter, compliment_rows_filter = prepare_otu_filters_from_indices(picked_indices, otus)
+    selected_rows_filter, compliment_rows_filter = prepare_otu_filters_from_indices(picked_indices, otus, rows_filter)
 
     sorted_rows_mat = _sort_matrix_rows_by_selection(rows_dist, picked_indices)
     sorted_mat = _sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
@@ -88,7 +94,7 @@ def run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, col
                                                                                        cols_dist,
                                                                                        samples)
 
-    selected_cols_filter, compliment_cols_filter = prepare_sample_filters_from_indices(picked_indices, samples)
+    selected_cols_filter, compliment_cols_filter = prepare_sample_filters_from_indices(picked_indices, samples, cols_filter)
 
     sorted_rows_mat = _sort_matrix_rows_by_selection(cols_dist, picked_indices)
     sorted_mat = _sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
@@ -109,6 +115,120 @@ def run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, col
     num_samples = len(picked_indices)
 
     return (num_otus, num_samples), selected_cols_filter, compliment_cols_filter
+
+def _ctwc_recursive__get_iteration_indices(iteration_ind):
+    if iteration_ind == "0":
+        return [ "1", "2", None, None ]
+    else:
+        return [ iteration_ind + ".{0}".format(ind) for ind in range(1,5) ]
+
+def _ctwc_recursive__get_next_step(iteration_ind, step):
+    return _ctwc_recursive__get_iteration_indices(iteration_ind)[step]
+
+def ctwc_recursive_select(data, tree, samples, otus, table):
+    ctwc__plot.init()
+    iteration_results = dict()
+    _ctwc_recursive_iteration(data, tree, samples, otus, table, iteration_results = iteration_results)
+
+    ctwc__plot.wait_for_user()
+
+def _ctwc_recursive_iteration(data, tree, samples, otus, table,
+                             otu_filter = [],
+                             otu_compliment = [],
+                             sample_filter = [],
+                             sample_compliment = [],
+                             iteration_ind = "0",
+                             iteration_results = dict()):
+
+    THRESH = 100
+    do_otus = False
+    do_samples = False
+
+    if len(otu_filter) == 0 or (len(otu_filter) > THRESH and len(otu_compliment) > THRESH):
+        do_otus = True
+    if len(sample_filter) == 0 or (len(sample_filter) > THRESH and len(sample_compliment) > THRESH):
+        do_samples = True
+
+    step = _ctwc_recursive__get_next_step(iteration_ind, 0)
+    if do_samples:
+        result, step_samp_filter, step_samp_compliment = run_iteration("Iteration {0}".format(step), "Pick samples...",
+                                                                       data,
+                                                                       tree,
+                                                                       samples,
+                                                                       otus,
+                                                                       otu_filter,
+                                                                       sample_filter,
+                                                                       table,
+                                                                       False)
+        iteration_results["Iteration {0}".format(step)] = result
+        _ctwc_recursive_iteration(data, tree, samples, otus, table,
+                                  otu_filter,
+                                  otu_compliment,
+                                  step_samp_filter,
+                                  step_samp_compliment,
+                                  step,
+                                  iteration_results)
+
+    if do_otus:
+        step = _ctwc_recursive__get_next_step(iteration_ind, 1)
+        result, step_otu_filter, step_otu_compliment = run_iteration("Iteration {0}".format(step), "Pick OTUs...",
+                                                                     data,
+                                                                     tree,
+                                                                     samples,
+                                                                     otus,
+                                                                     otu_filter,
+                                                                     sample_filter,
+                                                                     table,
+                                                                     True)
+        iteration_results["Iteration {0}".format(step)] = result
+        _ctwc_recursive_iteration(data, tree, samples, otus, table,
+                                  step_otu_filter,
+                                  step_otu_compliment,
+                                  sample_filter,
+                                  sample_compliment,
+                                  step,
+                                  iteration_results)
+
+    step = _ctwc_recursive__get_next_step(iteration_ind, 2)
+    if step is not None and do_samples:
+        result, step_samp_filter, step_samp_compliment = run_iteration("Iteration {0}".format(step), "Pick samples from compliment...",
+                                                             data,
+                                                             tree,
+                                                             samples,
+                                                             otus,
+                                                             otu_filter,
+                                                             sample_compliment,
+                                                             table,
+                                                             False)
+        iteration_results["Iteration {0}".format(step)] = result
+        _ctwc_recursive_iteration(data, tree, samples, otus, table,
+                                  otu_filter,
+                                  otu_compliment,
+                                  step_sample_filter,
+                                  step_sample_compliment,
+                                  step,
+                                  iteration_results)
+
+    step = _ctwc_recursive__get_next_step(iteration_ind, 3)
+    if step is not None and do_otus:
+        result, step_otu_filter, step_otu_compliment = run_iteration("Iteration {0}".format(step), "Pick OTUs from compliment...",
+                                                             data,
+                                                             tree,
+                                                             samples,
+                                                             otus,
+                                                             otu_compliment,
+                                                             sample_filter,
+                                                             table,
+                                                             True)
+        iteration_results["Iteration {0}".format(step)] = result
+        _ctwc_recursive_iteration(data, tree, samples, otus, table,
+                                  step_otu_filter,
+                                  step_otu_compliment,
+                                  sample_filter,
+                                  sample_compliment,
+                                  step,
+                                  iteration_results)
+
 
 def ctwc_select(data, tree, samples, otus, table):
     ctwc__plot.init()
@@ -184,155 +304,11 @@ def ctwc_select(data, tree, samples, otus, table):
 
     return iteration_results
 
-def __ctwc_select__obsolete(data, tree, samples, otus, table):
-    INFO("Iteration 1: Picking samples based on unifrac distance...")
-    _, cols_dist_1 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
-    picked_indices_1, last_rank_1, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_1, samples)
-    selected_cols_filter_1, compliment_cols_filter_1 = prepare_sample_filters_from_indices(picked_indices_1, samples)
-
-    INFO("Selected {0} samples:".format(len(picked_indices_1)))
-    DEBUG(picked_indices_1)
-    if table is not None:
-        picked_samples_1 = ctwc__data_handler.get_samples_by_indices(picked_indices_1, table)
-        DEBUG(picked_samples_1)
-        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_1)
-        INFO("Collection dates for selected samples:")
-        for row in dates:
-            INFO(row)
-
-    INFO("Iteration 2: Re-picking samples after filtering out the cluster picked in Iteration 1...")
-    _, cols_dist_2 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                  sample_filter=compliment_cols_filter_1,
-                                                                  skip_rows=True)
-    picked_indices_2, last_rank_2, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_2, samples)
-    selected_cols_filter_2, compliment_cols_filter_2 = prepare_sample_filters_from_indices(picked_indices_2, samples)
-
-    if table is not None:
-        INFO("Selected {0} samples:".format(len(picked_indices_2)))
-        picked_samples_2 = ctwc__data_handler.get_samples_by_indices(picked_indices_2, table)
-        DEBUG(picked_samples_2)
-        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_2)
-        INFO("Collection dates for selected samples:")
-        for row in dates:
-            INFO(row)
-
-    INFO("Iteration 1.1: Picking OTUs from selected samples...")
-    rows_dist_1_1, _ = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                    sample_filter=selected_cols_filter_1,
-                                                                    skip_cols=True)
-    picked_indices_1_1, last_rank_1_1, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data, rows_dist_1_1, otus)
-    selected_rows_filter_1_1, compliment_rows_filter_1_1 = prepare_otu_filters_from_indices(picked_indices_1_1, otus)
-
-    if table is not None:
-        picked_otus_1_1 = ctwc__data_handler.get_otus_by_indices(picked_indices_1_1, table)
-        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus_1_1)
-        INFO("Picked OTUs:")
-        for taxonomy in taxonomies:
-            INFO(taxonomy)
-
-    INFO("Iteration 1.2: Picking OTUs from selected samples compliment...")
-    rows_dist_1_2, _ = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                    sample_filter=compliment_cols_filter_1,
-                                                                    skip_cols=True)
-    picked_indices_1_2, last_rank_1_2, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data, rows_dist_1_2, otus)
-    selected_rows_filter_1_2, compliment_rows_filter_1_2 = prepare_otu_filters_from_indices(picked_indices_1_2, otus)
-
-    if table is not None:
-        picked_otus_1_2 = ctwc__data_handler.get_otus_by_indices(picked_indices_1_2, table)
-        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus_1_2)
-        INFO("Picked OTUs:")
-        for taxonomy in taxonomies:
-            INFO(taxonomy)
-
-    INFO("Iteration 3: Re-picking samples based on the compliment for OTUs in step 1.1...")
-    selected_rows_filter_1_1, compliment_rows_filter_1_1 = prepare_otu_filters_from_indices(picked_indices_1_1, otus)
-    _, cols_dist_3 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                  otu_filter=compliment_rows_filter_1_1,
-                                                                  skip_rows=True)
-    picked_indices_3, last_rank_3, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_3, samples)
-    selected_cols_filter_3, compliment_cols_filter_3 = prepare_sample_filters_from_indices(picked_indices_3, samples)
-
-    if table is not None:
-        picked_samples_3 = ctwc__data_handler.get_samples_by_indices(picked_indices_3, table)
-        DEBUG(picked_samples_3)
-        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_3)
-        INFO("Collection dates for selected samples:")
-        for row in dates:
-            INFO(row)
-
-    INFO("Iteration 4: Re-picking samples based on the OTUs picked in step 1.1...")
-    _, cols_dist_4 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                  otu_filter=selected_rows_filter_1_1,
-                                                                  skip_rows=True)
-    picked_indices_4, last_rank_4, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_4, samples)
-    selected_cols_filter_4, compliment_cols_filter_4 = prepare_sample_filters_from_indices(picked_indices_4, samples)
-
-    if table is not None:
-        picked_samples_4 = ctwc__data_handler.get_samples_by_indices(picked_indices_4, table)
-        DEBUG(picked_samples_4)
-        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_4)
-        INFO("Collection dates for selected samples:")
-        for row in dates:
-            INFO(row)
-
-    INFO("Iteration 5: Picking OTUs from full dataset...")
-    rows_dist_5, _ = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus, skip_cols=True)
-    picked_indices_5, last_rank_5, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data, rows_dist_5, otus)
-    selected_rows_filter_5, compliment_rows_filter_5 = prepare_otu_filters_from_indices(picked_indices_5, otus)
-
-    if table is not None:
-        picked_otus_5 = ctwc__data_handler.get_otus_by_indices(picked_indices_5, table)
-        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus_5)
-        INFO("Picked OTUs:")
-        for taxonomy in taxonomies:
-            INFO(taxonomy)
-
-    INFO("Iteration 5.1: Picking samples based on selected OTUs...")
-    _, cols_dist_5_1 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                    otu_filter=selected_rows_filter_5,
-                                                                    skip_rows=True)
-    picked_indices_5_1, last_rank_5_1, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_5_1, samples)
-    selected_cols_filter_5_1, compliment_cols_filter_5_1 = prepare_sample_filters_from_indices(picked_indices_5_1, samples)
-
-    if table is not None:
-        picked_samples_5_1 = ctwc__data_handler.get_samples_by_indices(picked_indices_5_1, table)
-        DEBUG(picked_samples_5_1)
-        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_5_1)
-        INFO("Collection dates for selected samples:")
-        for row in dates:
-            INFO(row)
-
-    INFO("Iteration 5.2: Picking samples based on selected OTUs compliment...")
-    _, cols_dist_5_2 = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus,
-                                                                    otu_filter=compliment_rows_filter_5,
-                                                                    skip_rows=True)
-    picked_indices_5_2, last_rank_5_2, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data, cols_dist_5_2, samples)
-    selected_cols_filter_5_2, compliment_cols_filter_5_2 = prepare_sample_filters_from_indices(picked_indices_5_2, samples)
-
-    if table is not None:
-        picked_samples_5_2 = ctwc__data_handler.get_samples_by_indices(picked_indices_5_2, table)
-        DEBUG(picked_samples_5_2)
-        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples_5_2)
-        INFO("Collection dates for selected samples:")
-        for row in dates:
-            INFO(row)
-
-    output = { "Iteration 1"   : (len(otus), len(picked_indices_1)),
-               "Iteration 2"   : (len(otus), len(picked_indices_2)),
-               "Iteration 1.1" : (len(picked_indices_1_1), len(picked_indices_1)),
-               "Iteration 1.2" : (len(picked_indices_1_2), len(selected_cols_filter_1)),
-               "Iteration 3"   : (len(picked_indices_1_1), len(picked_indices_3)),
-               "Iteration 4"   : (len(compliment_rows_filter_1_1), len(picked_indices_4)),
-               "Iteration 5"   : (len(picked_indices_5), len(samples)),
-               "Iteration 5.1" : (len(picked_indices_5), len(picked_indices_5_1)),
-               "Iteration 5.2" : (len(compliment_rows_filter_5), len(picked_indices_5_2)),
-               }
-    return output
-
 def test():
     np.seterr(all="ignore")
     samples, otus, tree, data, table = ctwc__distnace_matrix.get_data(True)
 
+    #output = ctwc_recursive_select(data, tree, samples, otus, table)
     output = ctwc_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
     for elem in output:
