@@ -228,16 +228,16 @@ def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
 def cluster_rows(data, dist_matrix):
     return cluster_rows_spc(data, dist_matrix)
 
-def test_agglomerative_clustering():
+def __test_agglomerative_clustering():
     _, labels, ag = cluster_rows_agglomerative(None, sample_dist_matrix, 2)
     import ctwc__cluster_rank
     ranks_list = ctwc__cluster_rank.get_ranks(ag)
     ctwc__cluster_rank.get_nth_top_cluster_base_node(ranks_list)
 
-def test_dbscan_clustering(data, dist_matrix):
+def __test_dbscan_clustering(data, dist_matrix):
     _, labels, ag = cluster_rows_dbscan(None, dist_matrix)
 
-def test_spc_clustering():
+def __test_spc_clustering():
     SIZE = 100
     z = np.zeros((SIZE, SIZE))
     for i in range(0, SIZE):
@@ -250,48 +250,9 @@ def test_spc_clustering():
     INFO(top_cluster)
 
 def test():
-    test_spc_clustering()
-    return
+    __test_spc_clustering()
 
-    data, otus, samples = ctwc__data_handler.get_sample_biom_table()
-
-    INFO("Original data:\n{0}\n\n".format(data))
-
-    tree = ctwc__data_handler.get_gg_97_otu_tree()
-
-    rows_dist, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus)
-
-    ASSERT(rows_dist.shape[0] == rows_dist.shape[1])
-    ASSERT(cols_dist.shape[0] == cols_dist.shape[1])
-
-    ASSERT(rows_dist.shape[0] == data.shape[0])
-    ASSERT(cols_dist.shape[0] == data.shape[1])
-
-    INFO("Original cols distance matrix:\n{0}\n\n".format(cols_dist))
-
-    cluster_rows_spc(data, cols_dist)
-
-    clust, labels, _ = cluster_rows(data.transpose(), cols_dist)
-
-    st = "Labels:\n"
-    for i in range(labels.shape[0]):
-        st += str(labels[i]) + " "
-    INFO(st + "\n\n")
-
-    INFO("Clustered by cols ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
-
-    INFO("Original rows distance matrix:\n{0}\n\n".format(rows_dist))
-
-    clust, labels, _ = cluster_rows(data, rows_dist)
-
-    st = "Labels:\n"
-    for i in range(labels.shape[0]):
-        st += str(labels[i]) + " "
-    INFO(st + "\n\n")
-
-    INFO("Clustered by rows ({0} clusters):\n{1}\n\n".format(len(set(labels)), clust))
-
-def inject_row_pattern_to_data(data):
+def __inject_row_pattern_to_data(data):
     z = np.zeros(data.shape)
     for col in range(data.shape[1]): # Flooding to create a false relationship between rows
         for row in range(6):
@@ -300,7 +261,7 @@ def inject_row_pattern_to_data(data):
             z[row, col] += (1 - (col % 2)) * 200
     return data + z
 
-def inject_col_pattern_to_data(data):
+def __inject_col_pattern_to_data(data):
     z = np.zeros(data.shape)
     for col in range(30):
         for row in range(data.shape[0]): # Flooding to create a false relationship between rows

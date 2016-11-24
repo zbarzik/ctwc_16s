@@ -12,61 +12,61 @@ import ctwc__data_handler
 
 RECURSION_LIMIT = 100000
 
-def get_parent(children, node, n_leaves):
+def __get_parent(children, node, n_leaves):
     for i in range(n_leaves, len(children) + n_leaves):
-        if (get_left_child(children, i, n_leaves) == node or
-            get_right_child(children, i, n_leaves) == node):
+        if (__get_left_child(children, i, n_leaves) == node or
+            __get_right_child(children, i, n_leaves) == node):
             return i
     return None
 
-def get_left_child(children, node, n_leaves):
+def __get_left_child(children, node, n_leaves):
     return children[int(node - n_leaves)][0]
 
-def get_right_child(children, node, n_leaves):
+def __get_right_child(children, node, n_leaves):
     return children[int(node - n_leaves)][1]
 
-def get_node_depth(node, children, n_leaves, in_recursive=False):
+def __get_node_depth(node, children, n_leaves, in_recursive=False):
     if node < n_leaves:
         return 0.0
     else:
         if not in_recursive:
             old_recursion_limit = sys.getrecursionlimit()
             sys.setrecursionlimit(RECURSION_LIMIT)
-        left = get_node_depth(get_left_child(children, node, n_leaves), children, n_leaves, True)
-        right = get_node_depth(get_right_child(children, node, n_leaves), children, n_leaves, True)
+        left = __get_node_depth(__get_left_child(children, node, n_leaves), children, n_leaves, True)
+        right = __get_node_depth(__get_right_child(children, node, n_leaves), children, n_leaves, True)
         ret = 1 + left if left > right else 1 + right
         if not in_recursive:
             sys.setrecursionlimit(old_recursion_limit)
         return ret
 
-def get_node_children_count(node, children, n_leaves, in_recursive=False):
+def __get_node_children_count(node, children, n_leaves, in_recursive=False):
     if node < n_leaves:
         return 0.0
     if not in_recursive:
         old_recursion_limit = sys.getrecursionlimit()
         sys.setrecursionlimit(RECURSION_LIMIT)
     count = 0.0;
-    if get_left_child(children, node, n_leaves) != None:
-        count += 1 + get_node_children_count(get_left_child(children, node, n_leaves), children, n_leaves, True)
-    if get_right_child(children, node, n_leaves) != None:
-        count += 1 + get_node_children_count(get_right_child(children, node, n_leaves), children, n_leaves, True)
+    if __get_left_child(children, node, n_leaves) != None:
+        count += 1 + __get_node_children_count(__get_left_child(children, node, n_leaves), children, n_leaves, True)
+    if __get_right_child(children, node, n_leaves) != None:
+        count += 1 + __get_node_children_count(__get_right_child(children, node, n_leaves), children, n_leaves, True)
     if not in_recursive:
         sys.setrecursionlimit(old_recursion_limit)
     return count
 
-def get_all_labels_for_node(node, children, n_leaves, labels, in_recursive=False):
+def __get_all_labels_for_node(node, children, n_leaves, labels, in_recursive=False):
     if node < n_leaves:
         l = set([labels[node]])
     else:
         if not in_recursive:
             old_recursion_limit = sys.getrecursionlimit()
             sys.setrecursionlimit(RECURSION_LIMIT)
-        right_children = get_all_labels_for_node(get_right_child(children, node, n_leaves),
+        right_children = __get_all_labels_for_node(__get_right_child(children, node, n_leaves),
                                                  children,
                                                  n_leaves,
                                                  labels,
                                                  True)
-        left_children = get_all_labels_for_node(get_left_child(children, node, n_leaves),
+        left_children = __get_all_labels_for_node(__get_left_child(children, node, n_leaves),
                                                 children,
                                                 n_leaves,
                                                 labels,
@@ -76,47 +76,47 @@ def get_all_labels_for_node(node, children, n_leaves, labels, in_recursive=False
         l = right_children | left_children
     return l
 
-def verify_node(node, children, n_leaves):
-    parent = get_parent(children, node, n_leaves)
+def __verify_node(node, children, n_leaves):
+    parent = __get_parent(children, node, n_leaves)
     root = len(children) + n_leaves - 1
     ASSERT(parent is None and node == root or
            parent is not None)
     ASSERT(parent is None or
-           get_left_child(children, parent, n_leaves) == node or
-           get_right_child(children, parent, n_leaves) == node)
+           __get_left_child(children, parent, n_leaves) == node or
+           __get_right_child(children, parent, n_leaves) == node)
 
 def get_node_rank(node, children, n_leaves):
-    #return get_node_rank__depth_to_log_children(node, children, n_leaves)
-    return get_node_rank__size_of_sibling(node, children, n_leaves)
+    #return __get_node_rank__depth_to_log_children(node, children, n_leaves)
+    return __get_node_rank__size_of_sibling(node, children, n_leaves)
 
-def get_node_rank__size_of_sibling(node, children, n_leaves):
-    count = get_node_children_count(node, children, n_leaves)
-    parent = get_parent(children, node, n_leaves)
+def __get_node_rank__size_of_sibling(node, children, n_leaves):
+    count = __get_node_children_count(node, children, n_leaves)
+    parent = __get_parent(children, node, n_leaves)
     if parent is not None:
-        parent_count = get_node_children_count(parent, children, n_leaves)
+        parent_count = __get_node_children_count(parent, children, n_leaves)
         return (count, (count / parent_count))
     else:
         return (count, 0.0)
 
-def get_node_rank__depth_to_log_children(node, children, n_leaves):
-    depth = get_node_depth(node, children, n_leaves)
-    count = get_node_children_count(node, children, n_leaves)
+def __get_node_rank__depth_to_log_children(node, children, n_leaves):
+    depth = __get_node_depth(node, children, n_leaves)
+    count = __get_node_children_count(node, children, n_leaves)
     if count == 0.0 or count == 1.0:
         return 0.0 + count / 2.0
     rank = depth / math.log(count, 2)
     return rank
 
-def get_ranks_agglomerative(ag):
+def __get_ranks_agglomerative(ag):
     n_samples = ag.children_.shape[0] + ag.n_leaves_
     l = []
     for i in range(n_samples):
         l.append([i,
-                  get_node_depth(i, ag.children_, ag.n_leaves_),
-                  get_node_children_count(i, ag.children_, ag.n_leaves_),
+                  __get_node_depth(i, ag.children_, ag.n_leaves_),
+                  __get_node_children_count(i, ag.children_, ag.n_leaves_),
                   get_node_rank(i, ag.children_, ag.n_leaves_)])
     return l
 
-def generate_dummy_data():
+def __generate_dummy_data():
     from sklearn.cluster import AgglomerativeClustering
     import itertools
     X = np.array([[
@@ -146,7 +146,7 @@ def generate_dummy_data():
     DEBUG(str([{'node_id': next(ii), 'left': x[0], 'right':x[1]} for x in model.children_]))
     return model, model.labels_
 
-def is_greater(val1, val2):
+def __is_greater(val1, val2):
     if not hasattr(val1, '__iter__'):
         return val1 > val2
     for i in range(len(val1)):
@@ -156,59 +156,59 @@ def is_greater(val1, val2):
             return val1[i] > val2[i]
     return False
 
-def get_max_value_in_array(array):
+def __get_max_value_in_array(array):
     max_val = None
     max_ind = 0
     for i, val in enumerate(array):
         if max_val is None:
             max_val = val
             max_ind = i
-        elif is_greater(val, max_val):
+        elif __is_greater(val, max_val):
             max_val = val
             max_ind = i
     return max_ind, max_val
 
-def get_nth_top_cluster_base_node(ranks_list, n=1):
+def __get_nth_top_cluster_base_node(ranks_list, n=1):
     ranks_array = np.array(ranks_list)
     nth_max_index = -1
     for i in range(n):
         if nth_max_index >= 0:
             ranks_array = np.delete(ranks_array, nth_max_index, axis=0)
-        nth_max_index, nth_max_rank = get_max_value_in_array(ranks_array)
+        nth_max_index, nth_max_rank = __get_max_value_in_array(ranks_array)
     nth_max_node = ranks_array[nth_max_index][0]
     return nth_max_node, nth_max_rank, ranks_array[nth_max_index]
 
-def get_index_list_for_label_filter(label_filter, labels):
+def __get_index_list_for_label_filter(label_filter, labels):
     l = []
     for ind, label in enumerate(labels):
         if label in label_filter:
             l.append(ind)
     return l
 
-def fix(array_like):
+def __fix(array_like):
     return np.squeeze(np.asarray(array_like))
 
 def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
     DEBUG("Starting to cluster data...")
     clust, labels, ag = ctwc__cluster_1d.cluster_rows(data, rows_dist)
     INFO("Clustered labels: {0}".format(labels))
-    return _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names, debug)
+    return __filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names, debug)
 
-def _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=None, debug=False):
+def __filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=None, debug=False):
     log_func = INFO if debug else DEBUG
     if ag is not None:
-        ranks_list = get_ranks_agglomerative(ag)
+        ranks_list = __get_ranks_agglomerative(ag)
         log_func("Labels: {0}".format(labels))
         log_func("Ranks: {0}".format(ranks_list))
-        max_rank = get_nth_top_cluster_base_node(ranks_list)
+        max_rank = __get_nth_top_cluster_base_node(ranks_list)
         if max_rank[0] == len(ranks_list) - 1:
-            max_rank = get_nth_top_cluster_base_node(ranks_list, 2)
+            max_rank = __get_nth_top_cluster_base_node(ranks_list, 2)
         log_func("Max node: {0} rank: {1}".format(max_rank[0], max_rank[1]))
-        labels_in_top_cluster = get_all_labels_for_node(max_rank[0],
+        labels_in_top_cluster = __get_all_labels_for_node(max_rank[0],
                                                         ag.children_,
                                                         ag.n_leaves_,
                                                         labels)
-        picked_indices = get_index_list_for_label_filter(labels_in_top_cluster, labels)
+        picked_indices = __get_index_list_for_label_filter(labels_in_top_cluster, labels)
     else:
         max_rank = (-1, -1)
         picked_indices = labels
@@ -226,7 +226,7 @@ def _filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=Non
 
     filtered_dist_matrix_compliment = [row for ind, row in enumerate(rows_dist) if ind not in picked_indices]
 
-    return picked_indices, max_rank[1], fix(filtered_data), fix(filtered_dist_matrix), fix(filtered_data_compliment), fix(filtered_dist_matrix_compliment)
+    return picked_indices, max_rank[1], __fix(filtered_data), __fix(filtered_dist_matrix), __fix(filtered_data_compliment), __fix(filtered_dist_matrix_compliment)
 
 def filter_cols_by_top_rank(data, cols_dist, samples=None, debug=False):
     data = data.transpose()

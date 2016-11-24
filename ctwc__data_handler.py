@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 
-def get_default_tree(otus):
+def __get_default_tree(otus):
     from cogent.parse.tree import DndParser
     from cogent.maths.unifrac.fast_tree import UniFracTreeNode
     tree_str = "(((A:0.15)B:0.2,(C:0.3,D:0.4)E:0.6)F:0.1)G;"
@@ -13,18 +13,18 @@ def get_default_tree(otus):
     tr = DndParser(tree_str, UniFracTreeNode)
     return tr
 
-def get_default_samples():
+def __get_default_samples():
     return np.array(['mouth', 'leg', 'lips', 'armpit', 'foot'])
 
-def get_default_otus():
+def __get_default_otus():
     return np.array(['donatello', 'leonardo', 'raphael', 'michelangelo', 'splinter', 'shredder', 'april'])
 
-def get_default_data(otus, samples):
-    #return get_randomly_pre_generated_data()
-    return get_synthetic_cluster_data(otus, samples)
+def __get_default_data(otus, samples):
+    #return __get_randomly_pre_generated_data()
+    return __get_synthetic_cluster_data(otus, samples)
 
-def get_synthetic_cluster_data(otus, samples):
-    data = get_randomly_pre_generated_data() # noise
+def __get_synthetic_cluster_data(otus, samples):
+    data = __get_randomly_pre_generated_data() # noise
     data += np.array([   [5, 13, 0, 0, 0],
                          [8, 15, 0, 0, 0],
                          [0, 0, 0, 0, 0],
@@ -35,13 +35,13 @@ def get_synthetic_cluster_data(otus, samples):
 
     return data
 
-def get_randomly_generated_data(otus, samples):
+def __get_randomly_generated_data(otus, samples):
     num_otu = len(otus)
     num_samp = len(samples)
     data = np.random.randint(low=0, high=2, size=(num_otu, num_samp))
     return data
 
-def get_randomly_pre_generated_data():
+def __get_randomly_pre_generated_data():
     # For deterministic testing - this was generated once using the above function
     data = np.array([   [0, 1, 1, 1, 1],
                         [1, 1, 0, 1, 1],
@@ -72,7 +72,7 @@ def get_biom_table_from_file(path):
         return table
     return None
 
-def add_suffix_to_sample_ids(table, suffix):
+def __add_suffix_to_sample_ids(table, suffix):
     for ind, samp in enumerate(table._sample_ids):
         samp_ = samp + suffix
         table._sample_ids[ind] = samp_
@@ -155,10 +155,10 @@ def get_otu_taxonomy(otu):
 
 
 def test():
-    samples = get_default_samples()
-    otus = get_default_otus()
-    tree = get_default_tree(otus)
-    data = get_default_data(otus, samples)
+    samples = __get_default_samples()
+    otus = __get_default_otus()
+    tree = __get_default_tree(otus)
+    data = __get_default_data(otus, samples)
     DEBUG("Tree:\n" + tree.asciiArt())
     DEBUG("Samples:\n" + str(samples))
     DEBUG("OTUs:\n" + str(otus))

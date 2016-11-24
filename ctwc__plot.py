@@ -11,9 +11,9 @@ def plot_mat(mat, xlabel=None, ylabel=None, header=None):
     cameled_hdr = ''.join(x.title() for x in header.split())
     sanitized_hdr = ''.join(x for x in cameled_hdr if x.isalnum())
     save_to_file((xlabel, ylabel, header), PLOT_RAW_FILE.format(sanitized_hdr), mat, PLOT_MAT_RAW_FILE.format(sanitized_hdr))
-    _plot_mat(mat, xlabel, ylabel, header)
+    __plot_mat(mat, xlabel, ylabel, header)
 
-def _plot_mat(mat, xlabel, ylabel, header):
+def __plot_mat(mat, xlabel, ylabel, header):
     if not INITIALIZED:
         return
 
@@ -52,7 +52,7 @@ def plot_from_file(filename, mat_filename):
         return
     metadata, mat = pack
     xlabel, ylabel, header = metadata
-    _plot_mat(mat, xlabel, ylabel, header)
+    __plot_mat(mat, xlabel, ylabel, header)
 
 def test():
     init()
@@ -70,5 +70,4 @@ if __name__ == '__main__':
             plot_from_file(PLOT_RAW_FILE.format(desc), PLOT_MAT_RAW_FILE.format(desc))
         wait_for_user()
         exit(0)
-
     test()

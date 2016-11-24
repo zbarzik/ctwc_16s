@@ -264,7 +264,7 @@ def get_data(use_real_data):
         table = None
     return samples, otus, tree, data, table
 
-def get_output_filename_by_type(mat_type):
+def __get_output_filename_by_type(mat_type):
     if mat_type == 'col':
         return COL_DISTANCE_MATRIX_FILE
     elif mat_type == 'row':
