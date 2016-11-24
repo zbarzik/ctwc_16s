@@ -8,7 +8,8 @@ PLOT_RAW_FILE = './plot_raw-{0}.pklz'
 PLOT_MAT_RAW_FILE = './plot_raw_mat-{0}.npz'
 
 def plot_mat(mat, xlabel=None, ylabel=None, header=None):
-    sanitized_hdr = ''.join(e for e in header if e.isalnum())
+    cameled_hdr = ''.join(x.title() for x in header.split())
+    sanitized_hdr = ''.join(x for x in cameled_hdr if x.isalnum())
     save_to_file((xlabel, ylabel, header), PLOT_RAW_FILE.format(sanitized_hdr), mat, PLOT_MAT_RAW_FILE.format(sanitized_hdr))
     _plot_mat(mat, xlabel, ylabel, header)
 

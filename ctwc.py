@@ -198,7 +198,7 @@ def _ctwc_recursive_iteration(data, tree, samples, otus, table,
                                       iteration_results)
 
     step = _ctwc_recursive__get_next_step(iteration_ind, 2)
-    if step is not None and do_samples and not step.endswith(".3"):
+    if step is not None and do_samples and not step.endswith(".1.3"):
         result, step_samp_filter, step_samp_compliment = run_iteration("Iteration {0}".format(step), "Pick samples from compliment...",
                                                              data,
                                                              tree,
@@ -219,7 +219,7 @@ def _ctwc_recursive_iteration(data, tree, samples, otus, table,
                                       iteration_results)
 
     step = _ctwc_recursive__get_next_step(iteration_ind, 3)
-    if step is not None and do_otus and not step.endswith(".4"):
+    if step is not None and do_otus and not step.endswith(".2.4"):
         result, step_otu_filter, step_otu_compliment = run_iteration("Iteration {0}".format(step), "Pick OTUs from compliment...",
                                                              data,
                                                              tree,
