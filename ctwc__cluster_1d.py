@@ -48,19 +48,18 @@ WriteCorFile|
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".run", "w+") as run_f:
         run_f.write(run_file)
 
-def __spc_prepare_dat_file(dist_mat, output_filename):
-    with open(output_filename, 'w+') as fn:
-        for r in range(dist_mat.shape[0]):
-            for c in range(dist_mat.shape[1]):
-                fn.write("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
-    return dist_mat.shape[0]
-
 def __spc_prepare_dat_file(dist_mat):
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat", 'w+') as fn:
         for r in range(dist_mat.shape[0]):
             for c in range(dist_mat.shape[1]):
                 fn.write("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
     return dist_mat.shape[0]
+
+def __spc_get_non_masked_data_points(dist_mat):
+    n = dist_mat.shape[0]
+    no_diag = dist_mat - np.eye(n)
+    non_zero_rows = len(set(no_diag.nonzero()[0]))
+    return non_zero_rows
 
 def __spc_prepare_edge_file(n):
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
@@ -131,7 +130,7 @@ def __pick_line_by_num_clusters(lines):
             break
     return line
 
-def __spc_parse_temperature_results(data_points):
+def __spc_parse_temperature_results(non_masked_data_points):
     TEMP_IND = 1
     lines = []
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".out.dg_01", "r") as out_dg_fn:
@@ -141,8 +140,8 @@ def __spc_parse_temperature_results(data_points):
         DEBUG(line)
 
     #line = __pick_line_by_num_clusters(lines)
-    lower_threshold = max(50.0, data_points / 200.0) # 0.5% or 50
-    upper_threshold = min(10000.0, data_points / 2.0) # 50% or 10000
+    lower_threshold = max(50.0, non_masked_data_points / 200.0) # 0.5% or 50
+    upper_threshold = min(10000.0, non_masked_data_points / 2.0) # 50% or 10000
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
 
@@ -202,7 +201,9 @@ def cluster_rows_spc(data, dist_matrix):
     __spc_prepare_edge_file(n_data_points)
     __spc_prepare_run_file(n_data_points)
     __spc_run_and_wait_for_completion()
-    t, log = __spc_parse_temperature_results(n_data_points)
+    non_masked_data_points = __spc_get_non_masked_data_points(dist_matrix)
+    DEBUG("Non masked data points = {0}".format(non_masked_data_points))
+    t, log = __spc_parse_temperature_results(non_masked_data_points)
     clusters = __spc_get_clusters_by_temperature(t)
     top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, 0)
     DEBUG("Top cluster: {0}".format(top_cluster))
