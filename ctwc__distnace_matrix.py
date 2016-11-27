@@ -17,6 +17,7 @@ COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
 UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pklz'
 SQUARE_UNIFRAC_DISTANCE = False
+INF_VALUE = 1000
 
 
 def __unifrac_prepare_entry_for_dictionary(args):
@@ -77,7 +78,7 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
     save_to_file(mat, UNIFRAC_DIST_FILE.format(h))
 
 def __increase_distance_for_filtered_samples(mat, filt):
-    D = 100 # float('Inf')
+    D = INF_VALUE # float('Inf')
     mat[ filt ] = D
     mat[ : , filt ] = D
     mat[mat == 0] = D

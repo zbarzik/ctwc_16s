@@ -152,11 +152,11 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
     step = __ctwc_recursive__get_next_step(iteration_ind, 0)
 
-    if len(step) > len("x.x.x.x"):
+    if len(iteration_ind) > len("x.x.x.x"):
         do_otus = False
         do_samples = False
 
-    if do_samples and not step.endswith(".1") and not step.endswith(".3"):
+    if do_samples:
         result, step_samp_filter, step_samp_compliment = run_iteration("Iteration {0}".format(step), "Pick samples...",
                                                                        data,
                                                                        tree,
@@ -176,7 +176,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                       step,
                                       iteration_results)
 
-    if do_otus and not step.endswith(".2") and not step.endswith(".4"):
+    if do_otus:
         step = __ctwc_recursive__get_next_step(iteration_ind, 1)
         result, step_otu_filter, step_otu_compliment = run_iteration("Iteration {0}".format(step), "Pick OTUs...",
                                                                      data,
@@ -198,7 +198,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                       iteration_results)
 
     step = __ctwc_recursive__get_next_step(iteration_ind, 2)
-    if step is not None and do_samples and not step.endswith(".1.3"):
+    if step is not None and do_samples:
         result, step_samp_filter, step_samp_compliment = run_iteration("Iteration {0}".format(step), "Pick samples from compliment...",
                                                              data,
                                                              tree,
@@ -219,7 +219,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                       iteration_results)
 
     step = __ctwc_recursive__get_next_step(iteration_ind, 3)
-    if step is not None and do_otus and not step.endswith(".2.4"):
+    if step is not None and do_otus:
         result, step_otu_filter, step_otu_compliment = run_iteration("Iteration {0}".format(step), "Pick OTUs from compliment...",
                                                              data,
                                                              tree,

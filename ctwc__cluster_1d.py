@@ -57,8 +57,12 @@ def __spc_prepare_dat_file(dist_mat):
 
 def __spc_get_non_masked_data_points(dist_mat):
     n = dist_mat.shape[0]
-    no_diag = dist_mat - np.eye(n)
-    non_zero_rows = len(set(no_diag.nonzero()[0]))
+    tmp = dist_mat
+    tmp[tmp < ctwc__distnace_matrix.INF_VALUE] = 1
+    tmp[tmp >= ctwc__distnace_matrix.INF_VALUE] = 0
+    tmp = tmp - np.eye(n)
+    non_zero_rows = len(set(tmp.nonzero()[0]))
+    INFO("Non-masked rows: {0}".format(non_zero_rows))
     return non_zero_rows
 
 def __spc_prepare_edge_file(n):
@@ -86,7 +90,6 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
     for candidate in candidates:
         largest_cluster, score = candidate
         if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
-            largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND]) or
             largest_cluster < lower_threshold or
             largest_cluster > upper_threshold or
             score < 3):
@@ -99,7 +102,7 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
         for candidate in candidates:
             largest_cluster, score = candidate
             if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
-                largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND])):
+                score < 3):
                 continue
             break
 
@@ -140,7 +143,7 @@ def __spc_parse_temperature_results(non_masked_data_points):
         DEBUG(line)
 
     #line = __pick_line_by_num_clusters(lines)
-    lower_threshold = 30.0 # arbitrary
+    lower_threshold = max(25.0, non_masked_data_points / 200.0) # 25 or 0.5%
     upper_threshold = min(10000.0, non_masked_data_points / 2.0) # 50% or 10000
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
