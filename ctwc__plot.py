@@ -66,8 +66,15 @@ if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
         init()
-        for desc in sys.argv[1:]:
-            plot_from_file(PLOT_RAW_FILE.format(desc), PLOT_MAT_RAW_FILE.format(desc))
+        if sys.argv[1] == "all":
+            import glob
+            for fn in glob.glob("*plot_raw*.pklz"):
+                desc = fn[len("plot_raw-"):-len(".pklz")]
+                INFO(desc)
+                plot_from_file(PLOT_RAW_FILE.format(desc), PLOT_MAT_RAW_FILE.format(desc))
+        else:
+            for desc in sys.argv[1:]:
+                plot_from_file(PLOT_RAW_FILE.format(desc), PLOT_MAT_RAW_FILE.format(desc))
         wait_for_user()
         exit(0)
     test()
