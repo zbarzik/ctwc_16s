@@ -57,10 +57,9 @@ def __spc_prepare_dat_file(dist_mat):
 
 def __spc_get_non_masked_data_points(dist_mat):
     n = dist_mat.shape[0]
-    tmp = dist_mat
-    tmp[tmp < ctwc__distnace_matrix.INF_VALUE] = 1
-    tmp[tmp >= ctwc__distnace_matrix.INF_VALUE] = 0
-    tmp = tmp - np.eye(n)
+    tmp = np.zeros(dist_mat.shape)
+    tmp[dist_mat < ctwc__distnace_matrix.INF_VALUE] = 1
+    np.fill_diagonal(tmp, 0.0)
     non_zero_rows = len(set(tmp.nonzero()[0]))
     INFO("Non-masked rows: {0}".format(non_zero_rows))
     return non_zero_rows
@@ -173,10 +172,11 @@ def __spc_clear_temporary_files():
     map(os.remove, glob(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + '*'))
 
 def __get_precalculated_spc_file_if_exists(h):
-    return load_from_file(SPC_CLUSTER_FILE.format(h))
+    return None
+    #return load_from_file(SPC_CLUSTER_FILE.format(h))
 
 def __calculate_hash_for_data(data, dist_matrix):
-    return hash(str([ hash(data.tostring()), hash(str(dist_matrix)) ]) ) # eh close enough
+    return hash( data.tostring() + str(dist_matrix) )
 
 def __get_precalculated_spc_file_if_exists_for_data(data, dist_matrix):
     h = __calculate_hash_for_data(data, dist_matrix)
@@ -205,7 +205,6 @@ def cluster_rows_spc(data, dist_matrix):
     __spc_prepare_run_file(n_data_points)
     __spc_run_and_wait_for_completion()
     non_masked_data_points = __spc_get_non_masked_data_points(dist_matrix)
-    DEBUG("Non masked data points = {0}".format(non_masked_data_points))
     t, log = __spc_parse_temperature_results(non_masked_data_points)
     clusters = __spc_get_clusters_by_temperature(t)
     top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, 0)
