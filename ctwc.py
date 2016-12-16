@@ -33,8 +33,8 @@ def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_fil
     selected_cols_filter = [ samp for index, samp in enumerate(samples) if index not in picked_indices ]
     compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
     if len(prev_samp_filter) > 0:
-        selected_cols_filter = [ samp for samp in selected_cols_filter if samp not in prev_samp_filter ]
-        compliment_cols_filter = [ samp for samp in compliment_cols_filter if samp not in prev_samp_filter ]
+        selected_cols_filter = [ samp for samp in selected_cols_filter if samp in prev_samp_filter ]
+        compliment_cols_filter = [ samp for samp in compliment_cols_filter if samp in prev_samp_filter ]
     return selected_cols_filter, compliment_cols_filter
 
 def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
