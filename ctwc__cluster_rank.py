@@ -6,7 +6,7 @@ import warnings
 import sys
 
 import math
-import ctwc__distnace_matrix
+import ctwc__distance_matrix
 import ctwc__cluster_1d
 import ctwc__data_handler
 
@@ -235,7 +235,7 @@ def filter_cols_by_top_rank(data, cols_dist, samples=None, debug=False):
 def test():
     data, otus, samples = ctwc__data_handler.get_sample_biom_table()
     tree = ctwc__data_handler.get_gg_97_otu_tree()
-    _, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
+    _, cols_dist = ctwc__distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
     picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_cols_by_top_rank(data, cols_dist, otus, True)
 
     INFO("Picked {0} indices".format(len(picked_indices)))

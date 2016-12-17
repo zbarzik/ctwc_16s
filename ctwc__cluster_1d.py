@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AgglomerativeClustering
-import ctwc__distnace_matrix, ctwc__data_handler
+import ctwc__distance_matrix, ctwc__data_handler
 
 
 # Constants
@@ -58,7 +58,7 @@ def __spc_prepare_dat_file(dist_mat):
 def __spc_get_non_masked_data_points(dist_mat):
     n = dist_mat.shape[0]
     tmp = np.zeros(dist_mat.shape)
-    tmp[dist_mat < ctwc__distnace_matrix.INF_VALUE] = 1
+    tmp[dist_mat < ctwc__distance_matrix.INF_VALUE] = 1
     np.fill_diagonal(tmp, 0.0)
     non_zero_rows = len(set(tmp.nonzero()[0]))
     INFO("Non-masked rows: {0}".format(non_zero_rows))

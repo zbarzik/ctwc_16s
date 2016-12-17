@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
-import ctwc__distnace_matrix, ctwc__cluster_rank, ctwc__data_handler, ctwc__plot
+import ctwc__distance_matrix, ctwc__cluster_rank, ctwc__data_handler, ctwc__plot
 import numpy as np
 
 def __join_submatrices_by_axis(mat_a, mat_b, axis):
@@ -46,7 +46,7 @@ def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filt
         return __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table)
 
 def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table):
-    rows_dist, _ = ctwc__distnace_matrix.get_distance_matrices(data,
+    rows_dist, _ = ctwc__distance_matrix.get_distance_matrices(data,
                                                                tree,
                                                                samples,
                                                                otus,
@@ -80,7 +80,7 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
     return (num_otus, num_samples), selected_rows_filter, compliment_rows_filter
 
 def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table):
-    _, cols_dist = ctwc__distnace_matrix.get_distance_matrices(data,
+    _, cols_dist = ctwc__distance_matrix.get_distance_matrices(data,
                                                                tree,
                                                                samples,
                                                                otus,
@@ -316,7 +316,7 @@ def ctwc_select(data, tree, samples, otus, table):
 
 def test():
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distnace_matrix.get_data(True)
+    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(True)
 
     output = ctwc_recursive_select(data, tree, samples, otus, table)
     #output = ctwc_select(data, tree, samples, otus, table)
