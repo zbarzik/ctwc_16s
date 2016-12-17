@@ -10,7 +10,7 @@ import math
 REAL_DATA = True
 
 SAMPLE_THRESHOLD = 2
-USE_LOG_XFORM = True
+USE_LOG_XFORM = False
 WEIGHTED_UNIFRAC = False
 NUM_THREADS = 32
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
@@ -19,18 +19,18 @@ UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pklz'
 SQUARE_UNIFRAC_DISTANCE = False
 INF_VALUE = 1000
 
-
 def __unifrac_prepare_entry_for_dictionary(args):
     data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
     samp_dict = {}
     for samp_ind, samp in enumerate(samples):
-        if samp in sample_filter or otu in otu_filter:
-            samp_dict[samp] = 0
+        if ((len(sample_filter) > 0 and samp not in sample_filter)
+             or
+            (len(otu_filter) > 0 and otu not in otu_filter)):
+            continue
+        if USE_LOG_XFORM:
+            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
         else:
-            if USE_LOG_XFORM:
-                samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
-            else:
-                samp_dict[samp] = data[samp_ind, otu_ind]
+            samp_dict[samp] = data[samp_ind, otu_ind]
     return {otu:samp_dict}
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
@@ -54,12 +54,15 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
     uf_dist_mat = unifrac_output[0]
     uf_samples = unifrac_output[1]
     z = np.zeros((len(samples), len(samples)))
+    z[:,:] = INF_VALUE
+    np.fill_diagonal(z, 0.0)
     for samp_ind, samp in enumerate(samples):
-        if samp not in sample_filter:
+        if samp in sample_filter or len(sample_filter) == 0:
             uf_ind = uf_samples.index(samp)
             for other_ind, other_samp in enumerate(samples):
-                uf_other_ind = uf_samples.index(other_samp)
-                z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
+                if other_samp in sample_filter or len(sample_filter) == 0:
+                    uf_other_ind = uf_samples.index(other_samp)
+                    z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
     return z
 
 def __get_precalculated_unifrac_file_if_exists(h):
@@ -79,9 +82,10 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
 
 def __increase_distance_for_filtered_samples(mat, filt):
     D = INF_VALUE # float('Inf')
-    mat[ filt ] = D
-    mat[ : , filt ] = D
-    mat[mat == 0] = D
+    mask = np.ones(mat.shape, dtype=bool)
+    mask[ filt ] = False
+    mask[ :, filt ] = False
+    mat[ mask ] = D
     np.fill_diagonal(mat, 0.0)
     return mat
 
