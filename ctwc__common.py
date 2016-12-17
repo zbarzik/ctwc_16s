@@ -31,9 +31,9 @@ def FATAL(message):
     ERROR(message)
     exit(-1)
 
-def ASSERT(condition):
+def ASSERT(predicate):
     import traceback
-    if not condition:
+    if not predicate:
         traceback.print_stack()
         ERROR("Assertion failed!")
         BP()
