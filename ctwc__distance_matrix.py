@@ -80,11 +80,17 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
     h = __calculate_hash_for_data(data, sample_filter, otu_filter)
     save_to_file(mat, UNIFRAC_DIST_FILE.format(h))
 
+def __get_mask_from_filter(mat, filt):
+    tmp_mask = np.ones(mat.shape[0], dtype=bool)
+    tmp_mask[filt] = False
+    mask = np.zeros(mat.shape, dtype=bool)
+    mask[ np.nonzero(tmp_mask == True) ] = True
+    mask[ : , np.nonzero(tmp_mask == True) ] = True
+    return mask
+
 def __increase_distance_for_filtered_samples(mat, filt):
     D = INF_VALUE # float('Inf')
-    mask = np.ones(mat.shape, dtype=bool)
-    mask[ filt ] = False
-    mask[ :, filt ] = False
+    mask = __get_mask_from_filter(mat, filt)
     mat[ mask ] = D
     np.fill_diagonal(mat, 0.0)
     return mat
@@ -162,9 +168,9 @@ def pearson_distance_rows(data, samples, otus, sample_filter, otu_filter):
 def jaccard_distance_rows(data, samples, otus, sample_filter, otu_filter):
     return __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter, 'jaccard')
 
-def __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter, metric):
+def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_filter, metric):
     DEBUG("Starting distance calculation using {0} as a metric...".format(metric))
-    data = np.copy(data)
+    data = np.copy(data_in)
     DEBUG("Filtering Samples...")
     try:
         if samples is not list:
@@ -174,8 +180,9 @@ def __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter
         cols_filter = [ samples.index(samp) for samp in sample_filter ]
     except ValueError as e:
         FATAL("Trying to filter out non-existing samples: {0}".format(str(e)))
-    for col in cols_filter:
-        data[:, col] = 0
+    mask = np.ones(data.shape, dtype=bool)
+    mask[ :, cols_filter ] = False
+    data[mask] = 0
     DEBUG("Filtering OTUs...")
     try:
         if otus is not list:
@@ -185,8 +192,9 @@ def __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter
         rows_filter = [ otus.index(otu) for otu in otu_filter ]
     except ValueError as e:
         FATAL("Trying to filter out non-existing OTUs: {0}".format(str(e)))
-    for row in rows_filter:
-        data[row, :] = 0
+    mask = np.ones(data.shape, dtype=bool)
+    mask[rows_filter] = False
+    data[mask] = 0
 
     if USE_LOG_XFORM:
         DEBUG("Log transform OTU abundance...")
@@ -198,6 +206,10 @@ def __calculate_otu_distance_rows(data, samples, otus, sample_filter, otu_filter
         res = __jaccard_distance(data)
     else:
         FATAL("Unknown metric requested: {0}".format(metric))
+
+    mask = __get_mask_from_filter(res, rows_filter)
+    res[mask] = INF_VALUE
+    np.fill_diagonal(res, 0.0)
 
     DEBUG("Finished calculating OTU distance matrix.")
     return res

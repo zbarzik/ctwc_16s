@@ -25,8 +25,8 @@ def __prepare_otu_filters_from_indices(picked_indices, otus, prev_otu_filter = [
     selected_rows_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
     compliment_rows_filter = [ otu for index, otu in enumerate(otus) if index in picked_indices ]
     if len(prev_otu_filter) > 0:
-        selected_rows_filter = [ otu for otu in selected_rows_filter if otu not in prev_otu_filter ]
-        compliment_rows_filter = [ otu for otu in compliment_rows_filter if otu not in prev_otu_filter ]
+        selected_rows_filter = [ otu for otu in selected_rows_filter if otu in prev_otu_filter ]
+        compliment_rows_filter = [ otu for otu in compliment_rows_filter if otu in prev_otu_filter ]
     return selected_rows_filter, compliment_rows_filter
 
 def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_filter = []):
