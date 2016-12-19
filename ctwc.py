@@ -39,7 +39,8 @@ def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_fil
 
 def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
     INFO("{0}: {1}".format(title, desc))
-    INFO("Input size: {0} {1}".format(len(otus) - len(rows_filter), len(samples) - len(cols_filter)))
+    INFO("Input size: {0} {1}".format(len(otus) if rows_filter is None else len(rows_filter),
+                                      len(samples) if cols_filter is None else len(cols_filter)))
     if is_rows:
         return __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table)
     else:
@@ -75,7 +76,7 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
             INFO(taxonomy)
 
     num_otus = len(picked_indices)
-    num_samples = len(samples) - len(cols_filter)
+    num_samples = len(samples) if cols_filter == None else len(cols_filter)
 
     return (num_otus, num_samples), selected_rows_filter, compliment_rows_filter
 
@@ -111,7 +112,7 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
         for row in dates:
             INFO(row)
 
-    num_otus = len(otus) - len(rows_filter)
+    num_otus = len(otus) if rows_filter == None else len(rows_filter)
     num_samples = len(picked_indices)
 
     return (num_otus, num_samples), selected_cols_filter, compliment_cols_filter
