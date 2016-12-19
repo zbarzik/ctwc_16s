@@ -44,8 +44,7 @@ def test_sample_distance_matrix(samples, otus, tree, data, table):
     data[:,::15] = 50
     indices = range(0, 36)
     samp_filter_1, _ = ctwc.__prepare_sample_filters_from_indices(indices,
-                                                               samples,
-                                                               [])
+                                                               samples)
     indices = range(36, 96)
     sample_filter, _ = ctwc.__prepare_sample_filters_from_indices(indices,
                                                                samples,
