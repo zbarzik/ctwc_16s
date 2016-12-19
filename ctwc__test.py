@@ -15,8 +15,7 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
     data[::4, :] = 50
     indices = range(36)
     otu_filter_1, _ = ctwc.__prepare_otu_filters_from_indices(indices,
-                                                           otus,
-                                                           [])
+                                                           otus)
     indices = range(36, 96)
     otu_filter, _ = ctwc.__prepare_otu_filters_from_indices(indices,
                                                          otus,
@@ -27,7 +26,6 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
                                                                samples,
                                                                otus,
                                                                otu_filter=otu_filter,
-                                                               sample_filter=[],
                                                                skip_cols=True)
 
     INFO("Test filtering...")
@@ -57,7 +55,6 @@ def test_sample_distance_matrix(samples, otus, tree, data, table):
                                                                tree,
                                                                samples,
                                                                otus,
-                                                               otu_filter=[],
                                                                sample_filter=sample_filter,
                                                                skip_rows=True)
 
@@ -69,15 +66,15 @@ def test_sample_distance_matrix(samples, otus, tree, data, table):
         else:
             ASSERT(count == 96)
 
-    #INFO("Test clustering...")
-    #picked_indices, _, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data,
-    #                                                                           cols_dist,
-    #                                                                           samples)
-    #for ind in picked_indices:
-    #    ASSERT(ind % 15 == 0)
-    #    ASSERT(ind >= 96)
+    INFO("Test clustering...")
+    picked_indices, _, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data,
+                                                                               cols_dist,
+                                                                               samples)
+    for ind in picked_indices:
+        ASSERT(ind % 15 == 0)
+        ASSERT(ind >= 96)
 
-    #INFO("Passed sample distance matrix and filtering tests")
+    INFO("Passed sample distance matrix and filtering tests")
 
 if __name__ == "__main__":
     test()

@@ -23,9 +23,9 @@ def __unifrac_prepare_entry_for_dictionary(args):
     data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
     samp_dict = {}
     for samp_ind, samp in enumerate(samples):
-        if ((len(sample_filter) > 0 and samp not in sample_filter)
+        if ((sample_filter is not None and samp not in sample_filter)
              or
-            (len(otu_filter) > 0 and otu not in otu_filter)):
+            (otu_filter is not None and otu not in otu_filter)):
             continue
         if USE_LOG_XFORM:
             samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
@@ -57,10 +57,10 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
     z[:,:] = INF_VALUE
     np.fill_diagonal(z, 0.0)
     for samp_ind, samp in enumerate(samples):
-        if samp in sample_filter or len(sample_filter) == 0:
+        if sample_filter is None or samp in sample_filter:
             uf_ind = uf_samples.index(samp)
             for other_ind, other_samp in enumerate(samples):
-                if other_samp in sample_filter or len(sample_filter) == 0:
+                if sample_filter is None or other_samp in sample_filter:
                     uf_other_ind = uf_samples.index(other_samp)
                     z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
     return z
@@ -81,6 +81,8 @@ def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_fi
     save_to_file(mat, UNIFRAC_DIST_FILE.format(h))
 
 def __get_mask_from_filter(mat, filt):
+    if filt is None:
+        return np.zeros(mat.shape, dtype=bool)
     tmp_mask = np.ones(mat.shape[0], dtype=bool)
     tmp_mask[filt] = False
     mask = np.zeros(mat.shape, dtype=bool)
@@ -97,10 +99,6 @@ def __increase_distance_for_filtered_samples(mat, filt):
 
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
     DEBUG("Starting unifrac_distance_rows...")
-    if sample_filter is None:
-        sample_filter = []
-    if otu_filter is None:
-        otu_filter = []
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         from cogent.maths.unifrac.fast_unifrac import fast_unifrac
@@ -139,8 +137,9 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
 
     DEBUG("Setting distances for filtered items to large values...")
-    filter_indices = [ ind for ind, samp in enumerate(samples) if samp in sample_filter ]
-    mat = __increase_distance_for_filtered_samples(mat, filter_indices)
+    if sample_filter is not None:
+        filter_indices = [ ind for ind, samp in enumerate(samples) if samp in sample_filter ]
+        mat = __increase_distance_for_filtered_samples(mat, filter_indices)
 
     DEBUG("Fixing NaN/inf values...")
     mat = np.nan_to_num(mat)
@@ -171,30 +170,38 @@ def jaccard_distance_rows(data, samples, otus, sample_filter, otu_filter):
 def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_filter, metric):
     DEBUG("Starting distance calculation using {0} as a metric...".format(metric))
     data = np.copy(data_in)
+
     DEBUG("Filtering Samples...")
     try:
         if samples is not list:
             samples = samples.tolist()
-        if sample_filter is None:
-            sample_filter = []
-        cols_filter = [ samples.index(samp) for samp in sample_filter ]
+        if sample_filter is not None:
+            cols_filter = [ samples.index(samp) for samp in sample_filter ]
+        else:
+            cols_filter = None
     except ValueError as e:
         FATAL("Trying to filter out non-existing samples: {0}".format(str(e)))
-    mask = np.ones(data.shape, dtype=bool)
-    mask[ :, cols_filter ] = False
-    data[mask] = 0
+
+    if cols_filter is not None:
+        mask = np.ones(data.shape, dtype=bool)
+        mask[ :, cols_filter ] = False
+        data[mask] = 0
+
     DEBUG("Filtering OTUs...")
     try:
         if otus is not list:
             otus = otus.tolist()
-        if otu_filter is None:
-            otu_filter = []
-        rows_filter = [ otus.index(otu) for otu in otu_filter ]
+        if otu_filter is not None:
+            rows_filter = [ otus.index(otu) for otu in otu_filter ]
+        else:
+            rows_filter = None
     except ValueError as e:
         FATAL("Trying to filter out non-existing OTUs: {0}".format(str(e)))
-    mask = np.ones(data.shape, dtype=bool)
-    mask[rows_filter] = False
-    data[mask] = 0
+
+    if rows_filter is not None:
+        mask = np.ones(data.shape, dtype=bool)
+        mask[rows_filter] = False
+        data[mask] = 0
 
     if USE_LOG_XFORM:
         DEBUG("Log transform OTU abundance...")
