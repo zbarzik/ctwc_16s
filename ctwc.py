@@ -210,7 +210,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                                              table,
                                                              False)
         iteration_results["Iteration {0}".format(step)] = result
-        if len(step_samp_filter) < len(sample_compliment) and len(step_samp_filter) > 0:
+        if sample_filter is None or (len(step_samp_filter) < len(sample_compliment) and len(step_samp_filter) > 0):
             __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                       otu_filter,
                                       otu_compliment,
