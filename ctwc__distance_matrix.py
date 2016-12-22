@@ -10,7 +10,7 @@ import math
 REAL_DATA = True
 
 SAMPLE_THRESHOLD = 2
-USE_LOG_XFORM = False
+USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
 NUM_THREADS = 32
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
@@ -18,6 +18,7 @@ ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
 UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pklz'
 SQUARE_UNIFRAC_DISTANCE = False
 INF_VALUE = 1000
+ALLOW_CACHING = False
 
 def __unifrac_prepare_entry_for_dictionary(args):
     data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
@@ -76,6 +77,8 @@ def __get_precalculated_unifrac_file_if_exists_for_data(data, sample_filter, otu
     return __get_precalculated_unifrac_file_if_exists(h)
 
 def __save_calculated_unifrac_file_and_hash_for_data(data, sample_filter, otu_filter, mat):
+    if not ALLOW_CACHING:
+        return
     DEBUG("Saving calculated Unifrac distance matrix to file...")
     h = __calculate_hash_for_data(data, sample_filter, otu_filter)
     save_to_file(mat, UNIFRAC_DIST_FILE.format(h))

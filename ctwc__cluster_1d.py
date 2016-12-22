@@ -142,7 +142,7 @@ def __spc_parse_temperature_results(non_masked_data_points):
         DEBUG(line)
 
     #line = __pick_line_by_num_clusters(lines)
-    lower_threshold = max(25.0, non_masked_data_points / 200.0) # 25 or 0.5%
+    lower_threshold = 25.0 # Disregard clusters smaller than this
     upper_threshold = min(10000.0, non_masked_data_points / 2.0) # 50% or 10000
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
@@ -172,8 +172,7 @@ def __spc_clear_temporary_files():
     map(os.remove, glob(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + '*'))
 
 def __get_precalculated_spc_file_if_exists(h):
-    return None
-    #return load_from_file(SPC_CLUSTER_FILE.format(h))
+    return load_from_file(SPC_CLUSTER_FILE.format(h))
 
 def __calculate_hash_for_data(data, dist_matrix):
     return hash( data.tostring() + str(dist_matrix) )
@@ -183,6 +182,8 @@ def __get_precalculated_spc_file_if_exists_for_data(data, dist_matrix):
     return __get_precalculated_spc_file_if_exists(h)
 
 def __save_calculated_spc_file_and_hash_for_data(data, dist_matrix, cluster, log):
+    if not ALLOW_CACHING:
+        return
     DEBUG("Saving calculated SPC cluster to file...")
     h = __calculate_hash_for_data(data, dist_matrix)
     save_to_file((cluster, log), SPC_CLUSTER_FILE.format(h))
