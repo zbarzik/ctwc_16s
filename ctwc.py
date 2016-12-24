@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 
-import ctwc__distance_matrix, ctwc__cluster_rank, ctwc__data_handler, ctwc__plot
+import ctwc__distance_matrix, ctwc__cluster_rank, ctwc__data_handler, ctwc__plot, ctwc__metadata_analysis
 import numpy as np
 
 def __join_submatrices_by_axis(mat_a, mat_b, axis):
@@ -70,7 +70,7 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
 
     if table is not None:
         picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
-        taxonomies = ctwc__data_handler.get_taxonomies_for_otus(picked_otus)
+        taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
         INFO("Picked OTUs:")
         for taxonomy in taxonomies:
             INFO(taxonomy)
@@ -107,7 +107,7 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
     if table is not None:
         picked_samples = ctwc__data_handler.get_samples_by_indices(picked_indices, table)
         DEBUG(picked_samples)
-        dates = ctwc__data_handler.get_collection_dates_for_samples(picked_samples)
+        dates = ctwc__metadata_analysis.get_collection_dates_for_samples(picked_samples)
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
