@@ -1,7 +1,6 @@
 #!/usr/bin/python
 from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
 import warnings
-
 import numpy as np
 
 def __get_default_tree(otus):
@@ -118,42 +117,6 @@ def get_otus_by_indices(indices, table):
         otus.append(__get_otu_by_index(index, table))
     return map(str, otus)
 
-def get_collection_dates_for_samples(samples):
-    dates = []
-    for samp in samples:
-        dates.append(get_sample_colletion_date(samp))
-    return dates
-
-def get_sample_colletion_date(sample):
-    import csv
-    with open('10485_20160420-093403.txt', 'r') as md_file:
-        metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
-        timestamp_index = -1
-        for row in metadata:
-            if timestamp_index == -1:
-                for index, item in enumerate(row):
-                    if item == "collection_timestamp":
-                        timestamp_index = index
-                        break
-            elif sample in row:
-                ts = row[timestamp_index].strip()
-                return ts
-    return None
-
-def get_taxonomies_for_otus(otus):
-    taxonomies = []
-    for otu in otus:
-        taxonomies.append(get_otu_taxonomy(otu))
-    return taxonomies
-
-def get_otu_taxonomy(otu):
-    with open('97_otu_taxonomy.txt', 'r') as tax_fn:
-        lines = tax_fn.readlines()
-    for line in lines:
-        if int(line.split()[0]) == int(otu):
-            return line
-
-
 def test():
     samples = __get_default_samples()
     otus = __get_default_otus()
@@ -164,7 +127,6 @@ def test():
     DEBUG("OTUs:\n" + str(otus))
     DEBUG("Data:\n" + str(data))
     get_sample_biom_table()
-
 
 if __name__ == "__main__":
     test()
