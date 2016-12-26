@@ -34,7 +34,7 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
         if row_ind < 36 or row_ind >= 96:
             ASSERT(count == data.shape[0] - 1)
         else:
-            ASSERT(count == 60)
+            ASSERT(count == data.shape[0] - 60)
 
     INFO("Test OTU clustering...")
     picked_indices, _, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data,
