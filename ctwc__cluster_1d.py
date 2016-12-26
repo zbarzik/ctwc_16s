@@ -73,7 +73,7 @@ def __spc_prepare_edge_file(n):
            buff.join("{0} {1}\n".format(r, c))
 
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
-        edfe_f.write(buff)
+        edge_f.write(buff)
 
 def __spc_run_and_wait_for_completion():
     from subprocess import call
