@@ -16,7 +16,7 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
     indices = range(36, data.shape[0])
     otu_filter_1, _ = ctwc.__prepare_otu_filters_from_indices(indices,
                                                               otus)
-    indices = range(36, 96)
+    indices = range(36, 196)
     otu_filter, _ = ctwc.__prepare_otu_filters_from_indices(indices,
                                                             otus,
                                                             otu_filter_1)
@@ -31,10 +31,10 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
     INFO("Test OTU filtering...")
     for row_ind, row in enumerate(rows_dist):
         count = len( [ cell for cell in row if cell == ctwc__distance_matrix.INF_VALUE ] )
-        if row_ind < 36 or row_ind >= 96:
+        if row_ind < 36 or row_ind >= 196:
             ASSERT(count == data.shape[0] - 1)
         else:
-            ASSERT(count == data.shape[0] - 60)
+            ASSERT(count == data.shape[0] - 160)
 
     INFO("Test OTU clustering...")
     picked_indices, _, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data,
@@ -43,7 +43,7 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
 
     for ind in picked_indices:
         ASSERT(ind % 3 == 0)
-        ASSERT(ind >= 36 and ind < 96)
+        ASSERT(ind >= 36 and ind < 196)
 
     INFO("Passed OTU distance matrix and filtering tests")
 
