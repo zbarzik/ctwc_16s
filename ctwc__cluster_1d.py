@@ -14,7 +14,7 @@ SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
 SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
 SPC_CLUSTER_FILE = './spc_cluster-{0}.pklz'
-ALLOW_CACHING = False
+ALLOW_CACHING = True
 
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1).
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
@@ -49,12 +49,12 @@ WriteCorFile|
         run_f.write(run_file)
 
 def __spc_prepare_dat_file(dist_mat):
-    buff = ""
+    lines = []
     for r in range(dist_mat.shape[0]):
         for c in range(dist_mat.shape[1]):
-            buff.join("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
+            lines.append("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat", 'w+') as fn:
-        fn.write(buff)
+        fn.write("".join(lines))
     return dist_mat.shape[0]
 
 def __spc_get_non_masked_data_points(dist_mat):
@@ -67,13 +67,13 @@ def __spc_get_non_masked_data_points(dist_mat):
     return non_zero_rows
 
 def __spc_prepare_edge_file(n):
-    buff = ""
+    lines = []
     for r in range(1, n):
        for c in range(1, r):
-           buff.join("{0} {1}\n".format(r, c))
+           lines.append("{0} {1}\n".format(r, c))
 
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
-        edge_f.write(buff)
+        edge_f.write("".join(lines))
 
 def __spc_run_and_wait_for_completion():
     from subprocess import call

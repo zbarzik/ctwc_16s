@@ -18,7 +18,7 @@ ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
 UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pklz'
 SQUARE_UNIFRAC_DISTANCE = False
 INF_VALUE = 1000
-ALLOW_CACHING = False
+ALLOW_CACHING = True
 
 def __unifrac_prepare_entry_for_dictionary(args):
     data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
