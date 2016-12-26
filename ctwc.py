@@ -21,19 +21,25 @@ def __sort_matrix_rows_by_selection(mat, selection):
 def __sort_matrix_cols_by_selection(mat, selection):
     return __sort_matrix_rows_by_selection(mat.transpose(), selection).transpose()
 
+"""
+Filter OTUs by picked indices - mask out all entries EXCEPT the ones noted by the picked indices.
+Compliment is from the previous filter (if provided).
+"""
 def __prepare_otu_filters_from_indices(picked_indices, otus, prev_otu_filter = None):
-    selected_rows_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
-    compliment_rows_filter = [ otu for index, otu in enumerate(otus) if index in picked_indices ]
+    selected_rows_filter = [ otu for index, otu in enumerate(otus) if index in picked_indices ]
+    compliment_rows_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
     if prev_otu_filter is not None:
-        selected_rows_filter = [ otu for otu in selected_rows_filter if otu in prev_otu_filter ]
         compliment_rows_filter = [ otu for otu in compliment_rows_filter if otu in prev_otu_filter ]
     return selected_rows_filter, compliment_rows_filter
 
+"""
+Filter samples by picked indices - mask out all entries EXCEPT the ones noted by the picked indices.
+Compliment is from the previous filter (if provided).
+"""
 def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_filter = None):
-    selected_cols_filter = [ samp for index, samp in enumerate(samples) if index not in picked_indices ]
-    compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
+    selected_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
+    compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index not in picked_indices ]
     if prev_samp_filter is not None:
-        selected_cols_filter = [ samp for samp in selected_cols_filter if samp in prev_samp_filter ]
         compliment_cols_filter = [ samp for samp in compliment_cols_filter if samp in prev_samp_filter ]
     return selected_cols_filter, compliment_cols_filter
 
@@ -75,7 +81,7 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
         for taxonomy in taxonomies:
             INFO(taxonomy)
 
-    num_otus = len(picked_indices)
+    num_otus = len(selected_rows_filter)
     num_samples = len(samples) if cols_filter == None else len(cols_filter)
 
     return (num_otus, num_samples), selected_rows_filter, compliment_rows_filter
@@ -113,7 +119,7 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
             INFO(row)
 
     num_otus = len(otus) if rows_filter == None else len(rows_filter)
-    num_samples = len(picked_indices)
+    num_samples = len(selected_cols_filter)
 
     return (num_otus, num_samples), selected_cols_filter, compliment_cols_filter
 

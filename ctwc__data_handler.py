@@ -78,13 +78,14 @@ def __add_suffix_to_sample_ids(table, suffix):
         table._sample_index[samp_] = table._sample_index[samp]
         table._sample_index.pop(samp, None)
 
-def get_sample_biom_table():
+def get_sample_biom_table(full_set=True):
     tables = []
     tables.append(get_biom_table_from_file('milk_3572_otu_table.json'))
-    tables.append(get_biom_table_from_file('milk_3573_otu_table.json'))
-    tables.append(get_biom_table_from_file('milk_3574_otu_table.json'))
-    tables.append(get_biom_table_from_file('milk_3575_otu_table.json'))
-    tables.append(get_biom_table_from_file('milk_3576_otu_table.json'))
+    if full_set:
+        tables.append(get_biom_table_from_file('milk_3573_otu_table.json'))
+        tables.append(get_biom_table_from_file('milk_3574_otu_table.json'))
+        tables.append(get_biom_table_from_file('milk_3575_otu_table.json'))
+        tables.append(get_biom_table_from_file('milk_3576_otu_table.json'))
     table = tables[0]
     for ind, tab in enumerate(tables, 1):
         INFO("Dataset part {0} size: {1}".format(ind, tab.shape))
