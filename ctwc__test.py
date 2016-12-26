@@ -6,7 +6,7 @@ import numpy as np
 
 def test():
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(True)
+    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=False)
     test_otu_distance_matrix(samples, otus, tree, data, table)
     test_sample_distance_matrix(samples, otus, tree, data, table)
 
@@ -31,7 +31,7 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
     INFO("Test OTU filtering...")
     for row_ind, row in enumerate(rows_dist):
         count = len( [ cell for cell in row if cell == ctwc__distance_matrix.INF_VALUE ] )
-        if row_ind >= 300::
+        if row_ind >= 300:
             ASSERT(count == data.shape[0] - 1)
         else:
             ASSERT(count == 96)
