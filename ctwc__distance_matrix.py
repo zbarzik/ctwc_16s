@@ -26,7 +26,7 @@ def __unifrac_prepare_entry_for_dictionary(args):
     for samp_ind, samp in enumerate(samples):
         if ((sample_filter is not None and not has_value(sample_filter, samp))
              or
-            (otu_filter is not None and not has_value(otu_filter, otu)):
+            (otu_filter is not None and not has_value(otu_filter, otu))):
             continue
         if USE_LOG_XFORM:
             samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
