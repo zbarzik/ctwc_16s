@@ -49,10 +49,12 @@ WriteCorFile|
         run_f.write(run_file)
 
 def __spc_prepare_dat_file(dist_mat):
+    buff = ""
+    for r in range(dist_mat.shape[0]):
+        for c in range(dist_mat.shape[1]):
+            buff.join("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat", 'w+') as fn:
-        for r in range(dist_mat.shape[0]):
-            for c in range(dist_mat.shape[1]):
-                fn.write("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
+        fn.write(buff)
     return dist_mat.shape[0]
 
 def __spc_get_non_masked_data_points(dist_mat):
@@ -65,10 +67,13 @@ def __spc_get_non_masked_data_points(dist_mat):
     return non_zero_rows
 
 def __spc_prepare_edge_file(n):
+    buff = ""
+    for r in range(1, n):
+       for c in range(1, r):
+           buff.join("{0} {1}\n".format(r, c))
+
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
-        for r in range(1, n):
-            for c in range(1, r):
-                edge_f.write("{0} {1}\n".format(r, c))
+        edfe_f.write(buff)
 
 def __spc_run_and_wait_for_completion():
     from subprocess import call
