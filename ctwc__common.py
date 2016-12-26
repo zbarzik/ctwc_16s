@@ -3,6 +3,7 @@
 import logging, pdb
 import cPickle, gzip
 import numpy
+import bisect
 
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
@@ -80,6 +81,14 @@ def load_from_file(filename, with_mat=False, mat_fn=None):
     except Exception as ex:
         DEBUG("Error trying to read mat_{0} file: {1}:".format(mat_fn, str(ex)))
     return obj, mat
+
+def has_value(sorted_list, value):
+    if sorted_list is None:
+        return False
+    i = bisect.bisect_left(sorted_list, value)
+    if i != len(sorted_list) and sorted_list[i] == value:
+        return True
+    return False
 
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',

@@ -24,24 +24,26 @@ def __sort_matrix_cols_by_selection(mat, selection):
 """
 Filter OTUs by picked indices - mask out all entries EXCEPT the ones noted by the picked indices.
 Compliment is from the previous filter (if provided).
+All output is SORTED.
 """
 def __prepare_otu_filters_from_indices(picked_indices, otus, prev_otu_filter = None):
     selected_rows_filter = [ otu for index, otu in enumerate(otus) if index in picked_indices ]
     compliment_rows_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
     if prev_otu_filter is not None:
         compliment_rows_filter = [ otu for otu in compliment_rows_filter if otu in prev_otu_filter ]
-    return selected_rows_filter, compliment_rows_filter
+    return sorted(selected_rows_filter), sorted(compliment_rows_filter)
 
 """
 Filter samples by picked indices - mask out all entries EXCEPT the ones noted by the picked indices.
 Compliment is from the previous filter (if provided).
+All output is SORTED.
 """
 def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_filter = None):
     selected_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
     compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index not in picked_indices ]
     if prev_samp_filter is not None:
         compliment_cols_filter = [ samp for samp in compliment_cols_filter if samp in prev_samp_filter ]
-    return selected_cols_filter, compliment_cols_filter
+    return sorted(selected_cols_filter), sorted(compliment_cols_filter)
 
 def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
     INFO("{0}: {1}".format(title, desc))
@@ -176,12 +178,12 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
         iteration_results["Iteration {0}".format(step)] = result
         if sample_filter is None or (len(step_samp_filter) > 0 and len(step_samp_filter) < len(sample_filter)):
             __ctwc_recursive_iteration(data, tree, samples, otus, table,
-                                      otu_filter,
-                                      otu_compliment,
-                                      step_samp_filter,
-                                      step_samp_compliment,
-                                      step,
-                                      iteration_results)
+                                       otu_filter,
+                                       otu_compliment,
+                                       step_samp_filter,
+                                       step_samp_compliment,
+                                       step,
+                                       iteration_results)
 
     if do_otus:
         step = __ctwc_recursive__get_next_step(iteration_ind, 1)
@@ -197,12 +199,12 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
         iteration_results["Iteration {0}".format(step)] = result
         if otu_filter is None or (len(step_otu_filter) > 0 and len(step_otu_filter) < len(otu_filter)):
             __ctwc_recursive_iteration(data, tree, samples, otus, table,
-                                      step_otu_filter,
-                                      step_otu_compliment,
-                                      sample_filter,
-                                      sample_compliment,
-                                      step,
-                                      iteration_results)
+                                       step_otu_filter,
+                                       step_otu_compliment,
+                                       sample_filter,
+                                       sample_compliment,
+                                       step,
+                                       iteration_results)
 
     step = __ctwc_recursive__get_next_step(iteration_ind, 2)
     if step is not None and do_samples:
@@ -218,12 +220,12 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
         iteration_results["Iteration {0}".format(step)] = result
         if sample_filter is None or (len(step_samp_filter) < len(sample_compliment) and len(step_samp_filter) > 0):
             __ctwc_recursive_iteration(data, tree, samples, otus, table,
-                                      otu_filter,
-                                      otu_compliment,
-                                      step_samp_filter,
-                                      step_samp_compliment,
-                                      step,
-                                      iteration_results)
+                                       otu_filter,
+                                       otu_compliment,
+                                       step_samp_filter,
+                                       step_samp_compliment,
+                                       step,
+                                       iteration_results)
 
     step = __ctwc_recursive__get_next_step(iteration_ind, 3)
     if step is not None and do_otus:
@@ -239,12 +241,12 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
         iteration_results["Iteration {0}".format(step)] = result
         if otu_compliment is None or (len(step_otu_filter) < len(otu_compliment) and len(step_otu_filter) > 0):
             __ctwc_recursive_iteration(data, tree, samples, otus, table,
-                                      step_otu_filter,
-                                      step_otu_compliment,
-                                      sample_filter,
-                                      sample_compliment,
-                                      step,
-                                      iteration_results)
+                                       step_otu_filter,
+                                       step_otu_compliment,
+                                       sample_filter,
+                                       sample_compliment,
+                                       step,
+                                       iteration_results)
 
 
 def ctwc_select(data, tree, samples, otus, table):

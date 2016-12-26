@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,save_to_file,load_from_file
+from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,save_to_file,load_from_file,has_value
 from multiprocessing import Pool
 import warnings
 import ctwc__data_handler
@@ -24,9 +24,9 @@ def __unifrac_prepare_entry_for_dictionary(args):
     data, otu_ind, otu, otus, otu_filter, samples, sample_filter = args
     samp_dict = {}
     for samp_ind, samp in enumerate(samples):
-        if ((sample_filter is not None and samp not in sample_filter)
+        if ((sample_filter is not None and not has_value(sample_filter, samp))
              or
-            (otu_filter is not None and otu not in otu_filter)):
+            (otu_filter is not None and not has_value(otu_filter, otu)):
             continue
         if USE_LOG_XFORM:
             samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
@@ -58,10 +58,10 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
     z[:,:] = INF_VALUE
     np.fill_diagonal(z, 0.0)
     for samp_ind, samp in enumerate(samples):
-        if sample_filter is None or samp in sample_filter:
+        if sample_filter is None or has_value(sample_filter, samp):
             uf_ind = uf_samples.index(samp)
             for other_ind, other_samp in enumerate(samples):
-                if sample_filter is None or other_samp in sample_filter:
+                if sample_filter is None or has_value(sample_filter, other_samp):
                     uf_other_ind = uf_samples.index(other_samp)
                     z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
     return z
@@ -141,7 +141,7 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
 
     DEBUG("Setting distances for filtered items to large values...")
     if sample_filter is not None:
-        filter_indices = [ ind for ind, samp in enumerate(samples) if samp in sample_filter ]
+        filter_indices = [ ind for ind, samp in enumerate(samples) if has_value(sample_filter, samp) ]
         mat = __increase_distance_for_filtered_samples(mat, filter_indices)
 
     DEBUG("Fixing NaN/inf values...")
@@ -179,7 +179,7 @@ def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_fil
         if samples is not list:
             samples = samples.tolist()
         if sample_filter is not None:
-            cols_filter = [ samples.index(samp) for samp in sample_filter ]
+            cols_filter = [ samples.index(samp) for has_value(sample_filter, samp) ]
         else:
             cols_filter = None
     except ValueError as e:

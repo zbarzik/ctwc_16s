@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,has_value
 import csv, bisect
 
 TAXA_LINE_STRUCUTURE = ["otu", "kingdom", "phylum", "class", "order", "family", "genus", "species"]
@@ -23,19 +23,13 @@ def __generate_histogram_for_taxonomy_rank(rank, taxa):
             d[entry[ind]] += 1
     return d
 
-def __has_value(sorted_list, value):
-    i = bisect.bisect_left(sorted_list, value)
-    if i != len(sorted_list) and sorted_list[i] == value:
-        return True
-    return False
-
 def get_taxonomies_for_otus(otus):
     with open(TAXA_MD_FILE, 'r') as tax_fn:
         lines = tax_fn.readlines()
     taxa = []
     otus_s = sorted(otus)
     for line in lines:
-        if __has_value(otus_s, int(line.split()[0])):
+        if has_value(otus_s, int(line.split()[0])):
             taxa.append(line)
     return taxa
 
@@ -57,7 +51,7 @@ def get_field_for_samples(field, samples):
     with open(SAMPLES_MD_FILE, 'r') as md_file:
         metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
         for row in metadata:
-            if __has_value(samples_s, row[sample_index].strip()):
+            if has_value(samples_s, row[sample_index].strip()):
                 field = row[field_index].strip()
                 out.append(field)
     return out
@@ -69,7 +63,7 @@ def get_metadata_for_samples(samples_list):
     with open(SAMPLES_MD_FILE, 'r') as md_file:
         metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
         for row in metadata:
-            if __has_value(samples_s, row[sample_index].strip()):
+            if has_value(samples_s, row[sample_index].strip()):
                 out.append(row)
     return out
 

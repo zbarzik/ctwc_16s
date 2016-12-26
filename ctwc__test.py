@@ -42,7 +42,6 @@ def test_otu_distance_matrix(samples, otus, tree, data, table):
                                                                                otus)
 
     for ind in picked_indices:
-        ASSERT(ind % 3 == 0)
         ASSERT(ind >= 36 and ind < 196)
 
     INFO("Passed OTU distance matrix and filtering tests")
@@ -79,7 +78,6 @@ def test_sample_distance_matrix(samples, otus, tree, data, table):
                                                                                cols_dist,
                                                                                samples)
     for ind in picked_indices:
-        ASSERT(ind % 3 == 0)
         ASSERT(ind >= 36 and ind < 196)
 
     INFO("Passed sample distance matrix and filtering tests")
