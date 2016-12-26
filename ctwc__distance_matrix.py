@@ -179,7 +179,7 @@ def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_fil
         if samples is not list:
             samples = samples.tolist()
         if sample_filter is not None:
-            cols_filter = [ samples.index(samp) for has_value(sample_filter, samp) ]
+            cols_filter = [ samples.index(samp) for samp in sample_filter ]
         else:
             cols_filter = None
     except ValueError as e:
