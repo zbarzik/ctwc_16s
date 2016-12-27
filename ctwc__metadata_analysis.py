@@ -29,7 +29,7 @@ def get_taxonomies_for_otus(otus):
     taxa = []
     otus_s = sorted(otus)
     for line in lines:
-        if has_value(otus_s, int(line.split()[0])):
+        if has_value(otus_s, line.split()[0]):
             taxa.append(line)
     return taxa
 
@@ -47,7 +47,7 @@ def get_field_for_samples(field, samples):
     out = []
     samples_s = sorted(samples)
     field_index = SAMPLES_LINE_STRUCTURE.index("collection_timestamp")
-    sample_index= SAMPLES_LINE_STRUCTURE.index("sample_name")
+    sample_index = SAMPLES_LINE_STRUCTURE.index("sample_name")
     with open(SAMPLES_MD_FILE, 'r') as md_file:
         metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
         for row in metadata:
@@ -59,7 +59,7 @@ def get_field_for_samples(field, samples):
 def get_metadata_for_samples(samples_list):
     out = []
     samples_s = sorted(samples_list)
-    sample_index= SAMPLES_LINE_STRUCTURE.index("sample_name")
+    sample_index = SAMPLES_LINE_STRUCTURE.index("sample_name")
     with open(SAMPLES_MD_FILE, 'r') as md_file:
         metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
         for row in metadata:
@@ -77,23 +77,56 @@ def __generate_histogram_for_samples_field(field, samples_md):
             d[entry[ind]] += 1
     return d
 
-def calculate_sample_histogram(samples_list):
+def calculate_samples_histogram(samples_list):
     md = get_metadata_for_samples(samples_list)
     hist = dict()
     for field in SAMPLES_LINE_STRUCTURE[1:]:
         hist[field] = __generate_histogram_for_samples_field(field, md)
     return hist
 
+def calculate_samples_distribution(samples_list):
+    percentiles = dict()
+    samp_hist = calculate_samples_histogram(samples_list)
+    for field in SAMPLES_LINE_STRUCTURE[1:]:
+        total = 0.0
+        for key in samp_hist[field].keys():
+            total += samp_hist[field][key]
+        ASSERT(total > 0) # can't happen - at least one key has to exist when iterating on samples
+        percentiles[field] = [ (key, (100.0 * samp_hist[field][key])/total) for key in samp_hist[field].keys() ]
+    return percentiles
+
+def calculate_otus_distribution(otus_list):
+    percentiles = dict()
+    otu_hist = calculate_otus_histogram(otus_list)
+    for rank in TAXA_LINE_STRUCUTURE[1:]:
+        total = 0.0
+        for key in otu_hist[rank].keys():
+            total += otu_hist[rank][key]
+        ASSERT(total > 0) # can't happen - every OTU has to be a part of at least one classification
+        percentiles[rank] = [ (key, (100.0 * otu_hist[rank][key])/total) for key in otu_hist[rank].keys() ]
+        sum = 0
+        for item in percentiles[rank]:
+            sum += item[1]
+        ASSERT(round(sum) == 100.0)
+    return percentiles
+
+
 def test():
     with open(TAXA_MD_FILE, 'r') as tax_fn:
         lines = tax_fn.readlines()
-    otus_list = map(lambda x: int(x.split()[0]), lines)
+    otus_list = map(lambda x: x.split()[0], lines)
     otus_hist = calculate_otus_histogram(otus_list)
+    dist = calculate_otus_distribution(otus_list)
+    for rank in dist.keys():
+        print "{0}: {1}".format(rank, dist[rank])
 
-    with open(TAXA_MD_FILE, 'r') as samp_fn:
+    with open(SAMPLES_MD_FILE, 'r') as samp_fn:
         lines = samp_fn.readlines()
     samples_list = map(lambda x: x.split()[0], lines)[1:]
-    samples_hist = calculate_sample_histogram(samples_list)
+    samples_hist = calculate_samples_histogram(samples_list)
+    dist = calculate_samples_distribution(samples_list)
+    for field in dist.keys():
+        print "{0}: {1}".format(field, dist[field])
 
 if __name__ == "__main__":
     test()
