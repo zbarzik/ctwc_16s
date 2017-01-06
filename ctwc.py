@@ -45,6 +45,13 @@ def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_fil
         compliment_cols_filter = [ samp for samp in compliment_cols_filter if samp in prev_samp_filter ]
     return sorted(selected_cols_filter), sorted(compliment_cols_filter)
 
+__full_samples_dist = None
+def __get_full_sample_dist(samples):
+    if globals()['__full_samples_dist'] is None:
+        full_samples_list, _ = __prepare_sample_filters_from_indices(range(len(samples)), samples)
+        globals()['__full_samples_dist'] = ctwc__metadata_analysis.calculate_samples_distribution(full_samples_list)
+    return globals()['__full_samples_dist']
+
 def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows):
     INFO("{0}: {1}".format(title, desc))
     INFO("Input size: {0} {1}".format(len(otus) if rows_filter is None else len(rows_filter),
@@ -119,6 +126,10 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
         INFO("Collection dates for selected samples:")
         for row in dates:
             INFO(row)
+        ref_dist = __get_full_sample_dist(samples)
+        sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(selected_cols_filter)
+        p_vals = ctwc__metadata_analysis.calculate_samples_p_values(sel_dist, ref_dist)
+        INFO("P Values: {0}".format(p_vals))
 
     num_otus = len(otus) if rows_filter == None else len(rows_filter)
     num_samples = len(selected_cols_filter)
