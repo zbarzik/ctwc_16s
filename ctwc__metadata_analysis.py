@@ -13,32 +13,37 @@ SAMPLES_MD_FILE = "10485_20160420-093403.txt"
 TAXA_MD_FILE = "97_otu_taxonomy.txt"
 TEST = False
 
-def __generate_histogram_for_taxonomy_rank(rank, taxa):
+"""
+filt is used for testing, allowing only a defined collection of species.
+Note that for performance, filt should be a set.
+"""
+def __generate_histogram_for_taxonomy_rank(rank, taxa, filt=None, filt_rank='species'):
     d = dict()
     ind = TAXA_LINE_STRUCUTURE.index(rank)
+    filter_ind = TAXA_LINE_STRUCUTURE.index(filt_rank)
     for e in taxa:
-        entry = e.split()
-        if not d.has_key(entry[ind].strip()):
-            d[entry[ind]] = 1
-        else:
-            d[entry[ind]] += 1
+        entry = [ en.strip(';') for en in e.split() ]
+        if filt is not None:
+            if entry[filter_ind] not in filt:
+                continue
+        d[entry[ind]] = d[entry[ind]] + 1 if d.has_key(entry[ind]) else 1
     return d
 
 def get_taxonomies_for_otus(otus):
     with open(TAXA_MD_FILE, 'r') as tax_fn:
         lines = tax_fn.readlines()
     taxa = []
-    otus_s = sorted(otus)
+    otus_s = set(otus)
     for line in lines:
-        if has_value(otus_s, line.split()[0].strip()):
+        if line.split()[0].strip() in otus_s:
             taxa.append(line)
     return taxa
 
-def calculate_otus_histogram(otus_list):
+def calculate_otus_histogram(otus_list, filt=None, filt_rank='species'):
     taxa = get_taxonomies_for_otus(otus_list)
     hist = dict()
     for rank in TAXA_LINE_STRUCUTURE[1:]:
-        hist[rank] = __generate_histogram_for_taxonomy_rank(rank, taxa)
+        hist[rank] = __generate_histogram_for_taxonomy_rank(rank, taxa, filt, filt_rank)
     return hist
 
 def get_collection_dates_for_samples(samples):
@@ -46,54 +51,52 @@ def get_collection_dates_for_samples(samples):
 
 def get_field_for_samples(field, samples):
     out = []
-    samples_s = sorted(samples)
+    samples_s = set(samples)
     field_index = SAMPLES_LINE_STRUCTURE.index("collection_timestamp")
     sample_index = SAMPLES_LINE_STRUCTURE.index("sample_name")
     with open(SAMPLES_MD_FILE, 'r') as md_file:
         metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
         for row in metadata:
-            if has_value(samples_s, row[sample_index].strip()):
+            if row[sample_index].strip() in samples_s:
                 field = row[field_index].strip()
                 out.append(field)
     return out
 
 def get_metadata_for_samples(samples_list):
     out = []
-    samples_s = sorted(samples_list)
+    samples_s = set(samples_list)
     sample_index = SAMPLES_LINE_STRUCTURE.index("sample_name")
     with open(SAMPLES_MD_FILE, 'r') as md_file:
         metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
         for row in metadata:
-            if has_value(samples_s, row[sample_index].strip()):
+            if row[sample_index].strip() in samples_s:
                 out.append(row)
     return out
 
-def __generate_histogram_for_samples_field(field, samples_md):
+def __generate_histogram_for_samples_field(field, samples_md, filt=None, filt_field='bactoscan'):
     d = dict()
     ind = SAMPLES_LINE_STRUCTURE.index(field)
+    filter_ind = SAMPLES_LINE_STRUCTURE.index(filt_field)
     for entry in samples_md:
-        if not d.has_key(entry[ind]):
-            d[entry[ind]] = 1
-        else:
-            d[entry[ind]] += 1
+        if filt is not None:
+            if entry[filter_ind] not in filt:
+                continue
+        d[entry[ind]] = d[entry[ind]] + 1 if d.has_key(entry[ind]) else 1
     return d
 
-def calculate_samples_histogram(samples_list):
+def calculate_samples_histogram(samples_list, filt=None, filt_field='bactoscan'):
     md = get_metadata_for_samples(samples_list)
     hist = dict()
     for field in SAMPLES_LINE_STRUCTURE[1:]:
-        hist[field] = __generate_histogram_for_samples_field(field, md)
+        hist[field] = __generate_histogram_for_samples_field(field, md, filt, filt_field)
     return hist
 
 def calculate_samples_distribution(samples_list):
     samp_hist = calculate_samples_histogram(samples_list)
     return __calculate_samples_distribution_from_histogram(samp_hist)
 
-def __calculate_filtered_samples_distribution(samples_list, field, filt):
-    samp_hist = calculate_samples_histogram(samples_list)
-    for k in samp_hist[field].keys():
-        if k not in filt:
-            samp_hist[field].pop(k)
+def __calculate_filtered_samples_distribution(samples_list, filt, filt_field):
+    samp_hist = calculate_samples_histogram(samples_list, set(filt), filt_field)
     return __calculate_samples_distribution_from_histogram(samp_hist)
 
 def __calculate_samples_distribution_from_histogram(samp_hist):
@@ -103,23 +106,20 @@ def __calculate_samples_distribution_from_histogram(samp_hist):
         for key in samp_hist[field].keys():
             total += samp_hist[field][key]
         ASSERT(total > 0) # can't happen - at least one key has to exist when iterating on samples
-        percentiles[field] = ( total, { key: (100.0 * samp_hist[field][key])/total for key in samp_hist[field].keys() } )
+        percentiles[field] = ( total, { key: samp_hist[field][key]/total for key in samp_hist[field].keys() } )
         if TEST:
             s = 0
             for key in percentiles[field][1].keys():
                 s += percentiles[field][1][key]
-            ASSERT(round(s) == 100.0)
+            ASSERT(round(s) == 1.0)
     return percentiles
 
 def calculate_otus_distribution(otus_list):
     otus_hist = calculate_otus_histogram(otus_list)
     return __calculate_otus_distribution_from_histogram(otus_hist)
 
-def __calculate_filtered_otus_distribution(otus_list, rank, filt):
-    otus_hist = calculate_otus_histogram(otus_list)
-    for k in otus_hist[rank].keys():
-        if k not in filt:
-            otus_hist[rank].pop(k)
+def __calculate_filtered_otus_distribution(otus_list, filt, filt_rank):
+    otus_hist = calculate_otus_histogram(otus_list, set(filt), filt_rank)
     return __calculate_otus_distribution_from_histogram(otus_hist)
 
 def __calculate_otus_distribution_from_histogram(otu_hist):
@@ -129,27 +129,21 @@ def __calculate_otus_distribution_from_histogram(otu_hist):
         for key in otu_hist[rank].keys():
             total += otu_hist[rank][key]
         ASSERT(total > 0) # can't happen - every OTU has to be a part of at least one classification
-        percentiles[rank] = ( total, { key: (100.0 * otu_hist[rank][key])/total for key in otu_hist[rank].keys() } )
+        percentiles[rank] = ( total, { key: otu_hist[rank][key]/total for key in otu_hist[rank].keys() } )
         if TEST:
             s = 0
             for key in percentiles[rank][1].keys():
                 s += percentiles[rank][1][key]
-            ASSERT(round(s) == 100.0)
+            ASSERT(round(s) == 1.0)
     return percentiles
 
-def __calculate_z_score(selected_num, selected_dist, general_dist):
-    s_ = selected_dist / 100.0
-    g_ = general_dist / 100.0
-    n_ = selected_num
-    try:
-        z_ = (s_ - g_) / math.sqrt(g_ * (1 - g_) / n_)
-    except:
-        z_ = 1.0
-    return z_
-
-def __calculate_p_value(selected_num, selected_dist, general_dist):
-    z = __calculate_z_score(selected_num, selected_dist, general_dist)
-    p = scipy.stats.norm.sf(abs(z))
+def __calculate_p_value(total, selected_size, selected_dist, general_dist):
+    M = total
+    N = selected_size
+    n = general_dist * total
+    x = selected_dist * selected_size
+    hg = scipy.stats.hypergeom(M=M, N=N, n=n)
+    p = hg.sf(x)
     return p
 
 def __calculate_otus_p_values_for_rank(sel_dist, ref_dist, rank):
@@ -164,12 +158,13 @@ def __calculate_generic_p_values_for_key(sel_dist, ref_dist, key):
     sel_dist_k = sel_dist[key][1]
     def g(d, k):
         return 0.0 if not d.has_key(k) else d[k]
-    total = sel_dist[key][0]
+    selected_size = sel_dist[key][0]
+    total = ref_dist[key][0]
     pvals = dict()
     for k in ref_dist_k.keys():
         tmp[k] = g(sel_dist_k, k)
     for k in tmp.keys():
-        pvals[k] = __calculate_p_value(total, tmp[k], ref_dist_k[k])
+        pvals[k] = __calculate_p_value(total, selected_size, tmp[k], ref_dist_k[k])
     return pvals
 
 def calculate_otus_p_values(selection_distribution, reference_distribution):
@@ -194,15 +189,15 @@ def test():
         lines = tax_fn.readlines()
     otus_list = map(lambda x: x.split()[0].strip(), lines)
     otus_dist = calculate_otus_distribution(otus_list)
-    filt = ['s__princeps', 's__nodulosa']
-    otus_dist_1 = __calculate_filtered_otus_distribution(otus_list, 'species', filt)
+    filt = ['o__Clostridiales']
+    otus_dist_1 = __calculate_filtered_otus_distribution(otus_list, filt, 'order')
     p_vals = calculate_otus_p_values(otus_dist_1, otus_dist)
 
     with open(SAMPLES_MD_FILE, 'r') as samp_fn:
         lines = samp_fn.readlines()
     samples_list = map(lambda x: x.split()[0].strip(), lines)[1:]
     samples_dist = calculate_samples_distribution(samples_list)
-    samples_dist_1 = __calculate_filtered_samples_distribution(samples_list, 'season', ['spring', 'fall', 'summer'])
+    samples_dist_1 = __calculate_filtered_samples_distribution(samples_list, ['spring', 'fall', 'summer'], 'season')
     p_vals = calculate_samples_p_values(samples_dist_1, samples_dist)
     BP()
 
