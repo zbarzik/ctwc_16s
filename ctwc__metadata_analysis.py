@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,has_value
-import csv, bisect, math, scipy, scipy.stats
+import csv, bisect, math, scipy, scipy.stats, random
 
 TAXA_LINE_STRUCUTURE = ["otu", "kingdom", "phylum", "class", "order", "family", "genus", "species"]
 SAMPLES_LINE_STRUCTURE = ['sample_name', 'bactoscan', 'check_in_time', 'check_out_time', 'collection_timestamp', 'date_pcr',
@@ -187,7 +187,7 @@ def test():
     globals()['TEST'] = True
     with open(TAXA_MD_FILE, 'r') as tax_fn:
         lines = tax_fn.readlines()
-    otus_list = map(lambda x: x.split()[0].strip(), lines)
+    otus_list = [ x.split()[0].strip() for x in lines ]
     otus_dist = calculate_otus_distribution(otus_list)
     filt = ['o__Clostridiales']
     otus_dist_1 = __calculate_filtered_otus_distribution(otus_list, filt, 'order')
@@ -195,11 +195,17 @@ def test():
 
     with open(SAMPLES_MD_FILE, 'r') as samp_fn:
         lines = samp_fn.readlines()
-    samples_list = map(lambda x: x.split()[0].strip(), lines)[1:]
+    samples_list = [ x.split()[0].strip() for x in lines[1:]  ]
     samples_dist = calculate_samples_distribution(samples_list)
     samples_dist_1 = __calculate_filtered_samples_distribution(samples_list, ['spring', 'fall', 'summer'], 'season')
     p_vals = calculate_samples_p_values(samples_dist_1, samples_dist)
-    BP()
+
+    with open(TAXA_MD_FILE, 'r') as tax_fn:
+        lines = tax_fn.readlines()
+    otus_list = [ x.split()[0].strip() for x in lines if random.randint(0, 6) == 0 ]
+    otus_dist_2 = calculate_otus_distribution(otus_list)
+    p_vals = calculate_otus_p_values(otus_dist_2, otus_dist)
+
 
 if __name__ == "__main__":
     test()
