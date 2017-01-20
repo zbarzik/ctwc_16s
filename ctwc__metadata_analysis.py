@@ -8,7 +8,7 @@ SAMPLES_LINE_STRUCTURE = ['sample_name', 'bactoscan', 'check_in_time', 'check_ou
 'env_feature', 'env_matter', 'env_package', 'geo_loc_name', 'host_subject_id', 'investigation_type', 'latitude', 'longitude',
 'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'sample_type', 'scientific_name',
 'season', 'silo_lot_id', 'tanker_cip_date', 'tanker_cip_time', 'taxon_id', 'title']
-
+SAMPLES_SKIP_FIELDS = ['check_in_time', 'collection_timestamp', 'date_pcr', 'latitude', 'longitude', 'notes', 'physical_specimen_remaining', 'title']
 SAMPLES_MD_FILE = "10485_20160420-093403.txt"
 TAXA_MD_FILE = "97_otu_taxonomy.txt"
 TEST = False
@@ -88,7 +88,8 @@ def calculate_samples_histogram(samples_list, filt=None, filt_field='bactoscan')
     md = get_metadata_for_samples(samples_list)
     hist = dict()
     for field in SAMPLES_LINE_STRUCTURE[1:]:
-        hist[field] = __generate_histogram_for_samples_field(field, md, filt, filt_field)
+        if field not in SAMPLES_SKIP_FIELDS:
+            hist[field] = __generate_histogram_for_samples_field(field, md, filt, filt_field)
     return hist
 
 def calculate_samples_distribution(samples_list):
@@ -172,6 +173,8 @@ def calculate_otus_p_values(selection_distribution, reference_distribution):
     ref_dist = reference_distribution
     p_vals = dict()
     for rank in sel_dist.keys():
+        if len(ref_dist[rank].keys()) == 1:
+            continue # skip if there's no dynamic range
         p_vals[rank] = __calculate_otus_p_values_for_rank(sel_dist, ref_dist, rank)
     return p_vals
 
@@ -180,6 +183,8 @@ def calculate_samples_p_values(selection_distribution, reference_distribution):
     ref_dist = reference_distribution
     p_vals = dict()
     for field in sel_dist.keys():
+        if len(ref_dist[field].keys()) == 1:
+            continue # skip if there's no dynamic range
         p_vals[field] = __calculate_samples_p_values_for_field(sel_dist, ref_dist, field)
     return p_vals
 
