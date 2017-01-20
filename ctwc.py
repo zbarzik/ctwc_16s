@@ -283,86 +283,11 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        iteration_results)
 
 
-def ctwc_select(data, tree, samples, otus, table):
-    ctwc__plot.init()
-
-    iteration_results = dict()
-    result, samp_filter, samp_compliment = run_iteration("Iteration 1", "Pick samples from full dataset...",
-                                                         data,
-                                                         tree,
-                                                         samples,
-                                                         otus,
-                                                         None,
-                                                         None,
-                                                         table,
-                                                         False)
-    iteration_results["Iteration 1"] = result
-
-    result, otu_filter, otu_compliment = run_iteration("Iteration 1.1", "Pick OTUs from selected samples...",
-                                                         data,
-                                                         tree,
-                                                         samples,
-                                                         otus,
-                                                         None,
-                                                         samp_filter,
-                                                         table,
-                                                         True)
-    iteration_results["Iteration 1.1"] = result
-
-    result, otu_filter, otu_compliment = run_iteration("Iteration 1.2", "Pick OTUs from compliment of selected samples...",
-                                                         data,
-                                                         tree,
-                                                         samples,
-                                                         otus,
-                                                         None,
-                                                         samp_compliment,
-                                                         table,
-                                                         True)
-    iteration_results["Iteration 1.2"] = result
-
-    result, otu_filter, otu_compliment = run_iteration("Iteration 2", "Pick OTUs from full dataset...",
-                                                         data,
-                                                         tree,
-                                                         samples,
-                                                         otus,
-                                                         None,
-                                                         None,
-                                                         table,
-                                                         True)
-    iteration_results["Iteration 2"] = result
-
-    result, samp_filter, samp_compliment = run_iteration("Iteration 2.1", "Pick samples from selected OTUs...",
-                                                         data,
-                                                         tree,
-                                                         samples,
-                                                         otus,
-                                                         otu_filter,
-                                                         None,
-                                                         table,
-                                                         False)
-    iteration_results["Iteration 2.1"] = result
-
-    result, samp_filter, samp_compliment = run_iteration("Iteration 2.2", "Pick samples from compliment of selected OTUs...",
-                                                         data,
-                                                         tree,
-                                                         samples,
-                                                         otus,
-                                                         otu_compliment,
-                                                         None,
-                                                         table,
-                                                         False)
-    iteration_results["Iteration 2.2"] = result
-
-    ctwc__plot.wait_for_user()
-
-    return iteration_results
-
 def test():
     np.seterr(all="ignore")
     samples, otus, tree, data, table = ctwc__distance_matrix.get_data(True)
 
     output = ctwc_recursive_select(data, tree, samples, otus, table)
-    #output = ctwc_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
     for elem in output:
         pv, keys = get_top_p_val(output[elem][1])
