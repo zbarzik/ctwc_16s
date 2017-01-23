@@ -90,6 +90,12 @@ def has_value(sorted_list, value):
         return True
     return False
 
+def write_dict_as_csv(filename, mydict):
+    import csv
+    with open(filename, 'wb') as f:
+        w = csv.DictWriter(f, mydict.keys())
+        w.writerow(mydict)
+
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
                                   datefmt='%Y-%m-%d %H:%M:%S')

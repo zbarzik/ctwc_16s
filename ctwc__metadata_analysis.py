@@ -104,6 +104,8 @@ def __calculate_samples_distribution_from_histogram(samp_hist):
     percentiles = dict()
     for field in SAMPLES_LINE_STRUCTURE[1:]:
         total = 0.0
+        if field not in samp_hist.keys():
+            continue
         for key in samp_hist[field].keys():
             total += samp_hist[field][key]
         ASSERT(total > 0) # can't happen - at least one key has to exist when iterating on samples
@@ -173,7 +175,7 @@ def calculate_otus_p_values(selection_distribution, reference_distribution):
     ref_dist = reference_distribution
     p_vals = dict()
     for rank in sel_dist.keys():
-        if len(ref_dist[rank].keys()) == 1:
+        if len(ref_dist[rank][1].keys()) == 1:
             continue # skip if there's no dynamic range
         p_vals[rank] = __calculate_otus_p_values_for_rank(sel_dist, ref_dist, rank)
     return p_vals
@@ -183,10 +185,34 @@ def calculate_samples_p_values(selection_distribution, reference_distribution):
     ref_dist = reference_distribution
     p_vals = dict()
     for field in sel_dist.keys():
-        if len(ref_dist[field].keys()) == 1:
+        if len(ref_dist[field][1].keys()) == 1:
             continue # skip if there's no dynamic range
         p_vals[field] = __calculate_samples_p_values_for_field(sel_dist, ref_dist, field)
     return p_vals
+
+def __prepare_p_val_vec(p_vals):
+    vec = []
+    for k1 in p_vals.keys():
+        for k2 in p_vals[k1].keys():
+            vec.append(p_vals[k1][k2])
+    return vec
+
+def __correct_p_vals(q_vals_vec, p_vals):
+    ind = 0
+    for k1 in p_vals.keys():
+        for k2 in p_vals[k1].keys():
+            p_vals[k1][k2] = q_vals_vec[ind]
+            ind += 1
+    return p_vals
+
+def __corrected_p_values(p_vals_vec):
+    import statsmodels.sandbox.stats.multicomp
+    return statsmodels.sandbox.stats.multicomp.multipletests(p_vals_vec)
+
+def correct_p_vals(p_vals):
+    p_vals_vec = __prepare_p_val_vec(p_vals)
+    q_vals_vec = __corrected_p_values(p_vals_vec)
+    return __correct_p_vals(q_vals_vec[1], p_vals)
 
 def test():
     globals()['TEST'] = True
@@ -197,6 +223,7 @@ def test():
     filt = ['o__Clostridiales']
     otus_dist_1 = __calculate_filtered_otus_distribution(otus_list, filt, 'order')
     p_vals = calculate_otus_p_values(otus_dist_1, otus_dist)
+    q_vals = correct_p_vals(p_vals)
 
     with open(SAMPLES_MD_FILE, 'r') as samp_fn:
         lines = samp_fn.readlines()

@@ -153,6 +153,8 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
         sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(selected_cols_filter)
         p_vals = ctwc__metadata_analysis.calculate_samples_p_values(sel_dist, ref_dist)
         DEBUG("P Values: {0}".format(p_vals))
+        keys, pv = get_top_p_val(p_vals)
+        INFO("Top P Value: {0}, keys: {1} {2}".format(pv, keys[0], keys[1]))
 
     num_otus = len(otus) if rows_filter == None else len(rows_filter)
     num_samples = len(selected_cols_filter)
@@ -172,6 +174,9 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
     ctwc__plot.init()
     iteration_results = dict()
     __ctwc_recursive_iteration(data, tree, samples, otus, table, iteration_results = iteration_results)
+
+    for elem in iteration_results:
+        iteration_results[elem][1] = ctwc__metadata_analysis.correct_p_vals(iteration_results[elem][1])
 
     ctwc__plot.wait_for_user()
     return iteration_results
@@ -285,7 +290,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
 def test():
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(True)
+    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=True)
 
     output = ctwc_recursive_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
