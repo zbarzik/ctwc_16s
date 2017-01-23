@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,has_value
+from ctwc__common import *
 import csv, bisect, math, scipy, scipy.stats, random
 
 TAXA_LINE_STRUCUTURE = ["otu", "kingdom", "phylum", "class", "order", "family", "genus", "species"]
@@ -12,6 +12,8 @@ SAMPLES_SKIP_FIELDS = ['check_in_time', 'collection_timestamp', 'date_pcr', 'lat
 SAMPLES_MD_FILE = "10485_20160420-093403.txt"
 TAXA_MD_FILE = "97_otu_taxonomy.txt"
 TEST = False
+
+Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
 
 """
 filt is used for testing, allowing only a defined collection of species.
@@ -212,7 +214,19 @@ def __corrected_p_values(p_vals_vec):
 def correct_p_vals(p_vals):
     p_vals_vec = __prepare_p_val_vec(p_vals)
     q_vals_vec = __corrected_p_values(p_vals_vec)
-    return __correct_p_vals(q_vals_vec[1], p_vals)
+    q_vals = __correct_p_vals(q_vals_vec[1], p_vals)
+    screened = {}
+    for k1 in q_vals.keys():
+        for k2 in q_vals[k1].keys():
+            if q_vals[k1][k2] < 0.5:
+                if not screened.has_key(k1):
+                    screened[k1] = {}
+                screened[k1][k2] = q_vals[k1][k2]
+    return screened
+
+def save_q_valus_to_csv(iteration, key, q_vals):
+    filename = Q_VALUE_FILENAME.format(iteration, key)
+    write_dict_as_csv(filename, q_vals[key])
 
 def test():
     globals()['TEST'] = True
@@ -237,7 +251,7 @@ def test():
     otus_list = [ x.split()[0].strip() for x in lines if random.randint(0, 6) == 0 ]
     otus_dist_2 = calculate_otus_distribution(otus_list)
     p_vals = calculate_otus_p_values(otus_dist_2, otus_dist)
-
+    q_vals = correct_p_vals(p_vals)
 
 if __name__ == "__main__":
     test()
