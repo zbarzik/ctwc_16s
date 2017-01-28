@@ -90,11 +90,17 @@ def has_value(sorted_list, value):
         return True
     return False
 
+def make_camel_from_string(header):
+    cameled_hdr = ''.join(x.title() for x in header.split())
+    sanitized_hdr = ''.join(x for x in cameled_hdr if x.isalnum())
+    return sanitized_hdr
+
 def write_dict_as_csv(filename, mydict):
     import csv
-    with open(filename, 'wb') as f:
-        w = csv.DictWriter(f, mydict.keys())
-        w.writerow(mydict)
+    with open(filename, 'wb') as csv_file:
+        writer = csv.writer(csv_file)
+        for key, value in mydict.items():
+            writer.writerow([key, value])
 
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,save_to_file,load_from_file
+from ctwc__common import *
 
 import numpy as np
 
@@ -8,8 +8,7 @@ PLOT_RAW_FILE = './plot_raw-{0}.pklz'
 PLOT_MAT_RAW_FILE = './plot_raw_mat-{0}.npz'
 
 def plot_mat(mat, xlabel=None, ylabel=None, header=None):
-    cameled_hdr = ''.join(x.title() for x in header.split())
-    sanitized_hdr = ''.join(x for x in cameled_hdr if x.isalnum())
+    sanitized_hdr = make_camel_from_string(header)
     save_to_file((xlabel, ylabel, header), PLOT_RAW_FILE.format(sanitized_hdr), mat, PLOT_MAT_RAW_FILE.format(sanitized_hdr))
     __plot_mat(mat, xlabel, ylabel, header)
 

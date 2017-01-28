@@ -225,7 +225,7 @@ def correct_p_vals(p_vals):
     return screened
 
 def save_q_values_to_csv(iteration, key, q_vals):
-    filename = Q_VALUE_FILENAME.format(iteration, key)
+    filename = Q_VALUE_FILENAME.format(make_camel_from_string(iteration), make_camel_from_string(key))
     write_dict_as_csv(filename, q_vals[key])
 
 def test():
