@@ -67,8 +67,8 @@ def __get_full_sample_dist(samples):
 def get_top_p_val(p_vals):
     mn = 1.0
     tpl = (None, None)
-    for k_1 in p_vals.keys():
-        for k_2 in p_vals[k_1].keys():
+    for k_1 in p_vals:
+        for k_2 in p_vals[k_1]:
             if p_vals[k_1][k_2] < mn:
                 mn = p_vals[k_1][k_2]
                 tpl = (k_1, k_2)
@@ -182,7 +182,7 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
 
     for elem in iteration_results:
         iteration_results[elem] = (iteration_results[elem][RES_IND_INPUT], ctwc__metadata_analysis.correct_p_vals(iteration_results[elem][RES_IND_P_VAL]), iteration_results[elem][RES_IND_DIST])
-        for k in iteration_results[elem][RES_IND_P_VAL].keys():
+        for k in iteration_results[elem][RES_IND_P_VAL]:
             ctwc__metadata_analysis.save_q_values_to_csv(elem, k, iteration_results[elem][RES_IND_P_VAL], iteration_results[elem][RES_IND_DIST])
 
     ctwc__plot.wait_for_user()
