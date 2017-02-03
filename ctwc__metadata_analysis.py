@@ -224,9 +224,9 @@ def correct_p_vals(p_vals):
                 screened[k1][k2] = q_vals[k1][k2]
     return screened
 
-def save_q_values_to_csv(iteration, key, q_vals):
+def save_q_values_to_csv(iteration, key, q_vals, sel_dist):
     filename = Q_VALUE_FILENAME.format(make_camel_from_string(iteration), make_camel_from_string(key))
-    write_dict_as_csv(filename, q_vals[key])
+    write_dict_as_csv(filename, q_vals[key], sel_dist[key][1])
 
 def test():
     globals()['TEST'] = True

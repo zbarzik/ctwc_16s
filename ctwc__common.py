@@ -95,12 +95,15 @@ def make_camel_from_string(header):
     sanitized_hdr = ''.join(x for x in cameled_hdr if x.isalnum())
     return sanitized_hdr
 
-def write_dict_as_csv(filename, mydict):
+def write_dict_as_csv(filename, mydict, ref_dict):
     import csv
     with open(filename, 'wb') as csv_file:
         writer = csv.writer(csv_file)
         for key, value in mydict.items():
-            writer.writerow([key, value])
+            original_val = "na"
+            if key in ref_dict.keys():
+                original_val = ref_dict[key]
+            writer.writerow([key, (value, original_val)])
 
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
