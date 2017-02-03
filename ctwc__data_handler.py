@@ -94,6 +94,17 @@ def get_sample_biom_table(full_set=True):
     INFO("Complete dataset size: {0}".format(table.shape))
     return table.matrix_data.todense(), table.ids('observation'), table.ids('sample'), table
 
+def get_synthetic_biom_table(full_set=True):
+    INFO("Synthesizing data based on sample table...")
+    INFO("Reading sample files...")
+    data, otus, samples, table = get_sample_biom_table(full_set)
+    INFO("Generating new patterns in data...")
+    data[:] = 0.0
+    for row in data:
+        for col in row:
+            pass
+    return data, otus, samples, table
+
 def get_samples_by_indices(indices, table):
     samples = []
     def __get_sample_by_index(index, table):

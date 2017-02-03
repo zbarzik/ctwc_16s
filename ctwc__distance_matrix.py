@@ -291,10 +291,7 @@ def get_data(use_real_data=True, full_set=True):
         tree = ctwc__data_handler.get_gg_97_otu_tree()
     else:
         INFO("Using synthetic data")
-        samples = ctwc__data_handler.get_default_samples()
-        otus = ctwc__data_handler.get_default_otus()
-        tree = ctwc__data_handler.get_default_tree(otus)
-        data = ctwc__data_handler.get_default_data(otus, samples)
+        data, otus, samples, table = ctwc__data_handler.get_synthetic_biom_table(full_set=full_set)
         table = None
     return samples, otus, tree, data, table
 
