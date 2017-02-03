@@ -40,10 +40,17 @@ def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_fi
         FATAL("Number of sample lables {0} does not match number of samples {1}".format(num_samples, len(samples)))
     if num_otus_in_sample != len(otus):
         FATAL("Number of otus labels {0} does not match number of samples {1}".format(num_otus_in_sample, len(otus)))
+
     full_dict = {}
     args = []
+
+    # Transforming to sets (O(n) operation) in order to turn "has_value" lookup from O(log(n)) to O(1))
+    # All in all it should turn the process of creating the dictionary to linear instead of O(nlog(n))
+    otu_filter_set = set(otu_filter)
+    sample_filter_set = set(sample_filter)
+
     for otu_ind, otu in enumerate(otus):
-        args.append((data, otu_ind, otu, otus, otu_filter, samples, sample_filter))
+        args.append((data, otu_ind, otu, otus, otu_filter_set, samples, sample_filter_set))
     p = Pool(NUM_THREADS)
     retvals = p.map(__unifrac_prepare_entry_for_dictionary, args)
     for retVal in retvals:

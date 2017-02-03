@@ -85,6 +85,11 @@ def load_from_file(filename, with_mat=False, mat_fn=None):
 def has_value(sorted_list, value):
     if sorted_list is None:
         return False
+
+    if type(sorted_list) is set:
+        return value in sorted_list # O(1) operation
+
+    # Otherwise assuming the list is sorted
     i = bisect.bisect_left(sorted_list, value)
     if i != len(sorted_list) and sorted_list[i] == value:
         return True
