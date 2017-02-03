@@ -106,15 +106,15 @@ def __calculate_samples_distribution_from_histogram(samp_hist):
     percentiles = dict()
     for field in SAMPLES_LINE_STRUCTURE[1:]:
         total = 0.0
-        if field not in samp_hist.keys():
+        if field not in samp_hist:
             continue
-        for key in samp_hist[field].keys():
+        for key in samp_hist[field]:
             total += samp_hist[field][key]
         ASSERT(total > 0) # can't happen - at least one key has to exist when iterating on samples
         percentiles[field] = ( total, { key: samp_hist[field][key]/total for key in samp_hist[field].keys() } )
         if TEST:
             s = 0
-            for key in percentiles[field][1].keys():
+            for key in percentiles[field][1]:
                 s += percentiles[field][1][key]
             ASSERT(round(s) == 1.0)
     return percentiles
@@ -131,13 +131,13 @@ def __calculate_otus_distribution_from_histogram(otu_hist):
     percentiles = dict()
     for rank in TAXA_LINE_STRUCUTURE[1:]:
         total = 0.0
-        for key in otu_hist[rank].keys():
+        for key in otu_hist[rank]:
             total += otu_hist[rank][key]
         ASSERT(total > 0) # can't happen - every OTU has to be a part of at least one classification
         percentiles[rank] = ( total, { key: otu_hist[rank][key]/total for key in otu_hist[rank].keys() } )
         if TEST:
             s = 0
-            for key in percentiles[rank][1].keys():
+            for key in percentiles[rank][1]:
                 s += percentiles[rank][1][key]
             ASSERT(round(s) == 1.0)
     return percentiles
@@ -166,9 +166,9 @@ def __calculate_generic_p_values_for_key(sel_dist, ref_dist, key):
     selected_size = sel_dist[key][0]
     total = ref_dist[key][0]
     pvals = dict()
-    for k in ref_dist_k.keys():
+    for k in ref_dist_k:
         tmp[k] = g(sel_dist_k, k)
-    for k in tmp.keys():
+    for k in tmp:
         pvals[k] = __calculate_p_value(total, selected_size, tmp[k], ref_dist_k[k])
     return pvals
 
@@ -176,7 +176,7 @@ def calculate_otus_p_values(selection_distribution, reference_distribution):
     sel_dist = selection_distribution
     ref_dist = reference_distribution
     p_vals = dict()
-    for rank in sel_dist.keys():
+    for rank in sel_dist:
         if len(ref_dist[rank][1].keys()) == 1:
             continue # skip if there's no dynamic range
         p_vals[rank] = __calculate_otus_p_values_for_rank(sel_dist, ref_dist, rank)
@@ -186,7 +186,7 @@ def calculate_samples_p_values(selection_distribution, reference_distribution):
     sel_dist = selection_distribution
     ref_dist = reference_distribution
     p_vals = dict()
-    for field in sel_dist.keys():
+    for field in sel_dist:
         if len(ref_dist[field][1].keys()) == 1:
             continue # skip if there's no dynamic range
         p_vals[field] = __calculate_samples_p_values_for_field(sel_dist, ref_dist, field)
@@ -194,15 +194,15 @@ def calculate_samples_p_values(selection_distribution, reference_distribution):
 
 def __prepare_p_val_vec(p_vals):
     vec = []
-    for k1 in p_vals.keys():
-        for k2 in p_vals[k1].keys():
+    for k1 in p_vals:
+        for k2 in p_vals[k1]:
             vec.append(p_vals[k1][k2])
     return vec
 
 def __correct_p_vals(q_vals_vec, p_vals):
     ind = 0
-    for k1 in p_vals.keys():
-        for k2 in p_vals[k1].keys():
+    for k1 in p_vals:
+        for k2 in p_vals[k1]:
             p_vals[k1][k2] = q_vals_vec[ind]
             ind += 1
     return p_vals
@@ -216,8 +216,8 @@ def correct_p_vals(p_vals):
     q_vals_vec = __corrected_p_values(p_vals_vec)
     q_vals = __correct_p_vals(q_vals_vec[1], p_vals)
     screened = {}
-    for k1 in q_vals.keys():
-        for k2 in q_vals[k1].keys():
+    for k1 in q_vals:
+        for k2 in q_vals[k1]:
             if q_vals[k1][k2] < 0.5:
                 if not screened.has_key(k1):
                     screened[k1] = {}
