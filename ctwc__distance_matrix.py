@@ -46,8 +46,8 @@ def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_fi
 
     # Transforming to sets (O(n) operation) in order to turn "has_value" lookup from O(log(n)) to O(1))
     # All in all it should turn the process of creating the dictionary to linear instead of O(nlog(n))
-    otu_filter_set = set(otu_filter)
-    sample_filter_set = set(sample_filter)
+    otu_filter_set = None if otu_filter is None else set(otu_filter)
+    sample_filter_set = None if sample_filter is None else set(sample_filter)
 
     for otu_ind, otu in enumerate(otus):
         args.append((data, otu_ind, otu, otus, otu_filter_set, samples, sample_filter_set))
