@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from ctwc__common import *
 import warnings
 import numpy as np
 
@@ -100,9 +100,9 @@ def get_synthetic_biom_table(full_set=True):
     data, otus, samples, table = get_sample_biom_table(full_set)
     INFO("Generating new patterns in data...")
     data[:] = 0.0
-    for row in data:
-        for col in row:
-            pass
+    data[::3, :] = 50
+    data[:, ::4] = 40
+    np.fill_diagonal(data, 0.0)
     return data, otus, samples, table
 
 def get_samples_by_indices(indices, table):
