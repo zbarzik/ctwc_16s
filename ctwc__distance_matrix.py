@@ -288,11 +288,10 @@ def get_data(use_real_data=True, full_set=True):
     if use_real_data:
         INFO("Using real data")
         data, otus, samples, table = ctwc__data_handler.get_sample_biom_table(full_set=full_set)
-        tree = ctwc__data_handler.get_gg_97_otu_tree()
     else:
         INFO("Using synthetic data")
         data, otus, samples, table = ctwc__data_handler.get_synthetic_biom_table(full_set=full_set)
-        table = None
+    tree = ctwc__data_handler.get_gg_97_otu_tree()
     return samples, otus, tree, data, table
 
 def __get_output_filename_by_type(mat_type):
