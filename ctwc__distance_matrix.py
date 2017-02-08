@@ -100,13 +100,6 @@ def __get_mask_from_filter(mat, filt):
     mask[ : , np.nonzero(tmp_mask == True) ] = True
     return mask
 
-def __increase_distance_for_filtered_samples(mat, filt):
-    D = INF_VALUE # float('Inf')
-    mask = __get_mask_from_filter(mat, filt)
-    mat[ mask ] = D
-    np.fill_diagonal(mat, 0.0)
-    return mat
-
 def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, sample_filter=None, otu_filter=None):
     DEBUG("Starting unifrac_distance_rows...")
     with warnings.catch_warnings():
@@ -145,11 +138,6 @@ def unifrac_distance_rows(data, samples_arg=None, otus_arg=None, tree_arg=None, 
     DEBUG("Unifrac results: {0}".format(unifrac))
     DEBUG("Reordering results...")
     mat = __reorder_unifrac_distance_matrix_by_original_samples(unifrac['distance_matrix'], samples, sample_filter, otu_filter)
-
-    DEBUG("Setting distances for filtered items to large values...")
-    if sample_filter is not None:
-        filter_indices = [ ind for ind, samp in enumerate(samples) if has_value(sample_filter, samp) ]
-        mat = __increase_distance_for_filtered_samples(mat, filter_indices)
 
     DEBUG("Fixing NaN/inf values...")
     mat = np.nan_to_num(mat)
@@ -223,10 +211,6 @@ def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_fil
         res = __jaccard_distance(data)
     else:
         FATAL("Unknown metric requested: {0}".format(metric))
-
-    mask = __get_mask_from_filter(res, rows_filter)
-    res[mask] = INF_VALUE
-    np.fill_diagonal(res, 0.0)
 
     DEBUG("Finished calculating OTU distance matrix.")
     return res
