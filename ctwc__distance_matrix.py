@@ -17,7 +17,7 @@ COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
 UNIFRAC_DIST_FILE = './unifrac_dist_mat-{0}.pklz'
 SQUARE_UNIFRAC_DISTANCE = False
-INF_VALUE = 1000
+INF_VALUE = 1.0001
 ALLOW_CACHING = False
 
 def __unifrac_prepare_entry_for_dictionary(args):
@@ -64,13 +64,14 @@ def __reorder_unifrac_distance_matrix_by_original_samples(unifrac_output, sample
     z = np.zeros((len(samples), len(samples)))
     z[:,:] = INF_VALUE
     np.fill_diagonal(z, 0.0)
+    mx = np.max(uf_dist_mat) * 1.0
     for samp_ind, samp in enumerate(samples):
         if sample_filter is None or has_value(sample_filter, samp):
             uf_ind = uf_samples.index(samp)
             for other_ind, other_samp in enumerate(samples):
                 if sample_filter is None or has_value(sample_filter, other_samp):
                     uf_other_ind = uf_samples.index(other_samp)
-                    z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind]
+                    z[samp_ind, other_ind] = uf_dist_mat[uf_ind, uf_other_ind] / mx
     return z
 
 def __get_precalculated_unifrac_file_if_exists(h):

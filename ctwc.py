@@ -197,19 +197,18 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                              iteration_results = dict()):
 
     THRESH = 100
-    do_otus = False
-    do_samples = False
-
-    if otu_filter is None or (len(otu_filter) > THRESH and len(otu_compliment) > THRESH):
-        do_otus = True
-    if sample_filter is None or (len(sample_filter) > THRESH and len(sample_compliment) > THRESH):
-        do_samples = True
+    do_otus = otu_filter is None or len(otu_filter) > THRESH
+    do_samples = sample_filter is None or len(sample_filter) > THRESH
+    do_otus_comp = otu_compliment is not None and len(otu_compliment) > THRESH
+    do_samples_comp = sample_compliment is not None and len(sample_compliment) > THRESH
 
     step = __ctwc_recursive__get_next_step(iteration_ind, 0)
 
     if len(iteration_ind) > len("x.x"):
         do_otus = False
         do_samples = False
+        do_samples_comp = False
+        do_otus_comp = False
 
     if do_samples:
         result, step_samp_filter, step_samp_compliment, p_vals, sel_dist = run_iteration("Iteration {0}".format(step), "Pick samples...",
@@ -252,8 +251,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        step,
                                        iteration_results)
 
-    step = __ctwc_recursive__get_next_step(iteration_ind, 2)
-    if step is not None and do_samples:
+    if do_samples_comp:
+        step = __ctwc_recursive__get_next_step(iteration_ind, 2)
         result, step_samp_filter, step_samp_compliment, p_vals, sel_dist = run_iteration("Iteration {0}".format(step), "Pick samples from compliment...",
                                                              data,
                                                              tree,
@@ -273,8 +272,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        step,
                                        iteration_results)
 
-    step = __ctwc_recursive__get_next_step(iteration_ind, 3)
-    if step is not None and do_otus:
+    if do_otus_comp:
+        step = __ctwc_recursive__get_next_step(iteration_ind, 3)
         result, step_otu_filter, step_otu_compliment, p_vals, sel_dist = run_iteration("Iteration {0}".format(step), "Pick OTUs from compliment...",
                                                              data,
                                                              tree,

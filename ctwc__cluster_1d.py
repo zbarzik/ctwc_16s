@@ -50,8 +50,8 @@ WriteCorFile|
 
 def __spc_prepare_dat_file(dist_mat):
     lines = []
-    for r in range(dist_mat.shape[0]):
-        for c in range(dist_mat.shape[1]):
+    for r in xrange(dist_mat.shape[0]):
+        for c in xrange(dist_mat.shape[1]):
             lines.append("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat", 'w+') as fn:
         fn.write("".join(lines))
@@ -68,8 +68,8 @@ def __spc_get_non_masked_data_points(dist_mat):
 
 def __spc_prepare_edge_file(n):
     lines = []
-    for r in range(1, n):
-       for c in range(1, r):
+    for r in xrange(1, n):
+       for c in xrange(1, r):
            lines.append("{0} {1}\n".format(r, c))
 
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
@@ -205,10 +205,14 @@ def cluster_rows_spc(data, dist_matrix):
 
     DEBUG("Clearing temporary files from previous runs...")
     __spc_clear_temporary_files()
-    DEBUG("Starting Super-Paramagnetic clustering...")
+    DEBUG("Preparing files for SPC run...")
+    DEBUG("Preparing dat file...")
     n_data_points = __spc_prepare_dat_file(dist_matrix)
+    DEBUG("Preparing edge file...")
     __spc_prepare_edge_file(n_data_points)
+    DEBUG("Preparing run file...")
     __spc_prepare_run_file(n_data_points)
+    DEBUG("Starting Super-Paramagnetic clustering...")
     __spc_run_and_wait_for_completion()
     non_masked_data_points = __spc_get_non_masked_data_points(dist_matrix)
     t, log = __spc_parse_temperature_results(non_masked_data_points)
