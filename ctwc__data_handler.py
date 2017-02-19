@@ -99,10 +99,14 @@ def get_synthetic_biom_table(full_set=True):
     INFO("Reading sample files...")
     data, otus, samples, table = get_sample_biom_table(full_set)
     INFO("Generating new patterns in data...")
-    data[:] = 0.0
-    data[::3, :] = 50
-    data[:, ::4] = 40
+    # noise
+    data = np.random.normal(2, 2, size=data.shape)
+    # cluster of samples
+    data[200:-200:3, :130] = 40
+    # second cluster of samples
+    data[100:-100:3, 70:130] = 40
     np.fill_diagonal(data, 0.0)
+    INFO("Done preparing synthetic data")
     return data, otus, samples, table
 
 def get_samples_by_indices(indices, table):

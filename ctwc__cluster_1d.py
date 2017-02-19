@@ -137,7 +137,7 @@ def __pick_line_by_num_clusters(lines):
             break
     return line
 
-def __spc_parse_temperature_results(non_masked_data_points):
+def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
     TEMP_IND = 1
     lines = []
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".out.dg_01", "r") as out_dg_fn:
@@ -148,7 +148,9 @@ def __spc_parse_temperature_results(non_masked_data_points):
 
     #line = __pick_line_by_num_clusters(lines)
     lower_threshold = 25.0 # Disregard clusters smaller than this
-    upper_threshold = min(10000.0, non_masked_data_points / 2.0) # 50% or 10000
+    upper_threshold = min(10000.0, 2.0 * non_masked_data_points / 3.0) # 66% or 10000
+    if cluster_limit > 0:
+        upper_threshold = min(upper_threshold, cluster_limit - 1)
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
 
@@ -193,7 +195,7 @@ def __save_calculated_spc_file_and_hash_for_data(data, dist_matrix, cluster, log
     h = __calculate_hash_for_data(data, dist_matrix)
     save_to_file((cluster, log), SPC_CLUSTER_FILE.format(h))
 
-def cluster_rows_spc(data, dist_matrix):
+def cluster_rows_spc(data, dist_matrix, cluster_limit):
     DEBUG("Checking for cached results...")
     cached_results = __get_precalculated_spc_file_if_exists_for_data(data, dist_matrix)
     if cached_results is not None:
@@ -215,7 +217,7 @@ def cluster_rows_spc(data, dist_matrix):
     DEBUG("Starting Super-Paramagnetic clustering...")
     __spc_run_and_wait_for_completion()
     non_masked_data_points = __spc_get_non_masked_data_points(dist_matrix)
-    t, log = __spc_parse_temperature_results(non_masked_data_points)
+    t, log = __spc_parse_temperature_results(non_masked_data_points, cluster_limit)
     clusters = __spc_get_clusters_by_temperature(t)
     top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, 0)
     DEBUG("Top cluster: {0}".format(top_cluster))
@@ -237,8 +239,8 @@ def cluster_rows_dbscan(data, dist_matrix, eps=0.5):
     db = DBSCAN(eps=eps, metric="precomputed", min_samples=3).fit(dist_matrix)
     return data, db.labels_, db
 
-def cluster_rows(data, dist_matrix):
-    return cluster_rows_spc(data, dist_matrix)
+def cluster_rows(data, dist_matrix, cluster_limit=0):
+    return cluster_rows_spc(data, dist_matrix, cluster_limit)
 
 def __test_agglomerative_clustering():
     _, labels, ag = cluster_rows_agglomerative(None, sample_dist_matrix, 2)

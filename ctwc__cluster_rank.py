@@ -188,9 +188,9 @@ def __get_index_list_for_label_filter(label_filter, labels):
 def __fix(array_like):
     return np.squeeze(np.asarray(array_like))
 
-def filter_rows_by_top_rank(data, rows_dist, entry_names=None, debug=False):
+def filter_rows_by_top_rank(data, rows_dist, cluster_limit=0, entry_names=None, debug=False):
     DEBUG("Starting to cluster data...")
-    clust, labels, ag = ctwc__cluster_1d.cluster_rows(data, rows_dist)
+    clust, labels, ag = ctwc__cluster_1d.cluster_rows(data, rows_dist, cluster_limit)
     INFO("Clustered labels: {0}".format(labels))
     return __filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names, debug)
 
@@ -228,15 +228,15 @@ def __filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=No
 
     return picked_indices, max_rank[1], __fix(filtered_data), __fix(filtered_dist_matrix), __fix(filtered_data_compliment), __fix(filtered_dist_matrix_compliment)
 
-def filter_cols_by_top_rank(data, cols_dist, samples=None, debug=False):
+def filter_cols_by_top_rank(data, cols_dist, cluster_limit=0, samples=None, debug=False):
     data = data.transpose()
-    return filter_rows_by_top_rank(data, cols_dist, samples, debug)
+    return filter_rows_by_top_rank(data, cols_dist, cluster_limit, samples, debug)
 
 def test():
     data, otus, samples = ctwc__data_handler.get_sample_biom_table()
     tree = ctwc__data_handler.get_gg_97_otu_tree()
     _, cols_dist = ctwc__distance_matrix.get_distance_matrices(data, tree, samples, otus, skip_rows=True)
-    picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_cols_by_top_rank(data, cols_dist, otus, True)
+    picked_indices, max_rank, filtered_data, filtered_dist_matrix, _ , _ = filter_cols_by_top_rank(data, cols_dist, 0, otus, True)
 
     INFO("Picked {0} indices".format(len(picked_indices)))
     clust, labels, ag = ctwc__cluster_1d.cluster_rows(filtered_data.transpose(), cols_dist)
