@@ -89,7 +89,7 @@ def has_value(sorted_list, value):
     if type(sorted_list) is set:
         return value in sorted_list # O(1) operation
 
-    # Otherwise assuming the list is sorted
+    # Otherwise assuming the list is sorted, O(lg(n)) operation
     i = bisect.bisect_left(sorted_list, value)
     if i != len(sorted_list) and sorted_list[i] == value:
         return True
@@ -104,11 +104,20 @@ def write_dict_as_csv(filename, mydict, ref_dict):
     import csv
     with open(filename, 'wb') as csv_file:
         writer = csv.writer(csv_file)
-        for key, value in mydict.items():
+        for key in mydict:
+            valye = mydict[key]
             original_val = "na"
-            if key in ref_dict.keys():
+            if key in ref_dict:
                 original_val = ref_dict[key]
             writer.writerow([key, (value, original_val)])
+
+def write_dict_entry_to_open_csv_file(csv_writer, mydict, ref_dict):
+    for key in mydict:
+        value = mydict[key]
+        original_val = "na"
+        if key in ref_dict:
+            original_val = ref_dict[key]
+        csv_writer.writerow([key, (value, original_val)])
 
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',

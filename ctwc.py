@@ -8,6 +8,7 @@ import numpy as np
 RES_IND_INPUT = 0
 RES_IND_P_VAL = 1
 RES_IND_DIST = 2
+Q_VALUES_ITERATION_FILENAME = "q_vals_{0}.csv"
 
 def __join_submatrices_by_axis(mat_a, mat_b, axis):
     ret = np.concatenate((mat_a, mat_b), axis)
@@ -182,10 +183,14 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
     iteration_results = dict()
     __ctwc_recursive_iteration(data, tree, samples, otus, table, iteration_results = iteration_results)
 
+    import csv
     for elem in iteration_results:
-        iteration_results[elem] = (iteration_results[elem][RES_IND_INPUT], ctwc__metadata_analysis.correct_p_vals(iteration_results[elem][RES_IND_P_VAL]), iteration_results[elem][RES_IND_DIST])
-        for k in iteration_results[elem][RES_IND_P_VAL]:
-            ctwc__metadata_analysis.save_q_values_to_csv(elem, k, iteration_results[elem][RES_IND_P_VAL], iteration_results[elem][RES_IND_DIST])
+        filename = Q_VALUES_ITERATION_FILENAME.format(elem)
+        with open(filename, 'wb') as csv_file:
+            csv_writer = csv.writer(csv_file)
+            iteration_results[elem] = (iteration_results[elem][RES_IND_INPUT], ctwc__metadata_analysis.correct_p_vals(iteration_results[elem][RES_IND_P_VAL]), iteration_results[elem][RES_IND_DIST])
+            for k in iteration_results[elem][RES_IND_P_VAL]:
+                ctwc__metadata_analysis.save_q_values_to_csv_for_iteration(csv_writer, k, iteration_results[elem][RES_IND_P_VAL], iteration_results[elem][RES_IND_DIST])
 
     ctwc__plot.wait_for_user()
     return iteration_results
