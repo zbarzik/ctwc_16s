@@ -228,8 +228,8 @@ def save_q_values_to_csv(iteration, key, q_vals, sel_dist):
     filename = Q_VALUE_FILENAME.format(make_camel_from_string(iteration), make_camel_from_string(key))
     write_dict_as_csv(filename, q_vals[key], sel_dist[key][1])
 
-def save_q_values_to_csv_for_iteration(csv_writer, key, q_vals, sel_dist):
-    write_dict_entry_to_open_csv_file(csv_writer, q_vals[key], sel_dist[key][1])
+def save_q_values_to_csv_for_iteration(csv_writer, key, q_vals, sel_dist, ref_dist):
+    write_dict_entry_to_open_csv_file(csv_writer, key, q_vals[key], sel_dist[key][1], ref_dist[key][1])
 
 def test():
     globals()['TEST'] = True
