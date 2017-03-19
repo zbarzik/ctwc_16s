@@ -216,7 +216,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
     step = __ctwc_recursive__get_next_step(iteration_ind, 0)
 
-    if len(iteration_ind) >= len("x.x"):
+    if len(iteration_ind) > len("x.x"):
         do_otus = False
         do_samples = False
         do_samples_comp = False
@@ -314,7 +314,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
 def test():
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=True)
+    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=False, full_set=False)
 
     output = ctwc_recursive_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
