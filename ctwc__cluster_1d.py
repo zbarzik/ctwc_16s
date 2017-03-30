@@ -94,6 +94,7 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
     for candidate in candidates:
         largest_cluster, score = candidate
         if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
+            largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND]) or
             largest_cluster < lower_threshold or
             largest_cluster > upper_threshold or
             score < 3):
@@ -148,7 +149,7 @@ def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
 
     #line = __pick_line_by_num_clusters(lines)
     lower_threshold = 25.0 # Disregard clusters smaller than this
-    upper_threshold = min(10000.0, 2.0 * non_masked_data_points / 3.0) # 66% or 10000
+    upper_threshold = min(non_masked_data_points * 0.99, non_masked_data_points - 1) # 99%
     if cluster_limit > 0:
         upper_threshold = min(upper_threshold, cluster_limit - 1)
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)

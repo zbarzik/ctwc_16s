@@ -9,7 +9,7 @@ import math
 
 REAL_DATA = True
 
-SAMPLE_THRESHOLD = 3
+SAMPLE_THRESHOLD = 2
 USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
 NUM_THREADS = 32
@@ -31,7 +31,7 @@ def __unifrac_prepare_entry_for_dictionary(args):
         if USE_LOG_XFORM:
             samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
         else:
-            samp_dict[samp] = data[samp_ind, otu_ind]
+            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else data[samp_ind, otu_ind]
     return {otu:samp_dict}
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
@@ -202,11 +202,11 @@ def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_fil
         mask[rows_filter] = False
         data[mask] = 0
 
-    if USE_LOG_XFORM:
-        DEBUG("Log transform OTU abundance...")
-        data[data < SAMPLE_THRESHOLD] = 0.0
-        data = np.ma.log2(data)
+    data[data < SAMPLE_THRESHOLD] = 0.0
     if metric == 'pearson':
+        if USE_LOG_XFORM:
+            DEBUG("Log transform OTU abundance...")
+            data = np.ma.log2(data)
         res = __pearson_distance(data)
     elif metric == 'jaccard':
         res = __jaccard_distance(data)

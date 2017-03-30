@@ -100,13 +100,11 @@ def get_synthetic_biom_table(full_set=True):
     data, otus, samples, table = get_sample_biom_table(full_set)
     INFO("Generating new patterns in data...")
     # noise
-    data = np.random.normal(0, 2, size=data.shape)
-    data[data < 0] = 0.0
-    #data = np.zeros(data.shape)
+    data = abs(np.random.normal(0, 2, size=data.shape))
     # cluster of samples
-    data[100:3500, :130] = 20 # 3400 OTU types common for 130 first samples
+    data[100:5000, :150] = 30.0 # 4900 OTU types common for 150 first samples
     # second cluster of samples
-    data[6000:9000, 70:130] = 40 # 3000 OTU types common for the latter 60 of the first 130 samples
+    data[5100:8000, 70:150] = 50.0 # 2900 OTU types common for the latter 80 of the first 150 samples
     np.fill_diagonal(data, 0.0)
     INFO("Done preparing synthetic data")
     return data, otus, samples, table
