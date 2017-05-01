@@ -94,18 +94,30 @@ def get_sample_biom_table(full_set=True):
     INFO("Complete dataset size: {0}".format(table.shape))
     return table.matrix_data.todense(), table.ids('observation'), table.ids('sample'), table
 
+def __shuffle_2d_dist_matrix(mat):
+    ASSERT(mat.shape[0] == mat.shape[1])
+    rand_state = np.random.get_state()
+    np.random.shuffle(mat)
+    mat = mat.transpose()
+    np.random.set_state(rand_state)
+    np.random.shuffle(mat)
+    return mat
+
+
 def get_synthetic_biom_table(full_set=True):
     INFO("Synthesizing data based on sample table...")
     INFO("Reading sample files...")
     data, otus, samples, table = get_sample_biom_table(full_set)
     INFO("Generating new patterns in data...")
     # noise
-    data = abs(np.random.normal(0, 2, size=data.shape))
+    data = abs(np.random.normal(0, 5, size=data.shape))
+    data[data < 0 ] = 0.0
     # cluster of samples
-    data[100:5000, :150] = 30.0 # 4900 OTU types common for 150 first samples
+    data[:, :150] = 0.0
+    data[100:5000, :150] = 6.0 # 4900 OTU types common for 150 first samples
     # second cluster of samples
-    data[5100:8000, 70:150] = 50.0 # 2900 OTU types common for the latter 80 of the first 150 samples
-    np.fill_diagonal(data, 0.0)
+    data[5100:6000, 70:150] = 5.0 # 2900 OTU types common for the latter 80 of the first 150 samples
+    np.random.shuffle(data)
     INFO("Done preparing synthetic data")
     return data, otus, samples, table
 
