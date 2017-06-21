@@ -112,14 +112,20 @@ def get_synthetic_biom_table(full_set=True):
     INFO("Generating new patterns in data...")
     # noise
     data = abs(np.random.normal(0, 5, size=data.shape))
-    data[data < 0 ] = 0.0
+    data[data < 0] = 0.0
     # cluster of samples
     data[:, :150] = 0.0
     data[100:5000, :150] = 6.0 # 4900 OTU types common for 150 first samples
     # second cluster of samples
     data[5100:6000, 70:150] = 5.0 # 2900 OTU types common for the latter 80 of the first 150 samples
     ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
+    # shuffle along first axis:
     np.random.shuffle(data)
+    # shuffle along second axis:
+    data = data.transpose()
+    np.random.shuffle(data)
+    # transpose back:
+    data = data.transpose()
     ctwc__plot.plot_mat(data, header="Original Data Post-shuffle")
     INFO("Done preparing synthetic data")
     return data, otus, samples, table
