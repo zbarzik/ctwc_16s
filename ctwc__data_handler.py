@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from ctwc__common import *
+import ctwc__plot
 import warnings
 import numpy as np
 
@@ -117,7 +118,9 @@ def get_synthetic_biom_table(full_set=True):
     data[100:5000, :150] = 6.0 # 4900 OTU types common for 150 first samples
     # second cluster of samples
     data[5100:6000, 70:150] = 5.0 # 2900 OTU types common for the latter 80 of the first 150 samples
+    ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
     np.random.shuffle(data)
+    ctwc__plot.plot_mat(data, header="Original Data Post-shuffle")
     INFO("Done preparing synthetic data")
     return data, otus, samples, table
 
