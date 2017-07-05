@@ -137,7 +137,7 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
                                                                sample_filter=cols_filter,
                                                                skip_rows=True)
 
-    ctwc__plot.plot_mat(cols_dist, header="{0}: {1}".format(title, "Samples Distance Matrix"))
+    #ctwc__plot.plot_mat(cols_dist, header="{0}: {1}".format(title, "Samples Distance Matrix"))
 
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data,
                                                                                        cols_dist,
