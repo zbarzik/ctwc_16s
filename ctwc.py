@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP
+from ctwc__common import *
 
 import ctwc__distance_matrix, ctwc__cluster_rank, ctwc__data_handler, ctwc__plot, ctwc__metadata_analysis
 import numpy as np
@@ -70,6 +70,8 @@ def get_top_p_val(p_vals):
     mn = 1.0
     tpl = (None, None)
     for k_1 in p_vals:
+        if k_1 in ctwc__metadata_analysis.OTU_RANKS_TO_SKIP:
+            continue
         for k_2 in p_vals[k_1]:
             if p_vals[k_1][k_2] < mn:
                 mn = p_vals[k_1][k_2]
@@ -94,7 +96,7 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
                                                                otu_filter=rows_filter,
                                                                skip_cols=True)
 
-    ctwc__plot.plot_mat(rows_dist, header="{0}: {1}".format(title, "OTUs Distance Matrix"))
+    #ctwc__plot.plot_mat(rows_dist, header="{0}: {1}".format(title, "OTUs Distance Matrix"))
 
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data,
                                                                                        rows_dist,
@@ -186,7 +188,7 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
 
     import csv
     for elem in iteration_results:
-        filename = Q_VALUES_ITERATION_FILENAME.format(elem)
+        filename = Q_VALUES_ITERATION_FILENAME.format(make_camel_from_string(elem))
         with open(filename, 'wb') as csv_file:
             csv_writer = csv.writer(csv_file)
             iteration_results[elem] = (iteration_results[elem][RES_IND_INPUT],

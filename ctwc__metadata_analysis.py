@@ -2,15 +2,20 @@
 from ctwc__common import *
 import csv, bisect, math, scipy, scipy.stats, random
 
-TAXA_LINE_STRUCUTURE = ["otu", "kingdom", "phylum", "class", "order", "family", "genus", "species"]
+TAXA_LINE_STRUCUTURE = ['otu', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
 SAMPLES_LINE_STRUCTURE = ['sample_name', 'bactoscan', 'check_in_time', 'check_out_time', 'collection_timestamp', 'date_pcr',
 'dateprocessed', 'description', 'dmissing_extraction', 'dna_extracted', 'dna_extraction', 'elevation', 'env_biome',
 'env_feature', 'env_matter', 'env_package', 'geo_loc_name', 'host_subject_id', 'investigation_type', 'latitude', 'longitude',
 'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'sample_type', 'scientific_name',
 'season', 'silo_lot_id', 'tanker_cip_date', 'tanker_cip_time', 'taxon_id', 'title']
-SAMPLES_SKIP_FIELDS = ['check_in_time', 'collection_timestamp', 'date_pcr', 'latitude', 'longitude', 'notes', 'physical_specimen_remaining', 'title']
+SAMPLES_SKIP_FIELDS = ['check_in_time', 'check_out_time', 'date_pcr', 'bactoscan',
+'dateprocessed', 'description', 'dmissing_extraction', 'dna_extracted', 'dna_extraction', 'elevation', 'env_biome',
+'env_feature', 'env_matter', 'env_package', 'investigation_type', 'latitude', 'longitude',
+'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'sample_type', 'scientific_name',
+'taxon_id', 'title']
 SAMPLES_MD_FILE = "10485_20160420-093403.txt"
 TAXA_MD_FILE = "97_otu_taxonomy.txt"
+OTU_RANKS_TO_SKIP = ['kingdom', 'phylum']
 TEST = False
 
 Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
