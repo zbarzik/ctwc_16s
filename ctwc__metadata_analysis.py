@@ -8,17 +8,19 @@ SAMPLES_LINE_STRUCTURE = ['sample_name', 'bactoscan', 'check_in_time', 'check_ou
 'env_feature', 'env_matter', 'env_package', 'geo_loc_name', 'host_subject_id', 'investigation_type', 'latitude', 'longitude',
 'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'sample_type', 'scientific_name',
 'season', 'silo_lot_id', 'tanker_cip_date', 'tanker_cip_time', 'taxon_id', 'title']
-SAMPLES_SKIP_FIELDS = ['check_in_time', 'check_out_time', 'date_pcr', 'bactoscan',
+SAMPLES_SKIP_FIELDS = ['date_pcr', 'bactoscan',
 'dateprocessed', 'description', 'dmissing_extraction', 'dna_extracted', 'dna_extraction', 'elevation', 'env_biome',
 'env_feature', 'env_matter', 'env_package', 'investigation_type', 'latitude', 'longitude',
-'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'sample_type', 'scientific_name',
-'taxon_id', 'title']
+'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'scientific_name',
+'title', 'tanker_cip_date', 'tanker_cip_time']
 SAMPLES_MD_FILE = "10485_20160420-093403.txt"
 TAXA_MD_FILE = "97_otu_taxonomy.txt"
 OTU_RANKS_TO_SKIP = ['kingdom', 'phylum']
 TEST = False
 
 Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
+
+MIN_Q_VAL = 0.05
 
 """
 filt is used for testing, allowing only a defined collection of species.
@@ -223,15 +225,11 @@ def correct_p_vals(p_vals):
     screened = {}
     for k1 in q_vals:
         for k2 in q_vals[k1]:
-            if q_vals[k1][k2] < 0.5:
+            if q_vals[k1][k2] < MIN_Q_VAL:
                 if not screened.has_key(k1):
                     screened[k1] = {}
                 screened[k1][k2] = q_vals[k1][k2]
     return screened
-
-def save_q_values_to_csv(iteration, key, q_vals, sel_dist):
-    filename = Q_VALUE_FILENAME.format(make_camel_from_string(iteration), make_camel_from_string(key))
-    write_dict_as_csv(filename, q_vals[key], sel_dist[key][1])
 
 def save_q_values_to_csv_for_iteration(csv_writer, key, q_vals, sel_dist, ref_dist):
     write_dict_entry_to_open_csv_file(csv_writer, key, q_vals[key], sel_dist[key][1], ref_dist[key][1])

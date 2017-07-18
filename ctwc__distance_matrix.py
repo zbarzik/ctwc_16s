@@ -10,6 +10,7 @@ import math
 REAL_DATA = True
 
 SAMPLE_THRESHOLD = 2
+OTU_THRESHOLD = 1
 USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
 NUM_THREADS = 32
@@ -202,7 +203,7 @@ def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_fil
         mask[rows_filter] = False
         data[mask] = 0
 
-    data[data < SAMPLE_THRESHOLD] = 0.0
+    data[data < OTU_THRESHOLD] = 0.0
     if metric == 'pearson':
         if USE_LOG_XFORM:
             DEBUG("Log transform OTU abundance...")
