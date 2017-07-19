@@ -121,7 +121,7 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
     add_line_to_results_file(res_file, "{0} - {1} OTUs X {2} Samples".format(title,
                                             len(otus) if rows_filter is None else len(rows_filter),
                                             len(samples) if cols_filter is None else len(cols_filter)))
-    add_line_to_results_file("-"*BANNER_LEN)
+    add_line_to_results_file(res_file, "-"*BANNER_LEN)
     sorted_rows_mat = __sort_matrix_rows_by_selection(rows_dist, picked_indices)
     sorted_mat = __sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
 
@@ -131,9 +131,9 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
         picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
         taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
         INFO("Selected {0} OTUs".format(len(picked_indices)))
-        add_line_to_results_file("-"*BANNER_LEN)
+        add_line_to_results_file(res_file, "-"*BANNER_LEN)
         add_line_to_results_file(res_file, "Selected {0} OTUs:".format(len(picked_indices)))
-        add_line_to_results_file("-"*BANNER_LEN)
+        add_line_to_results_file(res_file, "-"*BANNER_LEN)
         for taxonomy in taxonomies:
             DEBUG(taxonomy)
             add_line_to_results_file(res_file, taxonomy)
@@ -173,7 +173,7 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
                                             len(otus) if rows_filter is None else len(rows_filter),
                                             len(samples) if cols_filter is None else len(cols_filter)))
 
-    add_line_to_results_file("-"*BANNER_LEN)
+    add_line_to_results_file(res_file, "-"*BANNER_LEN)
     sorted_rows_mat = __sort_matrix_rows_by_selection(cols_dist, picked_indices)
     sorted_mat = __sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
 
@@ -181,9 +181,9 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
 
     if table is not None:
         INFO("Selected {0} samples".format(len(picked_indices)))
-        add_line_to_results_file("-"*BANNER_LEN)
+        add_line_to_results_file(res_file, "-"*BANNER_LEN)
         add_line_to_results_file(res_file, "Selected {0} samples:".format(len(picked_indices)))
-        add_line_to_results_file("-"*BANNER_LEN)
+        add_line_to_results_file(res_file, "-"*BANNER_LEN)
         picked_samples = ctwc__data_handler.get_samples_by_indices(picked_indices, table)
         for samp in picked_samples:
             add_line_to_results_file(res_file, samp)
@@ -232,9 +232,9 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
         with open(filename, 'r') as q_vals:
             res_file = create_or_open_results_file(elem)
             lines = q_vals.readlines()
-            add_line_to_results_file("-"*BANNER_LEN)
+            add_line_to_results_file(res_file, "-"*BANNER_LEN)
             add_line_to_results_file(res_file, "Filtered Q values:")
-            add_line_to_results_file("-"*BANNER_LEN)
+            add_line_to_results_file(res_file, "-"*BANNER_LEN)
             for line in lines:
                 add_line_to_results_file(res_file, line)
             res_file.close()
