@@ -87,6 +87,7 @@ def get_sample_biom_table(full_set=True):
         tables.append(get_biom_table_from_file('milk_3574_otu_table.json'))
         tables.append(get_biom_table_from_file('milk_3575_otu_table.json'))
         tables.append(get_biom_table_from_file('milk_3576_otu_table.json'))
+        tables.append(get_biom_table_from_file('milk_3579_otu_table.json'))
     table = tables[0]
     for ind, tab in enumerate(tables, 1):
         INFO("Dataset part {0} size: {1}".format(ind, tab.shape))
