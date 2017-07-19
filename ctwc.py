@@ -13,6 +13,10 @@ Q_VALUES_ITERATION_FILENAME = "q_vals_{0}.csv"
 
 RECURSIVE_THRESHOLD = 100
 
+CLUSTER_OUTPUT_FILE = "cluster_results_{0}.txt"
+
+BANNER_LEN = 50
+
 def __join_submatrices_by_axis(mat_a, mat_b, axis):
     ret = np.concatenate((mat_a, mat_b), axis)
     ASSERT(ret.shape[axis] == mat_a.shape[axis] + mat_b.shape[axis])
@@ -89,6 +93,14 @@ def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filt
     else:
         return __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev)
 
+def create_or_open_results_file(iteration):
+    fd = open(CLUSTER_OUTPUT_FILE.format(make_camel_from_string(iteration)), 'a')
+    return fd
+
+def add_line_to_results_file(fd, line):
+    if fd and not fd.closed:
+        fd.write(line + "\n")
+
 def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev=0):
     rows_dist, _ = ctwc__distance_matrix.get_distance_matrices(data,
                                                                tree,
@@ -98,8 +110,6 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
                                                                otu_filter=rows_filter,
                                                                skip_cols=True)
 
-    #ctwc__plot.plot_mat(rows_dist, header="{0}: {1}".format(title, "OTUs Distance Matrix"))
-
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data,
                                                                                        rows_dist,
                                                                                        prev,
@@ -107,6 +117,11 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
 
     selected_rows_filter, compliment_rows_filter = __prepare_otu_filters_from_indices(picked_indices, otus, rows_filter)
 
+    res_file = create_or_open_results_file(title)
+    add_line_to_results_file(res_file, "{0} - {1} OTUs X {2} Samples".format(title,
+                                            len(otus) if rows_filter is None else len(rows_filter),
+                                            len(samples) if cols_filter is None else len(cols_filter)))
+    add_line_to_results_file("-"*BANNER_LEN)
     sorted_rows_mat = __sort_matrix_rows_by_selection(rows_dist, picked_indices)
     sorted_mat = __sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
 
@@ -115,9 +130,14 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
     if table is not None:
         picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
         taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
-        DEBUG("Picked OTUs:")
+        INFO("Selected {0} OTUs".format(len(picked_indices)))
+        add_line_to_results_file("-"*BANNER_LEN)
+        add_line_to_results_file(res_file, "Selected {0} OTUs:".format(len(picked_indices)))
+        add_line_to_results_file("-"*BANNER_LEN)
         for taxonomy in taxonomies:
             DEBUG(taxonomy)
+            add_line_to_results_file(res_file, taxonomy)
+
         ref_dist = __get_full_otus_dist(otus)
         sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(selected_rows_filter)
         p_vals = ctwc__metadata_analysis.calculate_otus_p_values(sel_dist, ref_dist)
@@ -127,6 +147,8 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
 
     num_otus = len(selected_rows_filter)
     num_samples = len(samples) if cols_filter == None else len(cols_filter)
+
+    res_file.close()
 
     return (num_otus, num_samples), selected_rows_filter, compliment_rows_filter, p_vals, (sel_dist, ref_dist)
 
@@ -139,8 +161,6 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
                                                                sample_filter=cols_filter,
                                                                skip_rows=True)
 
-    #ctwc__plot.plot_mat(cols_dist, header="{0}: {1}".format(title, "Samples Distance Matrix"))
-
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data,
                                                                                        cols_dist,
                                                                                        prev,
@@ -148,20 +168,26 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
 
     selected_cols_filter, compliment_cols_filter = __prepare_sample_filters_from_indices(picked_indices, samples, cols_filter)
 
+    res_file = create_or_open_results_file(title)
+    add_line_to_results_file(res_file, "{0} - {1} OTUs X {2} Samples".format(title,
+                                            len(otus) if rows_filter is None else len(rows_filter),
+                                            len(samples) if cols_filter is None else len(cols_filter)))
+
+    add_line_to_results_file("-"*BANNER_LEN)
     sorted_rows_mat = __sort_matrix_rows_by_selection(cols_dist, picked_indices)
     sorted_mat = __sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
 
     ctwc__plot.plot_mat(sorted_mat, header="{0}: {1}".format(title, "Samples Distance Matrix - sorted"))
 
-    INFO("Selected {0} samples:".format(len(picked_indices)))
-    DEBUG(picked_indices)
     if table is not None:
+        INFO("Selected {0} samples".format(len(picked_indices)))
+        add_line_to_results_file("-"*BANNER_LEN)
+        add_line_to_results_file(res_file, "Selected {0} samples:".format(len(picked_indices)))
+        add_line_to_results_file("-"*BANNER_LEN)
         picked_samples = ctwc__data_handler.get_samples_by_indices(picked_indices, table)
-        DEBUG(picked_samples)
-        dates = ctwc__metadata_analysis.get_collection_dates_for_samples(picked_samples)
-        DEBUG("Collection dates for selected samples:")
-        for row in dates:
-            DEBUG(row)
+        for samp in picked_samples:
+            add_line_to_results_file(res_file, samp)
+            DEBUG(samp)
         ref_dist = __get_full_sample_dist(samples)
         sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(selected_cols_filter)
         p_vals = ctwc__metadata_analysis.calculate_samples_p_values(sel_dist, ref_dist)
@@ -171,6 +197,8 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
 
     num_otus = len(otus) if rows_filter == None else len(rows_filter)
     num_samples = len(selected_cols_filter)
+
+    res_file.close()
 
     return (num_otus, num_samples), selected_cols_filter, compliment_cols_filter, p_vals, (sel_dist, ref_dist)
 
@@ -191,6 +219,7 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
     import csv
     for elem in iteration_results:
         filename = Q_VALUES_ITERATION_FILENAME.format(make_camel_from_string(elem))
+
         with open(filename, 'wb') as csv_file:
             csv_writer = csv.writer(csv_file)
             iteration_results[elem] = (iteration_results[elem][RES_IND_INPUT],
@@ -200,6 +229,15 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
             for k in iteration_results[elem][RES_IND_P_VAL]:
                 ctwc__metadata_analysis.save_q_values_to_csv_for_iteration(csv_writer, k, iteration_results[elem][RES_IND_P_VAL],
                 iteration_results[elem][RES_IND_SEL_DIST], iteration_results[elem][RES_IND_REF_DIST])
+        with open(filename, 'r') as q_vals:
+            res_file = create_or_open_results_file(elem)
+            lines = q_vals.readlines()
+            add_line_to_results_file("-"*BANNER_LEN)
+            add_line_to_results_file(res_file, "Filtered Q values:")
+            add_line_to_results_file("-"*BANNER_LEN)
+            for line in lines:
+                add_line_to_results_file(res_file, line)
+            res_file.close()
 
     ctwc__plot.wait_for_user()
     return iteration_results
@@ -234,7 +272,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
     if run_on_selection:
         step = __ctwc_recursive__get_next_step(iteration_ind, 0)
-        result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration("Iteration {0}".format(step), "Pick samples...",
+        title = "Iteration {0}".format(step)
+        result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration(title, "Pick samples...",
                                                                        data,
                                                                        tree,
                                                                        samples,
@@ -245,7 +284,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                                                        False,
                                                                        0 if sample_filter is None else len(sample_filter))
         sel_dist, ref_dist = dist
-        iteration_results["Iteration {0}".format(step)] = (result, p_vals, sel_dist, ref_dist)
+        iteration_results[title] = (result, p_vals, sel_dist, ref_dist)
         if sample_filter is None or (len(step_samp_filter) > 0 and len(step_samp_filter) < len(sample_filter)):
             __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        otu_filter,
@@ -256,7 +295,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        iteration_results)
 
         step = __ctwc_recursive__get_next_step(iteration_ind, 1)
-        result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration("Iteration {0}".format(step), "Pick OTUs...",
+        title = "Iteration {0}".format(step)
+        result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration(title, "Pick OTUs...",
                                                                      data,
                                                                      tree,
                                                                      samples,
@@ -279,7 +319,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
     if run_on_sample_comp:
         step = __ctwc_recursive__get_next_step(iteration_ind, 2)
-        result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration("Iteration {0}".format(step), "Pick samples from compliment...",
+        title = "Iteration {0}".format(step)
+        result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration(title, "Pick samples from compliment...",
                                                                         data,
                                                                         tree,
                                                                         samples,
@@ -300,7 +341,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        iteration_results)
 
         step = __ctwc_recursive__get_next_step(iteration_ind, 4)
-        result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration("Iteration {0}".format(step), "Pick OTUs from samples compliment...",
+        title = "Iteration {0}".format(step)
+        result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration(title, "Pick OTUs from samples compliment...",
                                                                         data,
                                                                         tree,
                                                                         samples,
@@ -323,7 +365,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
     if run_on_otu_comp:
         step = __ctwc_recursive__get_next_step(iteration_ind, 3)
-        result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration("Iteration {0}".format(step), "Pick OTUs from compliment...",
+        title = "Iteration {0}".format(step)
+        result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration(title, "Pick OTUs from compliment...",
                                                                         data,
                                                                         tree,
                                                                         samples,
@@ -344,7 +387,8 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        iteration_results)
 
         step = __ctwc_recursive__get_next_step(iteration_ind, 5)
-        result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration("Iteration {0}".format(step), "Pick samples from OTUs compliment...",
+        title = "Iteration {0}".format(step)
+        result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration(title, "Pick samples from OTUs compliment...",
                                                                         data,
                                                                         tree,
                                                                         samples,
