@@ -31,7 +31,7 @@ NumberOfPoints: {0}
 NumberOfEdges: {2}
 DataFile: {1}.dat
 MinTemp: 0.0
-MaxTemp: 0.3
+MaxTemp: 0.5
 TempStep: 0.001
 OutFile: {1}.out
 SWCycles: 2000
@@ -148,7 +148,7 @@ def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
         DEBUG(line)
 
     #line = __pick_line_by_num_clusters(lines)
-    lower_threshold = 25.0 # Disregard clusters smaller than this
+    lower_threshold = 15.0 # Disregard clusters smaller than this
     upper_threshold = min(non_masked_data_points * 0.99, non_masked_data_points - 1) # 99%
     if cluster_limit > 0:
         upper_threshold = min(upper_threshold, cluster_limit - 1)
