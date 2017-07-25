@@ -9,10 +9,11 @@ import math
 
 REAL_DATA = True
 
-SAMPLE_THRESHOLD = 2
-OTU_THRESHOLD = 1
 USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
+NORMALIZE_FACTOR = 100.0
+OTU_THRESHOLD = 1 / NORMALIZE_FACTOR
+SAMPLE_THRESHOLD = 2 / NORMALIZE_FACTOR
 NUM_THREADS = 32
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
@@ -30,9 +31,9 @@ def __unifrac_prepare_entry_for_dictionary(args):
             (otu_filter is not None and not has_value(otu_filter, otu))):
             continue
         if USE_LOG_XFORM:
-            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])
+            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])*NORMALIZE_FACTOR
         else:
-            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else data[samp_ind, otu_ind]
+            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else data[samp_ind, otu_ind]*NORMALIZE_FACTOR
     return {otu:samp_dict}
 
 def __unifrac_prepare_dictionary_from_matrix_rows(data, samples, otus, sample_filter, otu_filter):
