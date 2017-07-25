@@ -4,6 +4,22 @@ import ctwc__plot
 import warnings
 import numpy as np
 
+RAW_MILK_FILES = [ 'milk_3572_otu_table.json', 'milk_3573_otu_table.json', 'milk_3574_otu_table.json', 'milk_3575_otu_table.json',
+'milk_3576_otu_table.json' ] #, 'milk_3579_otu_table.json' ]
+FILTERED_RAW_MILK_FILES = [ 'subset-normalized-milk_3572_otu_table.json', 'subset-normalized-milk_3574_otu_table.json', 'subset-normalized-milk_3576_otu_table.json',
+                            'subset-normalized-milk_3573_otu_table.json', 'subset-normalized-milk_3575_otu_table.json', 'subset-normalized-milk_3579_otu_table.json' ]
+DENOVO_REPROCESSED_MILK_FILES = [ 'milk-sub15k-min10.json' ]
+
+#BIOM_FILES_DICT = DENOVO_REPROCESSED_MILK_FILES
+BIOM_FILES_DICT = FILTERED_RAW_MILK_FILES
+#BIOM_FILES_DICT = RAW_MILK_FILES
+
+RAW_MILK_TREE_FILE = "97_otus.tree"
+DENOVO_REPROCESSED_MILK_TREE_FILE = "all.tre"
+
+#TREE_FILE = DENOVO_REPROCESSED_MILK_TREE_FILE
+TREE_FILE = RAW_MILK_TREE_FILE
+
 def __get_default_tree(otus):
     from cogent.parse.tree import DndParser
     from cogent.maths.unifrac.fast_tree import UniFracTreeNode
@@ -61,6 +77,7 @@ def get_tree_from_file(path):
 
 def get_gg_97_otu_tree():
     tr = get_tree_from_file('97_otus.tree')
+    #tr = get_tree_from_file('all.tre')
     return tr
 
 def get_biom_table_from_file(path):
@@ -80,14 +97,10 @@ def __add_suffix_to_sample_ids(table, suffix):
         table._sample_index.pop(samp, None)
 
 def get_sample_biom_table(full_set=True):
-    tables = []
-    tables.append(get_biom_table_from_file('milk_3572_otu_table.json'))
-    if full_set:
-        tables.append(get_biom_table_from_file('milk_3573_otu_table.json'))
-        tables.append(get_biom_table_from_file('milk_3574_otu_table.json'))
-        tables.append(get_biom_table_from_file('milk_3575_otu_table.json'))
-        tables.append(get_biom_table_from_file('milk_3576_otu_table.json'))
-        #tables.append(get_biom_table_from_file('milk_3579_otu_table.json'))
+    if not full_set:
+        tables = [ get_biom_table_from_file(BIOM_FILES_DICT[0]) ]
+    else:
+        tables = map(get_biom_table_from_file, BIOM_FILES_DICT)
     table = tables[0]
     for ind, tab in enumerate(tables, 1):
         INFO("Dataset part {0} size: {1}".format(ind, tab.shape))
@@ -112,17 +125,17 @@ def get_synthetic_biom_table(full_set=True):
     data, otus, samples, table = get_sample_biom_table(full_set)
     INFO("Generating new patterns in data...")
     # noise
-    data = abs(np.random.normal(0, 5, size=data.shape))
+    data = abs(np.random.normal(0, 5, size=data.shape)) / 100.0
     data[data < 0] = 0.0
     # cluster of samples
     size_of_samp_set = 150 if not full_set else 800
     size_of_otu_set = 5000 if not full_set else 10000
     size_of_partial_samp_set = 70 if not full_set else 300
     data[:, :size_of_samp_set] = 0.0
-    data[100:size_of_otu_set, :size_of_samp_set] = 6.0 # 4900 OTU types common for 150 first samples
+    data[100:size_of_otu_set, :size_of_samp_set] = 6.0 / 100.0 # 4900 OTU types common for 150 first samples
     # second cluster of samples
     data[size_of_otu_set + 100 : size_of_otu_set + 1000,
-         size_of_partial_samp_set : size_of_samp_set] = 5.0 # 2900 OTU types common for the latter 80 of the first 150 samples
+         size_of_partial_samp_set : size_of_samp_set] = 5.0 / 100.0 # 2900 OTU types common for the latter 80 of the first 150 samples
     ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
     # shuffle along first axis:
     np.random.shuffle(data)
