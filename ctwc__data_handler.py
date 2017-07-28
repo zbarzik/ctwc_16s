@@ -7,12 +7,12 @@ import numpy as np
 RAW_MILK_FILES = [ 'milk_3572_otu_table.json', 'milk_3573_otu_table.json', 'milk_3574_otu_table.json', 'milk_3575_otu_table.json',
 'milk_3576_otu_table.json' ] #, 'milk_3579_otu_table.json' ]
 FILTERED_RAW_MILK_FILES = [ 'subset-normalized-milk_3572_otu_table.json', 'subset-normalized-milk_3574_otu_table.json', 'subset-normalized-milk_3576_otu_table.json',
-                            'subset-normalized-milk_3573_otu_table.json', 'subset-normalized-milk_3575_otu_table.json', 'subset-normalized-milk_3579_otu_table.json' ]
+                            'subset-normalized-milk_3573_otu_table.json', 'subset-normalized-milk_3575_otu_table.json' ] #, 'subset-normalized-milk_3579_otu_table.json' ]
 DENOVO_REPROCESSED_MILK_FILES = [ 'milk-sub15k-min10.json' ]
 
 #BIOM_FILES_DICT = DENOVO_REPROCESSED_MILK_FILES
-BIOM_FILES_DICT = FILTERED_RAW_MILK_FILES
-#BIOM_FILES_DICT = RAW_MILK_FILES
+#BIOM_FILES_DICT = FILTERED_RAW_MILK_FILES
+BIOM_FILES_DICT = RAW_MILK_FILES
 
 RAW_MILK_TREE_FILE = "97_otus.tree"
 DENOVO_REPROCESSED_MILK_TREE_FILE = "all.tre"

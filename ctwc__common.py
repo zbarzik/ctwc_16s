@@ -111,16 +111,19 @@ def write_dict_as_csv(filename, mydict, ref_dict):
                 original_val = ref_dict[key]
             writer.writerow([key, (value, original_val)])
 
-def write_dict_entry_to_open_csv_file(csv_writer, field, mydict, sel_dict, ref_dict):
+def write_dict_entry_to_open_csv_file(csv_writer, field, mydict, sel_dict, ref_dict, num_selected=0.0, num_total=0.0):
     for key in mydict:
         value = mydict[key]
+        accuracy = 0.0
         distribution = "na"
         if key in sel_dict:
             distribution = sel_dict[key]
         ref_distribution = "na"
         if key in ref_dict:
             ref_distribution = ref_dict[key]
-        csv_writer.writerow([field, key, (value, distribution, ref_distribution)])
+            if num_total > 0:
+                accuracy =  distribution * num_selected / ref_distribution * num_total
+        csv_writer.writerow([field, key, (value, distribution, ref_distribution, accuracy)])
 
 def init_logger():
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',

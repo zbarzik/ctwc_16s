@@ -215,6 +215,13 @@ def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_fil
     else:
         FATAL("Unknown metric requested: {0}".format(metric))
 
+    if rows_filter is not None:
+        exclude = list(set(range(res.shape[0])) - set(rows_filter))
+        filter_mask = np.zeros(res.shape, dtype=bool)
+        filter_mask[exclude] = True
+        filter_mask[:, exclude] = True
+        res[filter_mask] = INF_VALUE
+
     DEBUG("Finished calculating OTU distance matrix.")
     return res
 

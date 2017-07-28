@@ -24,6 +24,8 @@ sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
                                 [ 0.1, 0.9, 0.1, 0.9, 0.0 ]
                                 ])
 
+__map_spc_to_mat = {}
+__map_mat_to_spc = {}
 
 def __spc_prepare_run_file(n_data_points):
     run_file = """
@@ -48,14 +50,28 @@ WriteCorFile|
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".run", "w+") as run_f:
         run_f.write(run_file)
 
+def __is_row_filtered(dist_mat, row):
+    non_filtered_indices = dist_mat[row] == ctwc__distance_matrix.INF_VALUE
+    non_filtered_indices[row] = True # diagonal is zeros even for filtered, remove those.
+    return non_filtered_indices.all()
+
 def __spc_prepare_dat_file(dist_mat):
+    globals()['__map_spc_to_mat'] = {}
+    globals()['__map_mat_to_spc'] = {}
     lines = []
+    count = 0
     for r in xrange(dist_mat.shape[0]):
-        for c in xrange(dist_mat.shape[1]):
-            lines.append("{0} {1} {2}\n".format(r + 1, c + 1, dist_mat[r][c]))
+        if __is_row_filtered(dist_mat, r):
+            continue
+        count += 1
+        __map_spc_to_mat[count] = r
+        __map_mat_to_spc[r] = count
+    for r in __map_spc_to_mat.keys():
+        for c in __map_spc_to_mat.keys():
+            lines.append("{0} {1} {2}\n".format(r, c, dist_mat[__map_spc_to_mat[r]][__map_spc_to_mat[c]]))
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat", 'w+') as fn:
         fn.write("".join(lines))
-    return dist_mat.shape[0]
+    return count
 
 def __spc_get_non_masked_data_points(dist_mat):
     n = dist_mat.shape[0]
@@ -66,11 +82,12 @@ def __spc_get_non_masked_data_points(dist_mat):
     INFO("Non-masked rows: {0}".format(non_zero_rows))
     return non_zero_rows
 
-def __spc_prepare_edge_file(n):
+def __spc_prepare_edge_file(dist_mat):
+    n = dist_mat.shape[0]
     lines = []
-    for r in xrange(1, n):
-       for c in xrange(1, r):
-           lines.append("{0} {1}\n".format(r, c))
+    for r in __map_mat_to_spc.keys():
+        for c in __map_mat_to_spc.keys():
+            lines.append("{0} {1}\n".format(r, c))
 
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
         edge_f.write("".join(lines))
@@ -148,8 +165,8 @@ def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
         DEBUG(line)
 
     #line = __pick_line_by_num_clusters(lines)
-    lower_threshold = 15.0 # Disregard clusters smaller than this
-    upper_threshold = min(non_masked_data_points * 0.99, non_masked_data_points - 1) # 99%
+    lower_threshold = 7.0 # Disregard clusters smaller than this
+    upper_threshold = min(non_masked_data_points * 0.99, non_masked_data_points - lower_threshold) # 99%
     if cluster_limit > 0:
         upper_threshold = min(upper_threshold, cluster_limit - 1)
     line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
@@ -165,13 +182,14 @@ def __spc_get_clusters_by_temperature(t):
     for line in lines:
         if float(line.split()[TEMP_IND]) == t:
             break
-    return map(int, line.split()[TEMP_IND + 1:])
+    spc_indices = map(int, line.split()[TEMP_IND + 1:])
+    return spc_indices
 
 def __spc_get_cluster_members_by_cluster_id(clusters, cluster_id):
     clust = []
     for i, val in enumerate(clusters):
         if val == cluster_id:
-            clust.append(i)
+            clust.append(__map_spc_to_mat[i + 1])
     return clust
 
 def __spc_clear_temporary_files():
@@ -212,7 +230,7 @@ def cluster_rows_spc(data, dist_matrix, cluster_limit):
     DEBUG("Preparing dat file...")
     n_data_points = __spc_prepare_dat_file(dist_matrix)
     DEBUG("Preparing edge file...")
-    __spc_prepare_edge_file(n_data_points)
+    __spc_prepare_edge_file(dist_matrix)
     DEBUG("Preparing run file...")
     __spc_prepare_run_file(n_data_points)
     DEBUG("Starting Super-Paramagnetic clustering...")

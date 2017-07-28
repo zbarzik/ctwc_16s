@@ -8,14 +8,10 @@ SAMPLES_LINE_STRUCTURE = ['sample_name', 'bactoscan', 'check_in_time', 'check_ou
 'env_feature', 'env_matter', 'env_package', 'geo_loc_name', 'host_subject_id', 'investigation_type', 'latitude', 'longitude',
 'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'sample_type', 'scientific_name',
 'season', 'silo_lot_id', 'tanker_cip_date', 'tanker_cip_time', 'taxon_id', 'title']
-SAMPLES_SKIP_FIELDS = ['date_pcr', 'bactoscan',
-'dateprocessed', 'description', 'dmissing_extraction', 'dna_extracted', 'dna_extraction', 'elevation', 'env_biome',
-'env_feature', 'env_matter', 'env_package', 'investigation_type', 'latitude', 'longitude',
-'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'scientific_name',
-'title', 'tanker_cip_date', 'tanker_cip_time']
+SAMPLES_SKIP_FIELDS = ['host_subject_id']
 SAMPLES_MD_FILE = "10485_20160420-093403.txt"
 TAXA_MD_FILE = "97_otu_taxonomy.txt"
-OTU_RANKS_TO_SKIP = ['kingdom', 'phylum']
+OTU_RANKS_TO_SKIP = ['kingdom']
 TEST = False
 
 Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
@@ -52,7 +48,8 @@ def calculate_otus_histogram(otus_list, filt=None, filt_rank='species'):
     taxa = get_taxonomies_for_otus(otus_list)
     hist = dict()
     for rank in TAXA_LINE_STRUCUTURE[1:]:
-        hist[rank] = __generate_histogram_for_taxonomy_rank(rank, taxa, filt, filt_rank)
+        if rank not in OTU_RANKS_TO_SKIP:
+            hist[rank] = __generate_histogram_for_taxonomy_rank(rank, taxa, filt, filt_rank)
     return hist
 
 def get_collection_dates_for_samples(samples):
@@ -136,7 +133,7 @@ def __calculate_filtered_otus_distribution(otus_list, filt, filt_rank):
 
 def __calculate_otus_distribution_from_histogram(otu_hist):
     percentiles = dict()
-    for rank in TAXA_LINE_STRUCUTURE[1:]:
+    for rank in set(TAXA_LINE_STRUCUTURE[1:]) - set(OTU_RANKS_TO_SKIP):
         total = 0.0
         for key in otu_hist[rank]:
             total += otu_hist[rank][key]
@@ -231,8 +228,8 @@ def correct_p_vals(p_vals):
                 screened[k1][k2] = q_vals[k1][k2]
     return screened
 
-def save_q_values_to_csv_for_iteration(csv_writer, key, q_vals, sel_dist, ref_dist):
-    write_dict_entry_to_open_csv_file(csv_writer, key, q_vals[key], sel_dist[key][1], ref_dist[key][1])
+def save_q_values_to_csv_for_iteration(csv_writer, key, q_vals, sel_dist, ref_dist, num_selected, num_total):
+    write_dict_entry_to_open_csv_file(csv_writer, key, q_vals[key], sel_dist[key][1], ref_dist[key][1], num_selected, num_total)
 
 def test():
     globals()['TEST'] = True
