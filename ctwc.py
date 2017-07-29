@@ -134,7 +134,6 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
         picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
         taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
         INFO("Selected {0} OTUs".format(len(picked_indices)))
-        add_line_to_results_file(res_file, "-"*BANNER_LEN)
         add_line_to_results_file(res_file, "Selected {0} OTUs:".format(len(picked_indices)))
         add_line_to_results_file(res_file, "-"*BANNER_LEN)
         for taxonomy in taxonomies:
@@ -184,7 +183,6 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
 
     if table is not None:
         INFO("Selected {0} samples".format(len(picked_indices)))
-        add_line_to_results_file(res_file, "-"*BANNER_LEN)
         add_line_to_results_file(res_file, "Selected {0} samples:".format(len(picked_indices)))
         add_line_to_results_file(res_file, "-"*BANNER_LEN)
         picked_samples = ctwc__data_handler.get_samples_by_indices(picked_indices, table)
