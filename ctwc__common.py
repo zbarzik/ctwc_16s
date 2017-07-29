@@ -122,7 +122,7 @@ def write_dict_entry_to_open_csv_file(csv_writer, field, mydict, sel_dict, ref_d
         if key in ref_dict:
             ref_distribution = ref_dict[key]
             if num_total > 0:
-                accuracy =  distribution * num_selected / ref_distribution * num_total
+                accuracy =  (distribution * num_selected) / (ref_distribution * num_total)
         csv_writer.writerow([field, key, (value, distribution, ref_distribution, accuracy)])
 
 def init_logger():
