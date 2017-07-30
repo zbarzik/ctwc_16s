@@ -10,6 +10,7 @@ import ctwc__distance_matrix, ctwc__data_handler
 
 # Constants
 N_CLUSTERS = 16
+MIN_CLUSTER_LIMIT = 25.0
 SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
 SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
@@ -98,20 +99,33 @@ def __spc_run_and_wait_for_completion():
     call(args, cwd=SPC_BINARY_PATH)
 
 def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_threshold=float('Inf')):
-    import collections
+    NUM_COLUMNS_TO_CHECK = 3
     LARGEST_CLUSTER_IND = 4
+    top_column = -1
+    top_score = -1
+    top_line = None
+    for column in xrange(LARGEST_CLUSTER_IND, LARGEST_CLUSTER_IND + NUM_COLUMNS_TO_CHECK):
+        tmp_line, tmp_score = __pick_line_by_most_stable_largest_cluster_for_column(column, lines,  lower_threshold,  upper_threshold)
+        if top_line == None or top_score < tmp_score:
+            top_column = column
+            top_line = tmp_line
+            top_score = tmp_score
+    return top_line, top_column - LARGEST_CLUSTER_IND
+
+def __pick_line_by_most_stable_largest_cluster_for_column(column, lines, lower_threshold=0, upper_threshold=float('Inf')):
+    import collections
     largest_cluster_sizes = []
     for line in lines:
-        largest_cluster_sizes.append(int(line.split()[LARGEST_CLUSTER_IND]))
-    counter=collections.Counter(largest_cluster_sizes)
+        largest_cluster_sizes.append(int(line.split()[column]))
+    counter = collections.Counter(largest_cluster_sizes)
     candidates = counter.most_common(200)
     # most common might be completely frozen or completely dissolved.
     # 3 cases should include one sequence from the middle as well.
     found = False
     for candidate in candidates:
         largest_cluster, score = candidate
-        if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
-            largest_cluster == int(lines[-1].split()[LARGEST_CLUSTER_IND]) or
+        if (largest_cluster == int(lines[0].split()[column]) or
+            largest_cluster == int(lines[-1].split()[column]) or
             largest_cluster < lower_threshold or
             largest_cluster > upper_threshold or
             score < 3):
@@ -123,37 +137,16 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
         candidates = counter.most_common(200)
         for candidate in candidates:
             largest_cluster, score = candidate
-            if (largest_cluster == int(lines[0].split()[LARGEST_CLUSTER_IND]) or
+            if (largest_cluster == int(lines[0].split()[column]) or
+                largest_cluster == int(lines[-1].split()[column]) or
                 score < 3):
                 continue
             break
 
-    for line in lines:
-        if int(line.split()[LARGEST_CLUSTER_IND]) == largest_cluster:
+    for line in lines: # fishy. who says it's monotonically declining?
+        if int(line.split()[column]) == largest_cluster:
             break
-    return line
-
-def __pick_line_by_num_clusters(lines):
-    import collections
-    NUM_CLUSTERS_IND = 3
-    num_clusters = []
-    for line in lines:
-        num_clusters.append(int(line.split()[NUM_CLUSTERS_IND]))
-    counter=collections.Counter(num_clusters)
-    candidates = counter.most_common(3)
-    # most common might be completely frozen or completely dissolved.
-    # 3 cases should include one sequence from the middle as well.
-    candidate = candidates[0]
-    for candidate in candidates:
-        n_clusters, score = candidate
-        if (n_clusters == int(lines[0].split()[NUM_CLUSTERS_IND]) or
-            n_clusters == int(lines[-1].split()[NUM_CLUSTERS_IND])):
-            continue # assuming that temperature range exceeds dynamic range - it's either frozen or dissolved
-        break
-    for line in lines:
-        if int(line.split()[NUM_CLUSTERS_IND]) == n_clusters:
-            break
-    return line
+    return line, score
 
 def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
     TEMP_IND = 1
@@ -164,16 +157,15 @@ def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
     for line in lines:
         DEBUG(line)
 
-    #line = __pick_line_by_num_clusters(lines)
-    lower_threshold = 7.0 # Disregard clusters smaller than this
+    lower_threshold = MIN_CLUSTER_LIMIT # Disregard clusters smaller than this
     upper_threshold = min(non_masked_data_points * 0.99, non_masked_data_points - lower_threshold) # 99%
     if cluster_limit > 0:
         upper_threshold = min(upper_threshold, cluster_limit - 1)
-    line = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
+    line, clust_id = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
     temperature = float(line.split()[TEMP_IND])
 
     INFO("Most stable temperature: {0}".format(temperature))
-    return temperature, lines
+    return temperature, lines, clust_id
 
 def __spc_get_clusters_by_temperature(t):
     TEMP_IND = 1
@@ -236,9 +228,9 @@ def cluster_rows_spc(data, dist_matrix, cluster_limit):
     DEBUG("Starting Super-Paramagnetic clustering...")
     __spc_run_and_wait_for_completion()
     non_masked_data_points = __spc_get_non_masked_data_points(dist_matrix)
-    t, log = __spc_parse_temperature_results(non_masked_data_points, cluster_limit)
+    t, log, clust_id = __spc_parse_temperature_results(non_masked_data_points, cluster_limit)
     clusters = __spc_get_clusters_by_temperature(t)
-    top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, 0)
+    top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, clust_id)
     DEBUG("Top cluster: {0}".format(top_cluster))
     DEBUG("Saving results in cache...")
     __save_calculated_spc_file_and_hash_for_data(data, dist_matrix, top_cluster, log)
