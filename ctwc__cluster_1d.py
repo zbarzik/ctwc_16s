@@ -52,7 +52,7 @@ WriteCorFile|
         run_f.write(run_file)
 
 def __is_row_filtered(dist_mat, row):
-    non_filtered_indices = dist_mat[row] == ctwc__distance_matrix.INF_VALUE
+    non_filtered_indices = dist_mat[row] >= 1 # == ctwc__distance_matrix.INF_VALUE
     non_filtered_indices[row] = True # diagonal is zeros even for filtered, remove those.
     return non_filtered_indices.all()
 
@@ -86,6 +86,7 @@ def __spc_get_non_masked_data_points(dist_mat):
 def __spc_prepare_edge_file(dist_mat):
     n = dist_mat.shape[0]
     lines = []
+    DEBUG("Size of __map_mat_to_spc is: {0}".format(len(__map_mat_to_spc)))
     for r in __map_mat_to_spc.keys():
         for c in __map_mat_to_spc.keys():
             lines.append("{0} {1}\n".format(r, c))

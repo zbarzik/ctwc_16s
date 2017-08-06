@@ -6,13 +6,21 @@ import numpy as np
 
 RAW_MILK_FILES = [ 'milk_3572_otu_table.json', 'milk_3573_otu_table.json', 'milk_3574_otu_table.json', 'milk_3575_otu_table.json',
 'milk_3576_otu_table.json' ] #, 'milk_3579_otu_table.json' ]
-FILTERED_RAW_MILK_FILES = [ 'subset-normalized-milk_3572_otu_table.json', 'subset-normalized-milk_3574_otu_table.json', 'subset-normalized-milk_3576_otu_table.json',
-                            'subset-normalized-milk_3573_otu_table.json', 'subset-normalized-milk_3575_otu_table.json' ] #, 'subset-normalized-milk_3579_otu_table.json' ]
+FILTERED_NORMALIZED_RAW_MILK_FILES = [ 'subset-normalized-milk_3572_otu_table.json', 'subset-normalized-milk_3574_otu_table.json', 'subset-normalized-milk_3576_otu_table.json',
+                            'subset-normalized-milk_3573_otu_table.json', 'subset-normalized-milk_3575_otu_table.json', 'subset-normalized-milk_3579_otu_table.json' ]
+FILTERED_RAW_MILK_FILES = [ 'subset-milk_3572_otu_table.json', 'subset-milk_3574_otu_table.json', 'subset-milk_3576_otu_table.json',
+                            'subset-milk_3573_otu_table.json', 'subset-milk_3575_otu_table.json', 'subset-milk_3579_otu_table.json' ]
+NORMALIZED_RAW_MILK_FILES = [ 'normalized-milk_3572_otu_table.json', 'normalized-milk_3574_otu_table.json', 'normalized-milk_3576_otu_table.json',
+                            'normalized-milk_3573_otu_table.json',
+                            'normalized-milk_3575_otu_table.json']# 'normalized-milk_3579_otu_table.json' ]
+DENOVO_REPROCESSED_MILK_FILES = [ 'milk-sub15k-min10.json' ]
 DENOVO_REPROCESSED_MILK_FILES = [ 'milk-sub15k-min10.json' ]
 
 #BIOM_FILES_DICT = DENOVO_REPROCESSED_MILK_FILES
 #BIOM_FILES_DICT = FILTERED_RAW_MILK_FILES
-BIOM_FILES_DICT = RAW_MILK_FILES
+#BIOM_FILES_DICT = FILTERED_NORMALIZED_RAW_MILK_FILES
+#BIOM_FILES_DICT = RAW_MILK_FILES
+BIOM_FILES_DICT = NORMALIZED_RAW_MILK_FILES
 
 RAW_MILK_TREE_FILE = "97_otus.tree"
 DENOVO_REPROCESSED_MILK_TREE_FILE = "all.tre"
@@ -76,8 +84,7 @@ def get_tree_from_file(path):
     return tr
 
 def get_gg_97_otu_tree():
-    tr = get_tree_from_file('97_otus.tree')
-    #tr = get_tree_from_file('all.tre')
+    tr = get_tree_from_file(TREE_FILE)
     return tr
 
 def get_biom_table_from_file(path):

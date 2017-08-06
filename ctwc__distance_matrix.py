@@ -31,7 +31,7 @@ def __unifrac_prepare_entry_for_dictionary(args):
             (otu_filter is not None and not has_value(otu_filter, otu))):
             continue
         if USE_LOG_XFORM:
-            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind])*NORMALIZE_FACTOR
+            samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else np.log2(data[samp_ind, otu_ind]*NORMALIZE_FACTOR)
         else:
             samp_dict[samp] = 0 if data[samp_ind, otu_ind] < SAMPLE_THRESHOLD else data[samp_ind, otu_ind]*NORMALIZE_FACTOR
     return {otu:samp_dict}
@@ -170,7 +170,7 @@ def jaccard_distance_rows(data, samples, otus, sample_filter, otu_filter):
 
 def __calculate_otu_distance_rows(data_in, samples, otus, sample_filter, otu_filter, metric):
     DEBUG("Starting distance calculation using {0} as a metric...".format(metric))
-    data = np.copy(data_in)
+    data = np.copy(data_in) * NORMALIZE_FACTOR
 
     DEBUG("Filtering Samples...")
     try:

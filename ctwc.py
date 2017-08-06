@@ -258,7 +258,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                              iteration_ind = "0",
                              iteration_results = dict()):
 
-    if len(iteration_ind) > len("x.x.x"):
+    if len(iteration_ind) > len("x.x"):
         return
 
     THRESH = RECURSIVE_THRESHOLD
