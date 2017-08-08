@@ -27,6 +27,7 @@ def __generate_histogram_for_taxonomy_rank(rank, taxa, filt=None, filt_rank='spe
     ind = TAXA_LINE_STRUCUTURE.index(rank)
     filter_ind = TAXA_LINE_STRUCUTURE.index(filt_rank)
     for e in taxa:
+        DEBUG("*** DEBUG: e={0} ind={1} rank={2}".format(e, ind, rank))
         entry = [ en.strip(';') for en in e.split() ]
         if filt is not None:
             if entry[filter_ind] not in filt:
@@ -44,8 +45,11 @@ def get_taxonomies_for_otus(otus):
             taxa.append(line)
     return taxa
 
-def calculate_otus_histogram(otus_list, filt=None, filt_rank='species'):
-    taxa = get_taxonomies_for_otus(otus_list)
+def calculate_otus_histogram(otus_list, otus_indices, table, filt=None, filt_rank='species'):
+    if table is None:
+        taxa = get_taxonomies_for_otus(otus_list)
+    else:
+        taxa = get_taxa_by_otu_indices(otus_indices, table)
     hist = dict()
     for rank in TAXA_LINE_STRUCUTURE[1:]:
         if rank not in OTU_RANKS_TO_SKIP:
@@ -123,12 +127,12 @@ def __calculate_samples_distribution_from_histogram(samp_hist):
             ASSERT(round(s) == 1.0)
     return percentiles
 
-def calculate_otus_distribution(otus_list):
-    otus_hist = calculate_otus_histogram(otus_list)
+def calculate_otus_distribution(otus_list, otus_indices, table=None):
+    otus_hist = calculate_otus_histogram(otus_list, otus_indices, table)
     return __calculate_otus_distribution_from_histogram(otus_hist)
 
-def __calculate_filtered_otus_distribution(otus_list, filt, filt_rank):
-    otus_hist = calculate_otus_histogram(otus_list, set(filt), filt_rank)
+def __calculate_filtered_otus_distribution(otus_list, otus_indices, filt, filt_rank):
+    otus_hist = calculate_otus_histogram(otus_list, otus_indices, table, set(filt), filt_rank)
     return __calculate_otus_distribution_from_histogram(otus_hist)
 
 def __calculate_otus_distribution_from_histogram(otu_hist):
@@ -231,6 +235,18 @@ def correct_p_vals(p_vals):
 def save_q_values_to_csv_for_iteration(csv_writer, key, q_vals, sel_dist, ref_dist, num_selected, num_total):
     write_dict_entry_to_open_csv_file(csv_writer, key, q_vals[key], sel_dist[key][1], ref_dist[key][1], num_selected, num_total)
 
+def get_taxa_by_otu_indices(indices, table):
+    def fix_taxonomy_structure(taxonomy):
+        fixed_taxonomy = {}
+        for taxon in taxonomy:
+            fixed_taxonomy[taxon[0]] = taxon
+        for char in [ rank[0] for rank in TAXA_LINE_STRUCUTURE[1:] ]:
+            if not fixed_taxonomy.has_key(char):
+                fixed_taxonomy[char] = char + "__"
+        fixed_taxonomy['o'] = 'o__'
+        return [ fixed_taxonomy[ch] for ch in [ rank[0] for rank in TAXA_LINE_STRUCUTURE ] ]
+    return [ "; ".join(fix_taxonomy_structure(table._observation_metadata[ind]['taxonomy'])) for ind in indices ]
+
 def test():
     globals()['TEST'] = True
     with open(TAXA_MD_FILE, 'r') as tax_fn:
@@ -238,7 +254,7 @@ def test():
     otus_list = [ x.split()[0].strip() for x in lines ]
     otus_dist = calculate_otus_distribution(otus_list)
     filt = ['o__Clostridiales']
-    otus_dist_1 = __calculate_filtered_otus_distribution(otus_list, filt, 'order')
+    otus_dist_1 = __calculate_filtered_otus_distribution(otus_list, range(len(otus_list)), filt, 'order')
     p_vals = calculate_otus_p_values(otus_dist_1, otus_dist)
     q_vals = correct_p_vals(p_vals)
 

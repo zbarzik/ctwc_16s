@@ -62,10 +62,10 @@ def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_fil
     return sorted(selected_cols_filter), sorted(compliment_cols_filter)
 
 __full_otus_dist = None
-def __get_full_otus_dist(otus):
+def __get_full_otus_dist(otus, table):
     if globals()['__full_otus_dist'] is None:
         full_otus_list, _ = __prepare_otu_filters_from_indices(range(len(otus)), otus)
-        globals()['__full_otus_dist'] = ctwc__metadata_analysis.calculate_otus_distribution(full_otus_list)
+        globals()['__full_otus_dist'] = ctwc__metadata_analysis.calculate_otus_distribution(full_otus_list, range(len(otus)), table)
     return globals()['__full_otus_dist']
 
 __full_samples_dist = None
@@ -131,8 +131,9 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
     ctwc__plot.plot_mat(sorted_mat, header="{0}: {1}".format(title, "OTUs Distance Matrix - sorted"))
 
     if table is not None:
-        picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
-        taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
+        taxonomies = ctwc__metadata_analysis.get_taxa_by_otu_indices(picked_indices, table)
+        #picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
+        #taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
         INFO("Selected {0} OTUs".format(len(picked_indices)))
         add_line_to_results_file(res_file, "Selected {0} OTUs:".format(len(picked_indices)))
         add_line_to_results_file(res_file, "-"*BANNER_LEN)
@@ -140,8 +141,8 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
             DEBUG(taxonomy)
             add_line_to_results_file(res_file, taxonomy)
 
-        ref_dist = __get_full_otus_dist(otus)
-        sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(selected_rows_filter)
+        ref_dist = __get_full_otus_dist(otus, table)
+        sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(selected_rows_filter, picked_indices, table)
         p_vals = ctwc__metadata_analysis.calculate_otus_p_values(sel_dist, ref_dist)
         DEBUG("P Values: {0}".format(p_vals))
         keys, pv = get_top_p_val(p_vals)
