@@ -1,9 +1,9 @@
 #!/usr/bin/python
-
 import logging, pdb
 import cPickle, gzip
 import numpy
 import bisect
+from functools import wraps
 
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
@@ -11,6 +11,18 @@ LOG_LEVEL_FILE = logging.DEBUG
 LOG_FILE = "ctwc__logger.log"
 logger = None
 MAX_PRINT_SIZE = 5000
+
+def memoize(function):
+    memo = {}
+    @wraps(function)
+    def wrapper(*args):
+        if args in memo:
+            return memo[args]
+        else:
+            rv = function(*args)
+            memo[args] = rv
+            return rv
+    return wrapper
 
 def DEBUG(message):
     message = str(message)

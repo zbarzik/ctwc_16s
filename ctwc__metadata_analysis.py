@@ -3,20 +3,30 @@ from ctwc__common import *
 import csv, bisect, math, scipy, scipy.stats, random
 
 TAXA_LINE_STRUCUTURE = ['otu', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
-SAMPLES_LINE_STRUCTURE = ['sample_name', 'bactoscan', 'check_in_time', 'check_out_time', 'collection_timestamp', 'date_pcr',
-'dateprocessed', 'description', 'dmissing_extraction', 'dna_extracted', 'dna_extraction', 'elevation', 'env_biome',
-'env_feature', 'env_matter', 'env_package', 'geo_loc_name', 'host_subject_id', 'investigation_type', 'latitude', 'longitude',
-'notes', 'physical_specimen_location', 'physical_specimen_remaining', 'pma_treatment', 'sample_type', 'scientific_name',
-'season', 'silo_lot_id', 'tanker_cip_date', 'tanker_cip_time', 'taxon_id', 'title']
+MILK_SAMPLES_ID_FIELD = 'sample_name'
+TWINS_SAMPLES_ID_FIELD = 'run_s'
 SAMPLES_SKIP_FIELDS = ['host_subject_id']
-SAMPLES_MD_FILE = "10485_20160420-093403.txt"
-TAXA_MD_FILE = "97_otu_taxonomy.txt"
+MILK_SAMPLES_MD_FILE = '10485_20160420-093403.txt'
+TWINS_SAMPLES_MD_FILE = 'SraRunTable.txt'
+TAXA_MD_FILE = '97_otu_taxonomy.txt'
 OTU_RANKS_TO_SKIP = ['kingdom']
 TEST = False
+
+SAMPLES_ID_FIELD = TWINS_SAMPLES_ID_FIELD
+#SAMPLES_ID_FIELD = MILK_SAMPLES_ID_FIELD
+
+SAMPLES_MD_FILE = TWINS_SAMPLES_MD_FILE
+#SAMPLES_MD_FILE = MILK_SAMPLES_MD_FILE
 
 Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
 
 MIN_Q_VAL = 0.05
+
+@memoize
+def get_samples_line_structure():
+    with open(SAMPLES_MD_FILE, 'r') as fn:
+        lines = fn.readlines()
+        return lines[0].lower().split()
 
 """
 filt is used for testing, allowing only a defined collection of species.
@@ -56,26 +66,10 @@ def calculate_otus_histogram(otus_list, otus_indices, table, filt=None, filt_ran
             hist[rank] = __generate_histogram_for_taxonomy_rank(rank, taxa, filt, filt_rank)
     return hist
 
-def get_collection_dates_for_samples(samples):
-    return get_field_for_samples("collection_timestamp", samples)
-
-def get_field_for_samples(field, samples):
-    out = []
-    samples_s = set(samples)
-    field_index = SAMPLES_LINE_STRUCTURE.index("collection_timestamp")
-    sample_index = SAMPLES_LINE_STRUCTURE.index("sample_name")
-    with open(SAMPLES_MD_FILE, 'r') as md_file:
-        metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
-        for row in metadata:
-            if row[sample_index].strip() in samples_s:
-                field = row[field_index].strip()
-                out.append(field)
-    return out
-
 def get_metadata_for_samples(samples_list):
     out = []
     samples_s = set(samples_list)
-    sample_index = SAMPLES_LINE_STRUCTURE.index("sample_name")
+    sample_index = get_samples_line_structure().index(SAMPLES_ID_FIELD)
     with open(SAMPLES_MD_FILE, 'r') as md_file:
         metadata = csv.reader(md_file, delimiter='\t', quotechar='\'')
         for row in metadata:
@@ -83,12 +77,12 @@ def get_metadata_for_samples(samples_list):
                 out.append(row)
     return out
 
-def __generate_histogram_for_samples_field(field, samples_md, filt=None, filt_field='bactoscan'):
+def __generate_histogram_for_samples_field(field, samples_md, filt, filt_field):
     d = dict()
-    ind = SAMPLES_LINE_STRUCTURE.index(field)
-    filter_ind = SAMPLES_LINE_STRUCTURE.index(filt_field)
+    ind = get_samples_line_structure().index(field)
     for entry in samples_md:
-        if filt is not None:
+        if filt is not None: # used for testing only
+            filter_ind = get_samples_line_structure().index(filt_field)
             if entry[filter_ind] not in filt:
                 continue
         d[entry[ind]] = d[entry[ind]] + 1 if d.has_key(entry[ind]) else 1
@@ -97,7 +91,7 @@ def __generate_histogram_for_samples_field(field, samples_md, filt=None, filt_fi
 def calculate_samples_histogram(samples_list, filt=None, filt_field='bactoscan'):
     md = get_metadata_for_samples(samples_list)
     hist = dict()
-    for field in SAMPLES_LINE_STRUCTURE[1:]:
+    for field in get_samples_line_structure()[1:]:
         if field not in SAMPLES_SKIP_FIELDS:
             hist[field] = __generate_histogram_for_samples_field(field, md, filt, filt_field)
     return hist
@@ -112,7 +106,7 @@ def __calculate_filtered_samples_distribution(samples_list, filt, filt_field):
 
 def __calculate_samples_distribution_from_histogram(samp_hist):
     percentiles = dict()
-    for field in SAMPLES_LINE_STRUCTURE[1:]:
+    for field in get_samples_line_structure()[1:]:
         total = 0.0
         if field not in samp_hist:
             continue
