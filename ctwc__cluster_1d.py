@@ -134,19 +134,30 @@ def __pick_line_by_most_stable_largest_cluster_for_column(column, lines, lower_t
         found = True
         break
 
-    if not found: # we didn't find anything that matches the thresholds, return something good enough
+    while not found: # we didn't find anything that matches the thresholds, return something good enough
+        lower_threshold = lower_threshold / 2.0
+        upper_threshold = upper_threshold * 2.0
         candidates = counter.most_common(200)
         for candidate in candidates:
             largest_cluster, score = candidate
             if (largest_cluster == int(lines[0].split()[column]) or
                 largest_cluster == int(lines[-1].split()[column]) or
+                largest_cluster < lower_threshold or
+                largest_cluster > upper_threshold or
                 score < 3):
                 continue
+            found = True
             break
 
-    for line in lines: # fishy. who says it's monotonically declining?
+    for ind, line in enumerate(lines):
         if int(line.split()[column]) == largest_cluster:
-            break
+            found = True
+            for j in xrange(score):
+                if int(lines[ind + j].split()[column]) != largest_cluster:
+                    found = False
+                    break
+            if found:
+                break
     return line, score
 
 def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
@@ -194,6 +205,8 @@ def __get_precalculated_spc_file_if_exists(h):
     return load_from_file(SPC_CLUSTER_FILE.format(h))
 
 def __calculate_hash_for_data(data, dist_matrix):
+    if data is None or dist_matrix is None:
+        return 0
     return hash( data.tostring() + str(dist_matrix) )
 
 def __get_precalculated_spc_file_if_exists_for_data(data, dist_matrix):
@@ -264,7 +277,7 @@ def __test_dbscan_clustering(data, dist_matrix):
     _, labels, ag = cluster_rows_dbscan(None, dist_matrix)
 
 def __test_spc_clustering():
-    SIZE = 100
+    SIZE = 101
     z = np.zeros((SIZE, SIZE))
     for i in range(0, SIZE):
         for j in range(0, SIZE):
@@ -272,7 +285,7 @@ def __test_spc_clustering():
             if i == j:
                 z[i][j] = 0.0
     INFO(z)
-    _, top_cluster, _ = cluster_rows_spc(None, z)
+    _, top_cluster, _ = cluster_rows_spc(None, z, 0)
     INFO(top_cluster)
 
 def test():
