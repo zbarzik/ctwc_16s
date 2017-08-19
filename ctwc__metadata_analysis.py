@@ -12,11 +12,11 @@ TAXA_MD_FILE = '97_otu_taxonomy.txt'
 OTU_RANKS_TO_SKIP = ['kingdom']
 TEST = False
 
-SAMPLES_ID_FIELD = TWINS_SAMPLES_ID_FIELD
-#SAMPLES_ID_FIELD = MILK_SAMPLES_ID_FIELD
+#SAMPLES_ID_FIELD = TWINS_SAMPLES_ID_FIELD
+SAMPLES_ID_FIELD = MILK_SAMPLES_ID_FIELD
 
-SAMPLES_MD_FILE = TWINS_SAMPLES_MD_FILE
-#SAMPLES_MD_FILE = MILK_SAMPLES_MD_FILE
+#SAMPLES_MD_FILE = TWINS_SAMPLES_MD_FILE
+SAMPLES_MD_FILE = MILK_SAMPLES_MD_FILE
 
 Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
 
@@ -37,7 +37,6 @@ def __generate_histogram_for_taxonomy_rank(rank, taxa, filt=None, filt_rank='spe
     ind = TAXA_LINE_STRUCUTURE.index(rank)
     filter_ind = TAXA_LINE_STRUCUTURE.index(filt_rank)
     for e in taxa:
-        DEBUG("*** DEBUG: e={0} ind={1} rank={2}".format(e, ind, rank))
         entry = [ en.strip(';') for en in e.split() ]
         if filt is not None:
             if entry[filter_ind] not in filt:
@@ -227,6 +226,7 @@ def correct_p_vals(p_vals):
     return screened
 
 def save_q_values_to_csv_for_iteration(csv_writer, key, q_vals, sel_dist, ref_dist, num_selected, num_total):
+    DEBUG("csv_writer {0}, key {1}, q_vals[key] {2}, sel_dist[key][1] {3}, ref_dist[key][1] {4}, num_selected {5}, num_total {6}".format(csv_writer, key, q_vals[key], sel_dist[key][1], ref_dist[key][1], num_selected, num_total))
     write_dict_entry_to_open_csv_file(csv_writer, key, q_vals[key], sel_dist[key][1], ref_dist[key][1], num_selected, num_total)
 
 def get_taxa_by_otu_indices(indices, table):

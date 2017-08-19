@@ -127,14 +127,16 @@ def write_dict_entry_to_open_csv_file(csv_writer, field, mydict, sel_dict, ref_d
     for key in mydict:
         value = mydict[key]
         accuracy = 0.0
-        distribution = "na"
+        distribution = 0.0
         if key in sel_dict:
             distribution = sel_dict[key]
-        ref_distribution = "na"
+        ref_distribution = 0.0
         if key in ref_dict:
             ref_distribution = ref_dict[key]
-            if num_total > 0:
+            if num_total > 0 and ref_distribution > 0:
                 accuracy =  (distribution * num_selected) / (ref_distribution * num_total)
+            else:
+                WARN("Cannot calculate accuracy value for field={0}, key={1}: ref_distribution={2}, num_total={3}".format(field, key, ref_distribution, num_total))
         csv_writer.writerow([field, key, (value, distribution, ref_distribution, accuracy)])
 
 def init_logger():

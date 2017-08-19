@@ -10,12 +10,13 @@ import ctwc__distance_matrix, ctwc__data_handler
 
 # Constants
 N_CLUSTERS = 16
-MIN_CLUSTER_LIMIT = 25.0
+MIN_CLUSTER_LIMIT = 50.0
 SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
 SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
 SPC_CLUSTER_FILE = './spc_cluster-{0}.pklz'
 ALLOW_CACHING = False
+MIN_SCORE = 8
 
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1).
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
@@ -105,60 +106,50 @@ def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_t
     top_column = -1
     top_score = -1
     top_line = None
+    top_size = -1
+    def is_valid_size(size):
+        return size < upper_threshold and size > lower_threshold
     for column in xrange(LARGEST_CLUSTER_IND, LARGEST_CLUSTER_IND + NUM_COLUMNS_TO_CHECK):
         tmp_line, tmp_score = __pick_line_by_most_stable_largest_cluster_for_column(column, lines,  lower_threshold,  upper_threshold)
-        if top_line == None or top_score < tmp_score:
+        tmp_size = int(tmp_line.split()[column])
+        if (top_line == None or # first iteration
+            tmp_score > MIN_SCORE and is_valid_size(tmp_size) and tmp_size > top_size or
+            tmp_score > MIN_SCORE and tmp_size > top_size):
             top_column = column
             top_line = tmp_line
             top_score = tmp_score
+            top_size = tmp_size
     return top_line, top_column - LARGEST_CLUSTER_IND
 
 def __pick_line_by_most_stable_largest_cluster_for_column(column, lines, lower_threshold=0, upper_threshold=float('Inf')):
-    import collections
-    largest_cluster_sizes = []
-    for line in lines:
-        largest_cluster_sizes.append(int(line.split()[column]))
-    counter = collections.Counter(largest_cluster_sizes)
-    candidates = counter.most_common(200)
-    # most common might be completely frozen or completely dissolved.
-    # 3 cases should include one sequence from the middle as well.
-    found = False
-    for candidate in candidates:
-        largest_cluster, score = candidate
-        if (largest_cluster == int(lines[0].split()[column]) or
-            largest_cluster == int(lines[-1].split()[column]) or
-            largest_cluster < lower_threshold or
-            largest_cluster > upper_threshold or
-            score < 3):
-            continue # assuming that temperature range exceeds dynamic range - it's either frozen or dissolved
-        found = True
-        break
+    from itertools import groupby
+    def get_count_per_value(iterator):
+        return sum(1 for _ in iterator)
 
-    while not found: # we didn't find anything that matches the thresholds, return something good enough
-        lower_threshold = lower_threshold / 2.0
-        upper_threshold = upper_threshold * 2.0
-        candidates = counter.most_common(200)
-        for candidate in candidates:
-            largest_cluster, score = candidate
-            if (largest_cluster == int(lines[0].split()[column]) or
-                largest_cluster == int(lines[-1].split()[column]) or
-                largest_cluster < lower_threshold or
-                largest_cluster > upper_threshold or
-                score < 3):
-                continue
-            found = True
-            break
+    def get_counter_list(iterable):
+        return [ (k, get_count_per_value(g)) for k, g in groupby(iterable) ]
 
-    for ind, line in enumerate(lines):
-        if int(line.split()[column]) == largest_cluster:
-            found = True
-            for j in xrange(score):
-                if int(lines[ind + j].split()[column]) != largest_cluster:
-                    found = False
-                    break
-            if found:
+    def get_max_counter(counter_list, lower_threshold):
+        return max(counter_list, key=lambda item: item[1] if item[0] > lower_threshold and item[0] < upper_threshold and item[1] > MIN_SCORE else -1)
+
+    def get_line_num_for_max_counter(counter_list, max_counter):
+        ind = 0
+        for counter in counter_list:
+            if counter == max_counter:
                 break
-    return line, score
+            else:
+                ind += counter[1]
+        return ind
+
+    cluster_list = [ int(line.split()[column]) for line in lines ]
+    counter_list = get_counter_list(cluster_list)
+    max_counter = get_max_counter(counter_list, lower_threshold)
+    while (max_counter[1] < MIN_SCORE and lower_threshold > 1
+          or max_counter[0] == cluster_list[0] and len(counter_list) > 1):
+        lower_threshold /= 2.0
+        max_counter = get_max_counter(counter_list, lower_threshold)
+    ind = get_line_num_for_max_counter(counter_list, max_counter)
+    return lines[ind], max_counter[1]
 
 def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
     TEMP_IND = 1
@@ -281,11 +272,11 @@ def __test_spc_clustering():
     z = np.zeros((SIZE, SIZE))
     for i in range(0, SIZE):
         for j in range(0, SIZE):
-            z[i][j] = 0.1 if (i+j) % 2 == 0 else 0.8
+            z[i][j] = 0.1 if (i+j) % 3 == 0 else 0.8
             if i == j:
                 z[i][j] = 0.0
     INFO(z)
-    _, top_cluster, _ = cluster_rows_spc(None, z, 0)
+    _, top_cluster, _ = cluster_rows_spc(None, z, 50)
     INFO(top_cluster)
 
 def test():
