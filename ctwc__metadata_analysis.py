@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from ctwc__common import *
+from ctwc__data_handler import DATASET
 import csv, bisect, math, scipy, scipy.stats, random
 
 TAXA_LINE_STRUCUTURE = ['otu', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
@@ -12,11 +13,14 @@ TAXA_MD_FILE = '97_otu_taxonomy.txt'
 OTU_RANKS_TO_SKIP = ['kingdom']
 TEST = False
 
-#SAMPLES_ID_FIELD = TWINS_SAMPLES_ID_FIELD
-SAMPLES_ID_FIELD = MILK_SAMPLES_ID_FIELD
-
-#SAMPLES_MD_FILE = TWINS_SAMPLES_MD_FILE
-SAMPLES_MD_FILE = MILK_SAMPLES_MD_FILE
+if DATASET == "milk":
+    SAMPLES_MD_FILE = MILK_SAMPLES_MD_FILE
+    SAMPLES_ID_FIELD = MILK_SAMPLES_ID_FIELD
+elif DATASET == "twins":
+    SAMPLES_ID_FIELD = TWINS_SAMPLES_ID_FIELD
+    SAMPLES_MD_FILE = TWINS_SAMPLES_MD_FILE
+else:
+    FATAL("Unknown dataset")
 
 Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
 

@@ -4,6 +4,8 @@ import ctwc__plot
 import warnings
 import numpy as np
 
+DATASET = "milk" # "twins"
+
 RAW_MILK_FILES = [ 'milk_3572_otu_table.json', 'milk_3573_otu_table.json', 'milk_3574_otu_table.json', 'milk_3575_otu_table.json',
 'milk_3576_otu_table.json' ] #, 'milk_3579_otu_table.json' ]
 FILTERED_NORMALIZED_RAW_MILK_FILES = [ 'subset-normalized-milk_3572_otu_table.json', 'subset-normalized-milk_3574_otu_table.json', 'subset-normalized-milk_3576_otu_table.json',
@@ -17,8 +19,6 @@ DENOVO_REPROCESSED_MILK_FILES = [ 'milk-sub15k-min10.json' ]
 
 DENOVO_REPROCESSED_TWINS_FILES = [ 'twins-sub15k-min10.json' ]
 
-BIOM_FILES_DICT = DENOVO_REPROCESSED_MILK_FILES
-#BIOM_FILES_DICT = DENOVO_REPROCESSED_TWINS_FILES
 #BIOM_FILES_DICT = FILTERED_RAW_MILK_FILES
 #BIOM_FILES_DICT = FILTERED_NORMALIZED_RAW_MILK_FILES
 #BIOM_FILES_DICT = RAW_MILK_FILES
@@ -31,6 +31,15 @@ DENOVO_REPROCESSED_TWINS_TREE_FILE = "twins_all.tre"
 TREE_FILE = DENOVO_REPROCESSED_MILK_TREE_FILE
 #TREE_FILE = DENOVO_REPROCESSED_TWINS_TREE_FILE
 #TREE_FILE = RAW_MILK_TREE_FILE
+
+if DATASET == "milk":
+    BIOM_FILES_DICT = DENOVO_REPROCESSED_MILK_FILES
+    TREE_FILE = DENOVO_REPROCESSED_MILK_TREE_FILE
+elif DATASET == "twins":
+    BIOM_FILES_DICT = DENOVO_REPROCESSED_TWINS_FILES
+    TREE_FILE = DENOVO_REPROCESSED_TWINS_TREE_FILE
+else:
+    FATAL("Unknown dataset")
 
 def __get_default_tree(otus):
     from cogent.parse.tree import DndParser
