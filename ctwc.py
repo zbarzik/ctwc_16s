@@ -353,7 +353,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        iteration_results)
 
     if run_on_sample_comp and run_on_otu_selection:
-        step = __ctwc_recursive__get_next_step(iteration_ind, 4)
+        step = __ctwc_recursive__get_next_step(iteration_ind, 5)
         title = "Iteration {0}".format(step)
         result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration(title, "Pick OTUs from samples compliment...",
                                                                         data,
@@ -400,7 +400,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        iteration_results)
 
     if run_on_otu_comp and run_on_sample_selection:
-        step = __ctwc_recursive__get_next_step(iteration_ind, 5)
+        step = __ctwc_recursive__get_next_step(iteration_ind, 4)
         title = "Iteration {0}".format(step)
         result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration(title, "Pick samples from OTUs compliment...",
                                                                         data,
