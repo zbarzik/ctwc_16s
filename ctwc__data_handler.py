@@ -117,6 +117,7 @@ def __add_suffix_to_sample_ids(table, suffix):
         table._sample_index.pop(samp, None)
 
 def get_sample_biom_table(full_set=True):
+    INFO("Using {0} dataset".format(DATASET))
     if not full_set:
         tables = [ get_biom_table_from_file(BIOM_FILES_DICT[0]) ]
     else:
@@ -137,7 +138,6 @@ def __shuffle_2d_dist_matrix(mat):
     np.random.set_state(rand_state)
     np.random.shuffle(mat)
     return mat
-
 
 def get_synthetic_biom_table(full_set=True):
     INFO("Synthesizing data based on sample table...")
@@ -169,28 +169,14 @@ def get_synthetic_biom_table(full_set=True):
     return data, otus, samples, table
 
 def get_samples_by_indices(indices, table):
-    samples = []
-    def __get_sample_by_index(index, table):
-        for samp in table._sample_index:
-            if table._sample_index[samp] == index:
-                return samp
-        return None
-
-    for index in indices:
-        samples.append(__get_sample_by_index(index, table))
-    return map(str, samples)
+    s_indices = set(indices)
+    samples = [ str(samp) for samp in table._sample_index if table._sample_index[samp] in s_indices ]
+    return samples
 
 def get_otus_by_indices(indices, table):
-    otus = []
-    def __get_otu_by_index(index, table):
-        for obs in table._obs_index:
-            if table._obs_index[obs] == index:
-                return obs
-        return None
-
-    for index in indices:
-        otus.append(__get_otu_by_index(index, table))
-    return map(str, otus)
+    s_indices = set(indices)
+    otus = [ str(obs) for obs in table._obs_index if table._obs_index[obs] in s_indices ]
+    return otus
 
 def test():
     samples = __get_default_samples()

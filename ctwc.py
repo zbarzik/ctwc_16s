@@ -132,7 +132,7 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
 
     if table is not None:
         taxonomies = ctwc__metadata_analysis.get_taxa_by_otu_indices(picked_indices, table)
-        #picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
+        picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
         #taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
         INFO("Selected {0} OTUs".format(len(picked_indices)))
         add_line_to_results_file(res_file, "Selected {0} OTUs:".format(len(picked_indices)))
@@ -140,6 +140,12 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
         for taxonomy in taxonomies:
             DEBUG(taxonomy)
             add_line_to_results_file(res_file, taxonomy)
+
+        add_line_to_results_file(res_file, "Selected OTU IDs:")
+        add_line_to_results_file(res_file, "-"*BANNER_LEN)
+        for picked_otu in picked_otus:
+            DEBUG(picked_otu)
+            add_line_to_results_file(res_file, picked_otu)
 
         ref_dist = __get_full_otus_dist(otus, table)
         sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(selected_rows_filter, picked_indices, table)
