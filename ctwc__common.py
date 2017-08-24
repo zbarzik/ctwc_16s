@@ -152,5 +152,33 @@ def init_logger():
     logger.addHandler(console_handler)
     logger.setLevel(logging.DEBUG)
 
+def get_iteration_path_string(iteration_ind):
+    def get_string_for_step(step):
+        if step == "1":
+            return "pick samples top cluster"
+        elif step == "2":
+            return "pick OTUs top cluster"
+        elif step == "3":
+            return "pick samples top cluster using samples compliment"
+        elif step == "4":
+            return "pick OTUs top cluster using OTUs compliment"
+        elif step == "5":
+            return "pick samples top cluster using OTUs compliment"
+        elif step == "6":
+            return "pick OTUs top cluster using samples compliment"
+        else:
+            FATAL("Ilegal string value")
+
+    res = ""
+    while len(iteration_ind) > 0:
+        if len(res) > 0:
+            res += "; "
+        res += get_string_for_step(iteration_ind[0])
+        if len(iteration_ind) > 2:
+            iteration_ind = iteration_ind[2:]
+        else:
+            iteration_ind = ""
+
+    return res[0].upper() + res[1:]
 
 init_logger()
