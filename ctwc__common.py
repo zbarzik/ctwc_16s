@@ -4,6 +4,7 @@ import cPickle, gzip
 import numpy
 import bisect
 from functools import wraps
+from collections import namedtuple
 
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
@@ -11,6 +12,10 @@ LOG_LEVEL_FILE = logging.DEBUG
 LOG_FILE = "ctwc__logger.log"
 logger = None
 MAX_PRINT_SIZE = 5000
+
+TITLE_FORMAT = "Iteration {0}" # iteration is assumed to be at the end of the title format
+
+CLUSTER_SUMMARY_CSV = "cluster_summary.csv"
 
 def memoize(function):
     memo = {}
@@ -180,5 +185,147 @@ def get_iteration_path_string(iteration_ind):
             iteration_ind = ""
 
     return res[0].upper() + res[1:]
+
+def iteration_to_title(iteration):
+    return TITLE_FORMAT.format(iteration)
+
+def title_to_iteration(title):
+    pref = TITLE_FORMAT.format("")
+    if not title.startswith(pref):
+        FATAL("Ilegal title string")
+    return title[len(pref):]
+
+LineStructure_Fields = ['title',
+                        'clustering_sequence',
+                        'input_otus',
+                        'input_samples',
+                        'clustering_dimension',
+                        'picked_cluster_size',
+                        'label_1',
+                        'value_1',
+                        'q_val_1',
+                        'purity_1',
+                        'reference_abundance_1',
+                        'accuracy_1',
+                        'label_2',
+                        'value_2',
+                        'q_val_2',
+                        'purity_2',
+                        'reference_abundance_2',
+                        'accuracy_2',
+                        ]
+
+LineStructure = namedtuple('LineStructure', LineStructure_Fields)
+
+QValStructure_Fields = ['label',
+                        'value',
+                        'q_val',
+                        'purity',
+                        'ref_abundance',
+                        'accuracy',
+                        ]
+
+QValStructure = namedtuple('QValStructure', QValStructure_Fields)
+
+def parse_result_file_to_structured_line(filename):
+    def is_interesting_q_val(qval, picked_size, axis):
+        if qval.value.lower() == "na":
+            return False
+        elif qval.value.lower() == "missing":
+            return False
+        elif qval.value.lower() == "":
+            return False
+        elif round(picked_size * qval.purity) == 1.0:
+            return False
+        elif qval.purity < qval.ref_abundance * 2: # arbitrary...
+            return False
+        elif axis == 'samples' and qval.purity < 0.1:
+            return False
+        elif axis == 'samples' and qval.accuracy < 0.1:
+            return False
+        else:
+            return True
+
+    with open(filename, 'r') as fh:
+        lines = fh.readlines()
+        title = lines[0].split('-')[0].strip()
+        clustering_sequence = get_iteration_path_string(title_to_iteration(title))
+        input_otus = int(lines[0].split('-')[1].strip().split(' ')[0].strip())
+        input_samples = int(lines[0].split('-')[1].strip().split(' ')[3].strip())
+        if lines[2].startswith("---"):
+            next_line = 3
+        else:
+            next_line = 2
+        clustering_dimension = lines[next_line].split()[2][:-1]
+        picked_cluster_size = int(lines[next_line].split()[1].strip())
+
+        reached_q_vals = False
+        reached_separator = False
+        q_vals = []
+        for s_line in lines:
+            line = s_line.strip()
+            if len(line) == 0:
+                continue
+            if line.lower().startswith("filtered q values"):
+                reached_q_vals = True
+                continue
+            if reached_q_vals and not reached_separator:
+                reached_separator = True
+                continue
+            if reached_q_vals:
+                label = line.split(',')[0]
+                value = line.split(',')[1]
+                q_val = float(line.split(',')[2][2:])
+                purity = float(line.split(',')[3])
+                ref_abundance = float(line.split(',')[4])
+                accuracy = float(line.split(',')[5][:-2])
+
+                q_vals.append(QValStructure(label, value, q_val, purity, ref_abundance, accuracy))
+
+
+        best = QValStructure("", "", 1.0, 0.0, 0.0, 0.0)
+        second_best = QValStructure("", "", 1.0, 0.0, 0.0, 0.0)
+        for qval in q_vals:
+            if not is_interesting_q_val(qval, picked_cluster_size, clustering_dimension):
+                continue
+            if (qval.purity > best.purity or
+                qval.purity == best.purity and qval.accuracy > best.accuracy):
+                second_best = best
+                best = qval
+            elif (qval.purity > second_best.purity or
+                  qval.purity == second_best.purity and qval.accuracy > second_best.accuracy):
+                second_best = qval
+
+        return LineStructure(title,
+                             clustering_sequence,
+                             input_otus,
+                             input_samples,
+                             clustering_dimension,
+                             picked_cluster_size,
+                             best.label,
+                             best.value,
+                             best.q_val,
+                             best.purity,
+                             best.ref_abundance,
+                             best.accuracy,
+                             second_best.label,
+                             second_best.value,
+                             second_best.q_val,
+                             second_best.purity,
+                             second_best.ref_abundance,
+                             second_best.accuracy,
+                            )
+
+def write_cluster_summary_as_csv(output_filename, cluster_filename_list):
+    import csv
+    with open(output_filename, 'wb') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(LineStructure_Fields)
+        for fn in cluster_filename_list:
+            writer.writerow(parse_result_file_to_structured_line(fn))
+
+def write_cluster_summary_for_all_files_in_path():
+    import glob
+    write_cluster_summary_as_csv(CLUSTER_SUMMARY_CSV, glob.glob('cluster*.txt'))
 
 init_logger()

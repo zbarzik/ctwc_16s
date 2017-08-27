@@ -10,6 +10,7 @@ import ctwc__distance_matrix, ctwc__data_handler
 
 # Constants
 N_CLUSTERS = 16
+MIN_DATA_POINTS_LIMIT = 100
 MIN_CLUSTER_LIMIT = 50.0
 SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
@@ -226,6 +227,9 @@ def cluster_rows_spc(data, dist_matrix, cluster_limit):
     DEBUG("Preparing files for SPC run...")
     DEBUG("Preparing dat file...")
     n_data_points = __spc_prepare_dat_file(dist_matrix)
+    if n_data_points < MIN_DATA_POINTS_LIMIT:
+        DEBUG("Too few data points, skipping clustering")
+        return data, [0], None
     DEBUG("Preparing edge file...")
     __spc_prepare_edge_file(dist_matrix)
     DEBUG("Preparing run file...")

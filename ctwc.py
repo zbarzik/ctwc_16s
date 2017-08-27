@@ -22,8 +22,6 @@ CLUSTER_OUTPUT_FILE = "cluster_results_{0}.txt"
 
 BANNER_LEN = 50
 
-TITLE_FORMAT = "Iteration {0}" # iteration is assumed to be at the end of the title format
-
 def __join_submatrices_by_axis(mat_a, mat_b, axis):
     ret = np.concatenate((mat_a, mat_b), axis)
     ASSERT(ret.shape[axis] == mat_a.shape[axis] + mat_b.shape[axis])
@@ -108,15 +106,6 @@ def add_line_to_results_file(fd, line):
     if fd and not fd.closed:
         fd.write(line + "\n")
 
-def iteration_to_title(iteration):
-    return TITLE_FORMAT.format(iteration)
-
-def title_to_iteration(title):
-    pref = TITLE_FORMAT.format("")
-    if not title.startswith(pref):
-        FATAL("Ilegal title string")
-    return title[len(pref):]
-
 def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev=0):
     rows_dist, _ = ctwc__distance_matrix.get_distance_matrices(data,
                                                                tree,
@@ -196,6 +185,7 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
                                             len(otus) if rows_filter is None else len(rows_filter),
                                             len(samples) if cols_filter is None else len(cols_filter)))
 
+    add_line_to_results_file(res_file, get_iteration_path_string(title_to_iteration(title)))
     add_line_to_results_file(res_file, "-"*BANNER_LEN)
     sorted_rows_mat = __sort_matrix_rows_by_selection(cols_dist, picked_indices)
     sorted_mat = __sort_matrix_cols_by_selection(sorted_rows_mat, picked_indices)
@@ -456,6 +446,8 @@ def test():
     for elem in output:
         keys, pv = get_top_p_val(output[elem][RES_IND_P_VAL])
         INFO("{0}: {1} X {2} - P Value {3} Keys {4}".format(elem, output[elem][RES_IND_INPUT][0], output[elem][RES_IND_INPUT][1], pv, keys))
+    write_cluster_summary_for_all_files_in_path()
+
 
 if __name__ == "__main__":
     test()
