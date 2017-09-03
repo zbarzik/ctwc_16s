@@ -6,6 +6,9 @@ import numpy as np
 INITIALIZED = False
 PLOT_RAW_FILE = './plot_raw-{0}.pklz'
 PLOT_MAT_RAW_FILE = './plot_raw_mat-{0}.npz'
+PLOT_PNG_FILE = './plot-{0}.png'
+SHOW_ON_SCREEN = False
+
 
 def plot_mat(mat, xlabel=None, ylabel=None, header=None):
     sanitized_hdr = make_camel_from_string(header)
@@ -25,15 +28,21 @@ def __plot_mat(mat, xlabel, ylabel, header):
         plt.ylabel(ylabel)
     if header is not None:
         plt.title(header)
-    plt.draw()
-    plt.pause(0.001)
+    plt.savefig(PLOT_PNG_FILE.format(make_camel_from_string(header)), dpi=300)
+    if SHOW_ON_SCREEN:
+        plt.draw()
+        plt.pause(0.001)
+
 
 def show_plots():
-    plt.show()
-    raw_input("Press [Enter] to close all plots...")
+    if SHOW_ON_SCREEN:
+        plt.show()
+        raw_input("Press [Enter] to close all plots...")
 
 def init():
     try:
+        import matplotlib
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         plt.ion()
         plt.set_cmap('hot')

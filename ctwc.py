@@ -224,7 +224,6 @@ def __ctwc_recursive__get_next_step(iteration_ind, step):
     return __ctwc_recursive__get_iteration_indices(iteration_ind)[step]
 
 def ctwc_recursive_select(data, tree, samples, otus, table):
-    ctwc__plot.init()
     iteration_results = dict()
     __ctwc_recursive_iteration(data, tree, samples, otus, table, iteration_results = iteration_results)
 
@@ -438,6 +437,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
 
 def test():
+    ctwc__plot.init()
     np.seterr(all="ignore")
     samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=True)
 

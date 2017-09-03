@@ -18,6 +18,7 @@ SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
 SPC_CLUSTER_FILE = './spc_cluster-{0}.pklz'
 ALLOW_CACHING = False
 MIN_SCORE = 8
+LARGEST_CLUSTER_IND = 4
 
 # Simulates a distance matrix with two natural clusters. Expected result is (1,0,1,0,1).
 sample_dist_matrix = np.array([ [ 0.0, 0.9, 0.1, 0.9, 0.1 ],
@@ -73,7 +74,8 @@ def __spc_prepare_dat_file(dist_mat):
         for c in __map_spc_to_mat.keys():
             lines.append("{0} {1} {2}\n".format(r, c, dist_mat[__map_spc_to_mat[r]][__map_spc_to_mat[c]]))
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".dat", 'w+') as fn:
-        fn.write("".join(lines))
+        for line in lines:
+            fn.write(line)
     return count
 
 def __spc_get_non_masked_data_points(dist_mat):
@@ -94,16 +96,23 @@ def __spc_prepare_edge_file(dist_mat):
             lines.append("{0} {1}\n".format(r, c))
 
     with open(SPC_BINARY_PATH + SPC_TMP_FILES_PREFIX + ".edge", "w+") as edge_f:
-        edge_f.write("".join(lines))
+        for line in lines:
+            edge_f.write(line)
 
 def __spc_run_and_wait_for_completion():
     from subprocess import call
     args = [SPC_BINARY_EXE, SPC_TMP_FILES_PREFIX + ".run"]
     call(args, cwd=SPC_BINARY_PATH)
 
+def __check_clustering_success(lines):
+    # excplicit handling of edge case: if there are no linked components
+    # for SPC's k-means stage, everything breaks down immediately.
+    return 1 != int(lines[1].split()[LARGEST_CLUSTER_IND])
+
 def __pick_line_by_most_stable_largest_cluster(lines, lower_threshold=0, upper_threshold=float('Inf')):
     NUM_COLUMNS_TO_CHECK = 3
-    LARGEST_CLUSTER_IND = 4
+    if not __check_clustering_success(lines):
+        return None, None
     top_column = -1
     top_score = -1
     top_line = None
@@ -166,6 +175,8 @@ def __spc_parse_temperature_results(non_masked_data_points, cluster_limit):
     if cluster_limit > 0:
         upper_threshold = min(upper_threshold, cluster_limit - 1)
     line, clust_id = __pick_line_by_most_stable_largest_cluster(lines, lower_threshold, upper_threshold)
+    if line is None:
+        return 0.0, lines, 0
     temperature = float(line.split()[TEMP_IND])
 
     INFO("Most stable temperature: {0}".format(temperature))
@@ -238,8 +249,11 @@ def cluster_rows_spc(data, dist_matrix, cluster_limit):
     __spc_run_and_wait_for_completion()
     non_masked_data_points = __spc_get_non_masked_data_points(dist_matrix)
     t, log, clust_id = __spc_parse_temperature_results(non_masked_data_points, cluster_limit)
-    clusters = __spc_get_clusters_by_temperature(t)
-    top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, clust_id)
+    if t == 0.0:
+        top_cluster = __spc_get_cluster_members_by_cluster_id([ 0 ] * n_data_points, 0)
+    else:
+        clusters = __spc_get_clusters_by_temperature(t)
+        top_cluster = __spc_get_cluster_members_by_cluster_id(clusters, clust_id)
     DEBUG("Top cluster: {0}".format(top_cluster))
     DEBUG("Saving results in cache...")
     __save_calculated_spc_file_and_hash_for_data(data, dist_matrix, top_cluster, log)

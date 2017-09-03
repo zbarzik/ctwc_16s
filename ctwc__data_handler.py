@@ -149,13 +149,14 @@ def get_synthetic_biom_table(full_set=True):
     data[data < 0] = 0.0
     # cluster of samples
     size_of_samp_set = 150 if not full_set else 800
-    size_of_otu_set = 5000 if not full_set else 10000
+    size_of_otu_set = 5000 if not full_set else 8000
+    size_of_partial_otu_set = 2000
     size_of_partial_samp_set = 70 if not full_set else 300
     data[:, :size_of_samp_set] = 0.0
-    data[100:size_of_otu_set, :size_of_samp_set] = 6.0 / 100.0 # 4900 OTU types common for 150 first samples
+    data[100:size_of_otu_set, :size_of_samp_set] = 6.0 / 100.0 # 7900 OTU types common for 150 first samples
     # second cluster of samples
-    data[size_of_otu_set + 100 : size_of_otu_set + 1000,
-         size_of_partial_samp_set : size_of_samp_set] = 5.0 / 100.0 # 2900 OTU types common for the latter 80 of the first 150 samples
+    data[size_of_otu_set + 100 : size_of_otu_set + size_of_partial_otu_set,
+         size_of_partial_samp_set : size_of_samp_set] = 5.0 / 100.0 # 1900 OTU types common for the latter 500 of the first 800 samples
     ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
     # shuffle along first axis:
     np.random.shuffle(data)
