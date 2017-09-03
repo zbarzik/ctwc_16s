@@ -28,7 +28,11 @@ def __plot_mat(mat, xlabel, ylabel, header):
         plt.ylabel(ylabel)
     if header is not None:
         plt.title(header)
-    plt.savefig(PLOT_PNG_FILE.format(make_camel_from_string(header)), dpi=300)
+
+    plt.locator_params(axis='x', nbins=4)
+    plt.locator_params(axis='y', nbins=10)
+    plt.xticks(rotation=45)
+    plt.savefig(PLOT_PNG_FILE.format(make_camel_from_string(header)), dpi=1000)
     if SHOW_ON_SCREEN:
         plt.draw()
         plt.pause(0.001)
@@ -84,5 +88,6 @@ if __name__ == '__main__':
             for desc in sys.argv[1:]:
                 plot_from_file(PLOT_RAW_FILE.format(desc), PLOT_MAT_RAW_FILE.format(desc))
         wait_for_user()
-        exit(0)
-    test()
+        exit()
+    else:
+        test()
