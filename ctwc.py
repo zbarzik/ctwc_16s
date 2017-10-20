@@ -18,6 +18,8 @@ Q_VALUES_ITERATION_FILENAME = "q_vals_{0}.csv"
 
 RECURSIVE_THRESHOLD = 100
 
+COUPLED_ENRICHMENT_THRESHOLD = 1.5
+
 CLUSTER_OUTPUT_FILE = "cluster_results_{0}.txt"
 
 BANNER_LEN = 50
@@ -89,6 +91,18 @@ def get_top_p_val(p_vals):
                 tpl = (k_1, k_2)
     return tpl, mn
 
+def filter_p_vals_by_threshold(p_vals, t):
+    filtered_p_vals = {}
+    for k_1 in p_vals:
+        for k_2 in p_vals[k_1]:
+            p = p_vals[k_1][k_2]
+            if p < t:
+                if filtered_p_vals.has_key(k_1):
+                    filtered_p_vals[k_1][k_2] = p
+                else:
+                    filtered_p_vals = {k_2: p}
+    return filtered_p_vals
+
 def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows, prev=0):
     INFO("{0}: {1}".format(title, desc))
     INFO("Input size: {0} {1}".format(len(otus) if rows_filter is None else len(rows_filter),
@@ -105,6 +119,61 @@ def create_or_open_results_file(iteration):
 def add_line_to_results_file(fd, line):
     if fd and not fd.closed:
         fd.write(line + "\n")
+
+def get_samples_for_otus(data_in, picked_indices, otu_filter, sample_filter, table, samples, otus):
+    data = np.copy(data_in)
+    if otu_filter is not None:
+        if otus is not list:
+            otus = otus.tolist()
+        rows_filter = [ otus.index(otu) for otu in otu_filter ]
+        mask = np.ones(data.shape, dtype=bool)
+        mask[rows_filter] = False
+        data[mask] = 0.0
+    if sample_filter is not None:
+        if samples is not list:
+            samples = samples.tolist()
+        cols_filter = [ samples.index(samp) for samp in sample_filter ]
+        mask = np.ones(data.shape, dtype=bool)
+        mask[ :, cols_filter ] = False
+        data[mask] = 0
+    mask = np.ones(data.shape, dtype=bool)
+    mask[picked_indices] = False
+    data[mask] = 0
+    samp_indices = numpy.where(data.any(axis=1))[0]
+    return ctwc__data_handler.get_samples_by_indices(samp_indices, table), samp_indices
+
+def get_otus_for_samples(data_in, picked_indices, otu_filter, sample_filter, table, samples, otus):
+    data = np.copy(data_in)
+    if otu_filter is not None:
+        if otus is not list:
+            otus = otus.tolist()
+        rows_filter = [ otus.index(otu) for otu in otu_filter ]
+        mask = np.ones(data.shape, dtype=bool)
+        mask[rows_filter] = False
+        data[mask] = 0.0
+    if sample_filter is not None:
+        if samples is not list:
+            samples = samples.tolist()
+        cols_filter = [ samples.index(samp) for samp in sample_filter ]
+        mask = np.ones(data.shape, dtype=bool)
+        mask[ :, cols_filter ] = False
+        data[mask] = 0
+    mask = np.ones(data.shape, dtype=bool)
+    mask[ :, picked_indices ] = False
+    data[mask] = 0
+    otu_indices = numpy.where(data.any(axis=0))[0]
+    return ctwc__data_handler.get_otus_by_indices(otu_indices, table), otu_indices
+
+def get_enriched_keys_over_threshold(sel_dist, ref_dist, t):
+    output = {}
+    for field in sel_dist:
+        for val in sel_dist[field][1]:
+            sel_val = sel_dist[field][1][val]
+            ref_val = ref_dist[field][1][val]
+            ratio = sel_val / ref_val
+            if ratio > t:
+                output[val] = sel_val, ref_val, ratio
+    return output
 
 def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev=0):
     rows_dist, _ = ctwc__distance_matrix.get_distance_matrices(data,
@@ -136,7 +205,6 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
     if table is not None:
         taxonomies = ctwc__metadata_analysis.get_taxa_by_otu_indices(picked_indices, table)
         picked_otus = ctwc__data_handler.get_otus_by_indices(picked_indices, table)
-        #taxonomies = ctwc__metadata_analysis.get_taxonomies_for_otus(picked_otus)
         INFO("Selected {0} OTUs".format(len(picked_indices)))
         add_line_to_results_file(res_file, "Selected {0} OTUs:".format(len(picked_indices)))
         add_line_to_results_file(res_file, "-"*BANNER_LEN)
@@ -150,12 +218,34 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
             DEBUG(picked_otu)
             add_line_to_results_file(res_file, picked_otu)
 
+        add_line_to_results_file(res_file, "Included Samples:")
+        add_line_to_results_file(res_file, "-"*BANNER_LEN)
+        included_samples, included_samples_indices = get_samples_for_otus(
+            data, picked_indices, rows_filter, cols_filter, table, samples, otus
+        )
+        for sample in included_samples:
+            add_line_to_results_file(res_file, sample)
+
         ref_dist = __get_full_otus_dist(otus, table)
         sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(selected_rows_filter, picked_indices, table)
         p_vals = ctwc__metadata_analysis.calculate_otus_p_values(sel_dist, ref_dist)
         DEBUG("P Values: {0}".format(p_vals))
         keys, pv = get_top_p_val(p_vals)
         INFO("Top P Value: {0}, keys: {1} {2}".format(pv, keys[0], keys[1]))
+
+        coupled_cols_filter, _ = __prepare_sample_filters_from_indices(included_samples_indices, samples, cols_filter)
+        if len(coupled_cols_filter) > 0:
+            coupled_ref_dist = __get_full_sample_dist(samples)
+            coupled_sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(coupled_cols_filter)
+            enriched = get_enriched_keys_over_threshold(coupled_sel_dist, coupled_ref_dist, COUPLED_ENRICHMENT_THRESHOLD)
+            if len(enriched) > 0:
+                add_line_to_results_file(res_file, "Enriched Samples:")
+                add_line_to_results_file(res_file, "-"*BANNER_LEN)
+            for key in enriched:
+                add_line_to_results_file(res_file, "{0}: Selection: {1} Reference: {2} Enrichment: {3}".format(
+                    key, enriched[key][0], enriched[key][1], enriched[key][2])
+                )
+
 
     num_otus = len(selected_rows_filter)
     num_samples = len(samples) if cols_filter == None else len(cols_filter)
@@ -206,6 +296,27 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
         DEBUG("P Values: {0}".format(p_vals))
         keys, pv = get_top_p_val(p_vals)
         INFO("Top P Value: {0}, keys: {1} {2}".format(pv, keys[0], keys[1]))
+        included_otus, included_otus_indices = get_otus_for_samples(
+            data, picked_indices, rows_filter, cols_filter, table, samples, otus
+        )
+        coupled_rows_filter, _ = __prepare_otu_filters_from_indices(included_otus_indices, otus, rows_filter)
+        add_line_to_results_file(res_file, "Included OTUs:")
+        add_line_to_results_file(res_file, "-"*BANNER_LEN)
+        for otu in included_otus:
+            add_line_to_results_file(res_file, otu)
+        if len(coupled_rows_filter) > 0:
+            coupled_ref_dist = __get_full_otus_dist(otus, table)
+            coupled_sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(
+                coupled_rows_filter, included_otus_indices, table
+            )
+            enriched = get_enriched_keys_over_threshold(coupled_sel_dist, coupled_ref_dist, COUPLED_ENRICHMENT_THRESHOLD)
+            if len(enriched) > 0:
+                add_line_to_results_file(res_file, "Enriched OTUs:")
+                add_line_to_results_file(res_file, "-"*BANNER_LEN)
+            for key in enriched:
+                add_line_to_results_file(res_file, "{0}: Selection: {1} Reference: {2} Enrichment: {3}".format(
+                    key, enriched[key][0], enriched[key][1], enriched[key][2])
+                )
 
     num_otus = len(otus) if rows_filter == None else len(rows_filter)
     num_samples = len(selected_cols_filter)
