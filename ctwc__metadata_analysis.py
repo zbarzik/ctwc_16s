@@ -22,8 +22,6 @@ elif DATASET == "twins":
 else:
     FATAL("Unknown dataset")
 
-Q_VALUE_FILENAME = "q_vals_{0}_{1}.csv"
-
 MIN_Q_VAL = 0.05
 
 @memoize

@@ -9,13 +9,13 @@ from collections import namedtuple
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
 
-LOG_FILE = "ctwc__logger.log"
+LOG_FILE = "results/ctwc__logger.log"
 logger = None
 MAX_PRINT_SIZE = 5000
 
 TITLE_FORMAT = "Iteration {0}" # iteration is assumed to be at the end of the title format
 
-CLUSTER_SUMMARY_CSV = "cluster_summary.csv"
+CLUSTER_SUMMARY_CSV = "results/cluster_summary.csv"
 
 def memoize(function):
     memo = {}
@@ -324,8 +324,8 @@ def write_cluster_summary_as_csv(output_filename, cluster_filename_list):
         for fn in cluster_filename_list:
             writer.writerow(parse_result_file_to_structured_line(fn))
 
-def write_cluster_summary_for_all_files_in_path():
+def write_cluster_summary_for_all_files_in_path(file_template):
     import glob
-    write_cluster_summary_as_csv(CLUSTER_SUMMARY_CSV, glob.glob('cluster*.txt'))
+    write_cluster_summary_as_csv(CLUSTER_SUMMARY_CSV, glob.glob(file_template.format("*")))
 
 init_logger()

@@ -4,9 +4,9 @@ from ctwc__common import *
 import numpy as np
 
 INITIALIZED = False
-PLOT_RAW_FILE = './plot_raw-{0}.pklz'
-PLOT_MAT_RAW_FILE = './plot_raw_mat-{0}.npz'
-PLOT_PNG_FILE = './plot-{0}.png'
+PLOT_RAW_FILE = 'results/plot_raw-{0}.pklz'
+PLOT_MAT_RAW_FILE = 'results/plot_raw_mat-{0}.npz'
+PLOT_PNG_FILE = 'results/plot-{0}.png'
 SHOW_ON_SCREEN = False
 
 
@@ -80,8 +80,9 @@ if __name__ == '__main__':
         init()
         if sys.argv[1] == "all":
             import glob
-            for fn in glob.glob("*plot_raw*.pklz"):
-                desc = fn[len("plot_raw-"):-len(".pklz")]
+            for fn in glob.glob(PLOT_RAW_FILE.format("*")):
+                tmplt = PLOT_RAW_FILE.format("@")
+                desc = fn[len(templ.split("@")[0]):-len(tmplt.split("@")[1])]
                 INFO(desc)
                 plot_from_file(PLOT_RAW_FILE.format(desc), PLOT_MAT_RAW_FILE.format(desc))
         else:

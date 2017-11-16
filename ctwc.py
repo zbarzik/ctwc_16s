@@ -14,13 +14,13 @@ RES_IND_NUM_TOTAL = 5
 
 RECURSION_DEPTH = 4
 
-Q_VALUES_ITERATION_FILENAME = "q_vals_{0}.csv"
+Q_VALUES_ITERATION_FILENAME = "results/q_vals_{0}.csv"
 
 RECURSIVE_THRESHOLD = 100
 
 COUPLED_ENRICHMENT_THRESHOLD = 1.5
 
-CLUSTER_OUTPUT_FILE = "cluster_results_{0}.txt"
+CLUSTER_OUTPUT_FILE = "results/cluster_results_{0}.txt"
 
 BANNER_LEN = 50
 
@@ -546,7 +546,6 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        iteration_results)
 
 
-
 def test():
     ctwc__plot.init()
     np.seterr(all="ignore")
@@ -557,7 +556,7 @@ def test():
     for elem in output:
         keys, pv = get_top_p_val(output[elem][RES_IND_P_VAL])
         INFO("{0}: {1} X {2} - P Value {3} Keys {4}".format(elem, output[elem][RES_IND_INPUT][0], output[elem][RES_IND_INPUT][1], pv, keys))
-    write_cluster_summary_for_all_files_in_path()
+    write_cluster_summary_for_all_files_in_path(CLUSTER_OUTPUT_FILE)
 
 
 if __name__ == "__main__":
