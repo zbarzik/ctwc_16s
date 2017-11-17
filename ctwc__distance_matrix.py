@@ -278,13 +278,16 @@ def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_fil
         rows_dist = jaccard_distance_rows(data, samples, otus, sample_filter, otu_filter)
     return rows_dist, cols_dist
 
-def get_data(use_real_data=True, full_set=True):
+def get_data(use_real_data=True, full_set=True, jagged=True):
     if use_real_data:
         INFO("Using real data")
         data, otus, samples, table = ctwc__data_handler.get_sample_biom_table(full_set=full_set)
     else:
         INFO("Using synthetic data")
-        data, otus, samples, table = ctwc__data_handler.get_synthetic_biom_table(full_set=full_set)
+        if jagged:
+            data, otus, samples, table = ctwc__data_handler.get_synthetic_biom_table_jagged(full_set=full_set)
+        else:
+            data, otus, samples, table = ctwc__data_handler.get_synthetic_biom_table_single_axis_noise(full_set=full_set)
     tree = ctwc__data_handler.get_gg_97_otu_tree()
     return samples, otus, tree, data, table
 

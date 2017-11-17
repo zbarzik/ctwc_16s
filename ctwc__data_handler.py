@@ -139,7 +139,41 @@ def __shuffle_2d_dist_matrix(mat):
     np.random.shuffle(mat)
     return mat
 
-def get_synthetic_biom_table(full_set=True):
+def get_synthetic_biom_table_jagged(full_set=True):
+    INFO("Synthesizing data based on sample table...")
+    INFO("Reading sample files...")
+    data, otus, samples, table = get_sample_biom_table(full_set)
+    INFO("Generating new patterns in data...")
+    # noise
+    data[:,:] = 0.0
+    # cluster of samples
+    # cluster of samples
+    samp_set_1 = 500
+    samp_set_2 = 550
+    samp_set_3 = 400
+    samp_set_4 = 600
+    otu_set_1 = 5000
+    otu_set_2 = 4000
+    otu_set_3 = 5500
+    otu_set_4 = 4500
+    data[:otu_set_1, :samp_set_1] = 4.0 / 100.0
+    data[otu_set_1:otu_set_1+otu_set_2, :samp_set_3] = 6.0 / 100.0
+    data[:otu_set_3, samp_set_1:samp_set_1+samp_set_2] = 9.0 / 100.0
+    data[otu_set_3:otu_set_3+otu_set_4, samp_set_1:samp_set_1+samp_set_4] = 11.0 / 100.0
+
+    ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
+    # shuffle along first axis:
+    np.random.shuffle(data)
+    # shuffle along second axis:
+    data = data.transpose()
+    np.random.shuffle(data)
+    # transpose back:
+    data = data.transpose()
+    ctwc__plot.plot_mat(data, header="Original Data Post-shuffle")
+    INFO("Done preparing synthetic data")
+    return data, otus, samples, table
+
+def get_synthetic_biom_table_single_axis_noise(full_set=True):
     INFO("Synthesizing data based on sample table...")
     INFO("Reading sample files...")
     data, otus, samples, table = get_sample_biom_table(full_set)
@@ -168,6 +202,7 @@ def get_synthetic_biom_table(full_set=True):
     ctwc__plot.plot_mat(data, header="Original Data Post-shuffle")
     INFO("Done preparing synthetic data")
     return data, otus, samples, table
+
 
 def get_samples_by_indices(indices, table):
     s_indices = set(indices)
