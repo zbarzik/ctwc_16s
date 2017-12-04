@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP,save_to_file,load_from_file
+from ctwc__common import *
 import warnings
 
 import numpy as np
@@ -15,7 +15,7 @@ MIN_CLUSTER_LIMIT = 50.0
 SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
 SPC_TMP_FILES_PREFIX = '__tmp_ctwc'
-SPC_CLUSTER_FILE = 'results/spc_cluster-{0}.pklz'
+SPC_CLUSTER_FILE = RESULTS_PATH+"spc_cluster-{0}.pklz"
 ALLOW_CACHING = False
 MIN_SCORE = 8
 LARGEST_CLUSTER_IND = 4

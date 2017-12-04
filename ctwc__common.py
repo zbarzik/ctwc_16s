@@ -9,13 +9,14 @@ from collections import namedtuple
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
 
-LOG_FILE = "results/ctwc__logger.log"
+RESULTS_PATH="results/"
+LOG_FILE = RESULTS_PATH + "ctwc__logger.log"
 logger = None
 MAX_PRINT_SIZE = 5000
 
 TITLE_FORMAT = "Iteration {0}" # iteration is assumed to be at the end of the title format
 
-CLUSTER_SUMMARY_CSV = "results/cluster_summary.csv"
+CLUSTER_SUMMARY_CSV = RESULTS_PATH+"cluster_summary.csv"
 
 def memoize(function):
     memo = {}

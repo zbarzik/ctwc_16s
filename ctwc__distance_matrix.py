@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from ctwc__common import ASSERT,DEBUG,INFO,WARN,ERROR,FATAL,BP,save_to_file,load_from_file,has_value
+from ctwc__common import *
 from multiprocessing import Pool
 import warnings
 import ctwc__data_handler
@@ -12,12 +12,12 @@ REAL_DATA = True
 USE_LOG_XFORM = True
 WEIGHTED_UNIFRAC = False
 NORMALIZE_FACTOR = 100.0
-OTU_THRESHOLD = 1 / NORMALIZE_FACTOR
+OTU_THRESHOLD = 3 / NORMALIZE_FACTOR
 SAMPLE_THRESHOLD = 2 / NORMALIZE_FACTOR
 NUM_THREADS = 32
 COL_DISTANCE_MATRIX_FILE = './sample_distance.dat'
 ROW_DISTANCE_MATRIX_FILE = './bacteria_distance.dat'
-UNIFRAC_DIST_FILE = 'results/unifrac_dist_mat-{0}.pklz'
+UNIFRAC_DIST_FILE = RESULTS_PATH+"unifrac_dist_mat-{0}.pklz"
 SQUARE_UNIFRAC_DISTANCE = False
 INF_VALUE = 1.0001
 ALLOW_CACHING = False

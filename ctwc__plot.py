@@ -4,9 +4,9 @@ from ctwc__common import *
 import numpy as np
 
 INITIALIZED = False
-PLOT_RAW_FILE = 'results/plot_raw-{0}.pklz'
-PLOT_MAT_RAW_FILE = 'results/plot_raw_mat-{0}.npz'
-PLOT_PNG_FILE = 'results/plot-{0}.png'
+PLOT_RAW_FILE = RESULTS_PATH+'plot_raw-{0}.pklz'
+PLOT_MAT_RAW_FILE = RESULTS_PATH+'plot_raw_mat-{0}.npz'
+PLOT_PNG_FILE = RESULTS_PATH+'plot-{0}.png'
 SHOW_ON_SCREEN = False
 
 

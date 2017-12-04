@@ -14,13 +14,13 @@ RES_IND_NUM_TOTAL = 5
 
 RECURSION_DEPTH = 4
 
-Q_VALUES_ITERATION_FILENAME = "results/q_vals_{0}.csv"
+Q_VALUES_ITERATION_FILENAME = RESULTS_PATH+"q_vals_{0}.csv"
 
 RECURSIVE_THRESHOLD = 100
 
 COUPLED_ENRICHMENT_THRESHOLD = 1.5
 
-CLUSTER_OUTPUT_FILE = "results/cluster_results_{0}.txt"
+CLUSTER_OUTPUT_FILE = RESULTS_PATH+"cluster_results_{0}.txt"
 
 BANNER_LEN = 50
 
@@ -549,7 +549,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 def test():
     ctwc__plot.init()
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=True)
+    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=False, full_set=True)
 
     output = ctwc_recursive_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))

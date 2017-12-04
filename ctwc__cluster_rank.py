@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import numpy as np
-from ctwc__common import DEBUG,INFO,WARN,ERROR,FATAL,ASSERT,BP
+from ctwc__common import *
 import warnings
 import sys
 

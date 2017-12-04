@@ -143,10 +143,10 @@ def get_synthetic_biom_table_jagged(full_set=True):
     INFO("Synthesizing data based on sample table...")
     INFO("Reading sample files...")
     data, otus, samples, table = get_sample_biom_table(full_set)
-    INFO("Generating new patterns in data...")
+    INFO("Generating jagged checkerbox patterns in data...")
     # noise
-    data[:,:] = 0.0
-    # cluster of samples
+    data = abs(np.random.normal(0, 2, size=data.shape)) / 100.0
+    data[data < 0] = 0
     # cluster of samples
     samp_set_1 = 500
     samp_set_2 = 550
@@ -156,11 +156,11 @@ def get_synthetic_biom_table_jagged(full_set=True):
     otu_set_2 = 4000
     otu_set_3 = 5500
     otu_set_4 = 4500
-    data[:otu_set_1, :samp_set_1] = 4.0 / 100.0
-    data[otu_set_1:otu_set_1+otu_set_2, :samp_set_3] = 6.0 / 100.0
-    data[:otu_set_3, samp_set_1:samp_set_1+samp_set_2] = 9.0 / 100.0
-    data[otu_set_3:otu_set_3+otu_set_4, samp_set_1:samp_set_1+samp_set_4] = 11.0 / 100.0
-
+    data[:, :samp_set_1+samp_set_2] = 0.0
+    data[:otu_set_1, :samp_set_1] = 32.0 / 100.0
+    data[otu_set_1:otu_set_1+otu_set_2, :samp_set_3] = 24.0 / 100.0
+    data[:otu_set_3, samp_set_1:samp_set_1+samp_set_2] = 36.0 / 100.0
+    data[otu_set_3:otu_set_3+otu_set_4, samp_set_3:samp_set_3+samp_set_4] = 44.0 / 100.0
     ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
     # shuffle along first axis:
     np.random.shuffle(data)
@@ -177,7 +177,7 @@ def get_synthetic_biom_table_single_axis_noise(full_set=True):
     INFO("Synthesizing data based on sample table...")
     INFO("Reading sample files...")
     data, otus, samples, table = get_sample_biom_table(full_set)
-    INFO("Generating new patterns in data...")
+    INFO("Generating single axis noise patterns in data...")
     # noise
     data = abs(np.random.normal(0, 5, size=data.shape)) / 100.0
     data[data < 0] = 0.0
