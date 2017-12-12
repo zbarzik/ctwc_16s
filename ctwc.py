@@ -12,7 +12,7 @@ RES_IND_REF_DIST = 3
 RES_IND_NUM_SELECTED = 4
 RES_IND_NUM_TOTAL = 5
 
-RECURSION_DEPTH = 4
+RECURSION_DEPTH = 3
 
 Q_VALUES_ITERATION_FILENAME = RESULTS_PATH+"q_vals_{0}.csv"
 
@@ -47,11 +47,11 @@ Compliment is from the previous filter (if provided).
 All output is SORTED.
 """
 def __prepare_otu_filters_from_indices(picked_indices, otus, prev_otu_filter = None):
-    selected_rows_filter = [ otu for index, otu in enumerate(otus) if index in picked_indices ]
-    compliment_rows_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
+    selected_otu_filter = [ otu for index, otu in enumerate(otus) if index in picked_indices ]
+    compliment_otu_filter = [ otu for index, otu in enumerate(otus) if index not in picked_indices ]
     if prev_otu_filter is not None:
-        compliment_rows_filter = [ otu for otu in compliment_rows_filter if otu in prev_otu_filter ]
-    return sorted(selected_rows_filter), sorted(compliment_rows_filter)
+        compliment_otu_filter = [ otu for otu in compliment_otu_filter if otu in prev_otu_filter ]
+    return sorted(selected_otu_filter), sorted(compliment_otu_filter)
 
 """
 Filter samples by picked indices - mask out all entries EXCEPT the ones noted by the picked indices.
@@ -59,11 +59,11 @@ Compliment is from the previous filter (if provided).
 All output is SORTED.
 """
 def __prepare_sample_filters_from_indices(picked_indices, samples, prev_samp_filter = None):
-    selected_cols_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
-    compliment_cols_filter = [ samp for index, samp in enumerate(samples) if index not in picked_indices ]
+    selected_samp_filter = [ samp for index, samp in enumerate(samples) if index in picked_indices ]
+    compliment_samp_filter = [ samp for index, samp in enumerate(samples) if index not in picked_indices ]
     if prev_samp_filter is not None:
-        compliment_cols_filter = [ samp for samp in compliment_cols_filter if samp in prev_samp_filter ]
-    return sorted(selected_cols_filter), sorted(compliment_cols_filter)
+        compliment_samp_filter = [ samp for samp in compliment_samp_filter if samp in prev_samp_filter ]
+    return sorted(selected_samp_filter), sorted(compliment_samp_filter)
 
 __full_otus_dist = None
 def __get_full_otus_dist(otus, table):
@@ -103,14 +103,14 @@ def filter_p_vals_by_threshold(p_vals, t):
                     filtered_p_vals = {k_2: p}
     return filtered_p_vals
 
-def run_iteration(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, is_rows, prev=0):
+def run_iteration(title, desc, data, tree, samples, otus, otu_filter, sample_filter, table, is_rows, prev=0):
     INFO("{0}: {1}".format(title, desc))
-    INFO("Input size: {0} {1}".format(len(otus) if rows_filter is None else len(rows_filter),
-                                      len(samples) if cols_filter is None else len(cols_filter)))
+    INFO("Input size: {0} {1}".format(len(otus) if otu_filter is None else len(otu_filter),
+                                      len(samples) if sample_filter is None else len(sample_filter)))
     if is_rows:
-        return __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev)
+        return __run_iteration__rows(title, desc, data, tree, samples, otus, otu_filter, sample_filter, table, prev)
     else:
-        return __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev)
+        return __run_iteration__cols(title, desc, data, tree, samples, otus, otu_filter, sample_filter, table, prev)
 
 def create_or_open_results_file(iteration):
     fd = open(CLUSTER_OUTPUT_FILE.format(make_camel_from_string(iteration)), 'a')
@@ -175,13 +175,13 @@ def get_enriched_keys_over_threshold(sel_dist, ref_dist, t):
                 output[val] = sel_val, ref_val, ratio
     return output
 
-def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev=0):
+def __run_iteration__rows(title, desc, data, tree, samples, otus, otu_filter, sample_filter, table, prev=0):
     rows_dist, _ = ctwc__distance_matrix.get_distance_matrices(data,
                                                                tree,
                                                                samples,
                                                                otus,
-                                                               sample_filter=cols_filter,
-                                                               otu_filter=rows_filter,
+                                                               sample_filter=sample_filter,
+                                                               otu_filter=otu_filter,
                                                                skip_cols=True)
 
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_rows_by_top_rank(data,
@@ -189,12 +189,12 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
                                                                                        prev,
                                                                                        otus)
 
-    selected_rows_filter, compliment_rows_filter = __prepare_otu_filters_from_indices(picked_indices, otus, rows_filter)
+    selected_otu_filter, compliment_otu_filter = __prepare_otu_filters_from_indices(picked_indices, otus, otu_filter)
 
     res_file = create_or_open_results_file(title)
     add_line_to_results_file(res_file, "{0} - {1} OTUs X {2} Samples".format(title,
-                                            len(otus) if rows_filter is None else len(rows_filter),
-                                            len(samples) if cols_filter is None else len(cols_filter)))
+                                            len(otus) if otu_filter is None else len(otu_filter),
+                                            len(samples) if sample_filter is None else len(sample_filter)))
     add_line_to_results_file(res_file, get_iteration_path_string(title_to_iteration(title)))
     add_line_to_results_file(res_file, "-"*BANNER_LEN)
     sorted_rows_mat = __sort_matrix_rows_by_selection(rows_dist, picked_indices)
@@ -221,22 +221,22 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
         add_line_to_results_file(res_file, "Included Samples:")
         add_line_to_results_file(res_file, "-"*BANNER_LEN)
         included_samples, included_samples_indices = get_samples_for_otus(
-            data, picked_indices, rows_filter, cols_filter, table, samples, otus
+            data, picked_indices, otu_filter, sample_filter, table, samples, otus
         )
         for sample in included_samples:
             add_line_to_results_file(res_file, sample)
 
         ref_dist = __get_full_otus_dist(otus, table)
-        sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(selected_rows_filter, picked_indices, table)
+        sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(selected_otu_filter, picked_indices, table)
         p_vals = ctwc__metadata_analysis.calculate_otus_p_values(sel_dist, ref_dist)
         DEBUG("P Values: {0}".format(p_vals))
         keys, pv = get_top_p_val(p_vals)
         INFO("Top P Value: {0}, keys: {1} {2}".format(pv, keys[0], keys[1]))
 
-        coupled_cols_filter, _ = __prepare_sample_filters_from_indices(included_samples_indices, samples, cols_filter)
-        if len(coupled_cols_filter) > 0:
+        coupled_sample_filter, _ = __prepare_sample_filters_from_indices(included_samples_indices, samples, sample_filter)
+        if len(coupled_sample_filter) > 0:
             coupled_ref_dist = __get_full_sample_dist(samples)
-            coupled_sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(coupled_cols_filter)
+            coupled_sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(coupled_sample_filter)
             enriched = get_enriched_keys_over_threshold(coupled_sel_dist, coupled_ref_dist, COUPLED_ENRICHMENT_THRESHOLD)
             if len(enriched) > 0:
                 add_line_to_results_file(res_file, "Enriched Samples:")
@@ -247,20 +247,20 @@ def __run_iteration__rows(title, desc, data, tree, samples, otus, rows_filter, c
                 )
 
 
-    num_otus = len(selected_rows_filter)
-    num_samples = len(samples) if cols_filter == None else len(cols_filter)
+    num_otus = len(selected_otu_filter)
+    num_samples = len(samples) if sample_filter == None else len(sample_filter)
 
     res_file.close()
 
-    return (num_otus, num_samples), selected_rows_filter, compliment_rows_filter, p_vals, (sel_dist, ref_dist)
+    return (num_otus, num_samples), selected_otu_filter, compliment_otu_filter, p_vals, (sel_dist, ref_dist)
 
-def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, cols_filter, table, prev=0):
+def __run_iteration__cols(title, desc, data, tree, samples, otus, otu_filter, sample_filter, table, prev=0):
     _, cols_dist = ctwc__distance_matrix.get_distance_matrices(data,
                                                                tree,
                                                                samples,
                                                                otus,
-                                                               otu_filter=rows_filter,
-                                                               sample_filter=cols_filter,
+                                                               otu_filter=otu_filter,
+                                                               sample_filter=sample_filter,
                                                                skip_rows=True)
 
     picked_indices, last_rank, _, _, _, _ = ctwc__cluster_rank.filter_cols_by_top_rank(data,
@@ -268,12 +268,12 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
                                                                                        prev,
                                                                                        samples)
 
-    selected_cols_filter, compliment_cols_filter = __prepare_sample_filters_from_indices(picked_indices, samples, cols_filter)
+    selected_sample_filter, compliment_sample_filter = __prepare_sample_filters_from_indices(picked_indices, samples, sample_filter)
 
     res_file = create_or_open_results_file(title)
     add_line_to_results_file(res_file, "{0} - {1} OTUs X {2} Samples".format(title,
-                                            len(otus) if rows_filter is None else len(rows_filter),
-                                            len(samples) if cols_filter is None else len(cols_filter)))
+                                            len(otus) if otu_filter is None else len(otu_filter),
+                                            len(samples) if sample_filter is None else len(sample_filter)))
 
     add_line_to_results_file(res_file, get_iteration_path_string(title_to_iteration(title)))
     add_line_to_results_file(res_file, "-"*BANNER_LEN)
@@ -291,23 +291,23 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
             add_line_to_results_file(res_file, samp)
             DEBUG(samp)
         ref_dist = __get_full_sample_dist(samples)
-        sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(selected_cols_filter)
+        sel_dist = ctwc__metadata_analysis.calculate_samples_distribution(selected_sample_filter)
         p_vals = ctwc__metadata_analysis.calculate_samples_p_values(sel_dist, ref_dist)
         DEBUG("P Values: {0}".format(p_vals))
         keys, pv = get_top_p_val(p_vals)
         INFO("Top P Value: {0}, keys: {1} {2}".format(pv, keys[0], keys[1]))
         included_otus, included_otus_indices = get_otus_for_samples(
-            data, picked_indices, rows_filter, cols_filter, table, samples, otus
+            data, picked_indices, otu_filter, sample_filter, table, samples, otus
         )
-        coupled_rows_filter, _ = __prepare_otu_filters_from_indices(included_otus_indices, otus, rows_filter)
+        coupled_otu_filter, _ = __prepare_otu_filters_from_indices(included_otus_indices, otus, otu_filter)
         add_line_to_results_file(res_file, "Included OTUs:")
         add_line_to_results_file(res_file, "-"*BANNER_LEN)
         for otu in included_otus:
             add_line_to_results_file(res_file, otu)
-        if len(coupled_rows_filter) > 0:
+        if len(coupled_otu_filter) > 0:
             coupled_ref_dist = __get_full_otus_dist(otus, table)
             coupled_sel_dist = ctwc__metadata_analysis.calculate_otus_distribution(
-                coupled_rows_filter, included_otus_indices, table
+                coupled_otu_filter, included_otus_indices, table
             )
             enriched = get_enriched_keys_over_threshold(coupled_sel_dist, coupled_ref_dist, COUPLED_ENRICHMENT_THRESHOLD)
             if len(enriched) > 0:
@@ -318,12 +318,12 @@ def __run_iteration__cols(title, desc, data, tree, samples, otus, rows_filter, c
                     key, enriched[key][0], enriched[key][1], enriched[key][2])
                 )
 
-    num_otus = len(otus) if rows_filter == None else len(rows_filter)
-    num_samples = len(selected_cols_filter)
+    num_otus = len(otus) if otu_filter == None else len(otu_filter)
+    num_samples = len(selected_sample_filter)
 
     res_file.close()
 
-    return (num_otus, num_samples), selected_cols_filter, compliment_cols_filter, p_vals, (sel_dist, ref_dist)
+    return (num_otus, num_samples), selected_sample_filter, compliment_sample_filter, p_vals, (sel_dist, ref_dist)
 
 def __ctwc_recursive__get_iteration_indices(iteration_ind):
     if iteration_ind == "0":
@@ -549,7 +549,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 def test():
     ctwc__plot.init()
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=False, full_set=True)
+    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=False, full_set=False)
 
     output = ctwc_recursive_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
