@@ -252,22 +252,64 @@ def jaccard_distance_cols(data, samples, otus, sample_filter, otu_filter):
 def pearson_distance_cols(data, samples, otus, sample_filter, otu_filter):
     return pearson_distance_rows(data.transpose(), samples, otus, sample_filter, otu_filter)
 
-def euclidean_distance_rows(data):
-    def _dist(vec1, vec2):
-        from math import sqrt
-        s = 0
-        for i in range(0, min(len(vec1), len(vec2))):
-            s += sqrt((vec1[i]-vec2[i])*(vec1[i]-vec2[i]))
-        return s
-    num_rows, row_vec_len = data.shape
-    output = np.zeros((num_rows, num_rows))
-    for i in range(0, num_rows):
-        for j in range(0, num_rows):
-            output[i][j] = _dist(data[i,:], data[j,:])
+def euclidean_distance_cols(data, sample_filter, otu_filter, samples, otus):
+    data = data.copy()
+    if sample_filter is not None:
+        samples = samples.tolist()
+        cols_filter = set(
+            [samples.index(samp) for samp in sample_filter]
+        )
+    if otu_filter is not None:
+        otus = otus.tolist()
+        rows_filter = [otus.index(otu) for otu in otu_filter]
+        mask = np.ones(data.shape, dtype=bool)
+        mask[rows_filter] = False
+        data[mask] = 0
+    def _dist(a, b):
+        return numpy.linalg.norm(a-b)
+    _, num_cols = data.shape
+    output = np.zeros((num_cols, num_cols))
+    for i in xrange(num_cols):
+        for j in xrange(num_cols):
+            if sample_filter is not None and (
+                i not in cols_filter or j not in cols_filter
+                ):
+                output[i][j] = INF_VALUE
+            else:
+                output[i][j] = _dist(data[:,i], data[:,j])
+    for i in xrange(num_cols):
+        output[i][i] = 0.0
     return output
 
-def euclidean_distance_cols(data):
-    return euclidean_distance_rows(data.transpose())
+def euclidean_distance_rows(data, sample_filter, otu_filter, samples, otus):
+    data = data.copy()
+    if otu_filter is not None:
+        otus = otus.tolist()
+        rows_filter = set(
+            [otus.index(otu) for otu in otu_filter]
+        )
+    if sample_filter is not None:
+        samples = samples.tolist()
+        cols_filter = [samples.index(sample) for sample in sample_filter]
+        mask = np.ones(data.shape, dtype=bool)
+        mask[:,cols_filter] = False
+        data[mask] = 0
+    def _dist(a, b):
+        return numpy.linalg.norm(a-b)
+    num_rows, _ = data.shape
+    output = np.zeros((num_rows, num_rows))
+    for i in xrange(num_rows):
+        for j in xrange(num_rows):
+            if otu_filter is not None and (
+                i not in rows_filter or j not in rows_filter
+                ):
+                output[i][j] = INF_VALUE
+            else:
+                output[i][j] = _dist(data[i], data[j])
+    for i in xrange(num_rows):
+        output[i][i] = 0.0
+    return output
+
 
 def get_distance_matrices(data, tree, samples, otus, sample_filter=None, otu_filter=None, skip_cols=False, skip_rows=False):
     cols_dist = None

@@ -142,8 +142,8 @@ def __shuffle_2d_dist_matrix(mat):
 def get_synthetic_small_input_biom_table_jagged():
     INFO("Syntherizing a small data set based on sample table...")
     INFO("Reading sample files...")
-    num_otus = 500
-    num_samples = 500
+    num_otus = 400
+    num_samples = 350
     data, otus, samples, table = get_sample_biom_table(False)
     INFO("Reducing data set size to ({},{})".format(num_otus, num_samples))
     otus = otus[:num_otus]
@@ -151,6 +151,7 @@ def get_synthetic_small_input_biom_table_jagged():
     table._data = table._data[:num_otus, :num_samples]
     data = abs(np.random.normal(0, 2, size=(num_otus,num_samples)))
     data[data < 0] = 0
+    data[:] = 0.0
     # cluster of samples
     samp_set_1 = 100
     samp_set_2 = 110
@@ -160,11 +161,13 @@ def get_synthetic_small_input_biom_table_jagged():
     otu_set_2 = 150
     otu_set_3 = 160
     otu_set_4 = 170
-    #data[:, :samp_set_3+samp_set_4] = 0.0
-    data[:otu_set_1, :samp_set_1] = 32.0
-    data[otu_set_1:otu_set_1+otu_set_2, :samp_set_3] = 24.0
-    data[:otu_set_3, samp_set_1:samp_set_1+samp_set_2] = 36.0
-    data[otu_set_3:otu_set_3+otu_set_4, samp_set_3:samp_set_3+samp_set_4] = 44.0
+    #data[:, :samp_set_1+samp_set_4] = 0.0
+    #data[:otu_set_1+otu_set_4, :] = 0.0
+    data[:otu_set_4, :samp_set_4] = 13.0
+    data[otu_set_4:otu_set_4+otu_set_1, :samp_set_2] = 24.0
+    data[:otu_set_2, samp_set_4:samp_set_4+samp_set_1] = 36.0
+    data[otu_set_4:otu_set_4+otu_set_3, samp_set_4:samp_set_4+samp_set_3] = 44.0
+    data = data / 100.0
     ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
     # shuffle along first axis:
     #np.random.shuffle(data)
@@ -173,7 +176,7 @@ def get_synthetic_small_input_biom_table_jagged():
     #np.random.shuffle(data)
     # transpose back:
     #data = data.transpose()
-    ctwc__plot.plot_mat(data, header="Original Data Post-shuffle")
+    #ctwc__plot.plot_mat(data, header="Original Data Post-shuffle")
     INFO("Done preparing synthetic data")
     return data, otus, samples, table
 
@@ -220,7 +223,7 @@ def get_synthetic_biom_table_single_axis_noise(full_set=True):
     data, otus, samples, table = get_sample_biom_table(full_set)
     INFO("Generating single axis noise patterns in data...")
     # noise
-    data = abs(np.random.normal(0, 5, size=data.shape)) / 100.0
+    data = abs(np.random.normal(0, 2, size=data.shape)) / 100.0
     data[data < 0] = 0.0
     # cluster of samples
     size_of_samp_set = 150 if not full_set else 800
