@@ -475,7 +475,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        step,
                                        iteration_results)
 
-    if run_on_sample_comp and run_on_otu_selection:
+    if run_on_sample_comp:
         step = __ctwc_recursive__get_next_step(iteration_ind, 5)
         title = iteration_to_title(step)
         result, step_otu_filter, step_otu_compliment, p_vals, dist = run_iteration(title, "Pick OTUs from samples compliment...",
@@ -483,7 +483,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                                                         tree,
                                                                         samples,
                                                                         otus,
-                                                                        otu_filter,
+                                                                        None,
                                                                         sample_compliment,
                                                                         table,
                                                                         True)
@@ -522,7 +522,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                        step,
                                        iteration_results)
 
-    if run_on_otu_comp and run_on_sample_selection:
+    if run_on_otu_comp:
         step = __ctwc_recursive__get_next_step(iteration_ind, 4)
         title = iteration_to_title(step)
         result, step_samp_filter, step_samp_compliment, p_vals, dist = run_iteration(title, "Pick samples from OTUs compliment...",
@@ -531,7 +531,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
                                                                         samples,
                                                                         otus,
                                                                         otu_compliment,
-                                                                        sample_filter,
+                                                                        None,
                                                                         table,
                                                                         False)
         sel_dist, ref_dist = dist
@@ -549,7 +549,7 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 def test():
     ctwc__plot.init()
     np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=False, full_set=False)
+    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=False)
 
     output = ctwc_recursive_select(data, tree, samples, otus, table)
     INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
