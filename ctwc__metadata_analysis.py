@@ -6,11 +6,15 @@ import csv, bisect, math, scipy, scipy.stats, random
 TAXA_LINE_STRUCUTURE = ['otu', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
 MILK_SAMPLES_ID_FIELD = 'sample_name'
 TWINS_SAMPLES_ID_FIELD = 'run_s'
+COWS_SAMPLES_ID_FIELD = 'sampleid'
+COWS_SAMPLES_MD_FILE = 'metadata_table_run1_to_21_corrected.txt'
 SAMPLES_SKIP_FIELDS = ['host_subject_id']
 MILK_SAMPLES_MD_FILE = '10485_20160420-093403.txt'
 TWINS_SAMPLES_MD_FILE = 'SraRunTable.txt'
 TAXA_MD_FILE = '97_otu_taxonomy.txt'
 OTU_RANKS_TO_SKIP = ['kingdom']
+AG_SAMPLES_MD_FILE = "new_data/AG_even1k.txt"
+AG_SAMPLES_ID_FIELD = "#sampleid"
 TEST = False
 
 if DATASET == "milk":
@@ -19,6 +23,12 @@ if DATASET == "milk":
 elif DATASET == "twins":
     SAMPLES_ID_FIELD = TWINS_SAMPLES_ID_FIELD
     SAMPLES_MD_FILE = TWINS_SAMPLES_MD_FILE
+elif DATASET == "cows":
+    SAMPLES_MD_FILE = COWS_SAMPLES_MD_FILE
+    SAMPLES_ID_FIELD = COWS_SAMPLES_ID_FIELD
+elif DATASET == "ag":
+    SAMPLES_MD_FILE = AG_SAMPLES_MD_FILE
+    SAMPLES_ID_FIELD = AG_SAMPLES_ID_FIELD
 else:
     FATAL("Unknown dataset")
 

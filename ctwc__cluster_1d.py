@@ -10,8 +10,8 @@ import ctwc__distance_matrix, ctwc__data_handler
 
 # Constants
 N_CLUSTERS = 16
-MIN_DATA_POINTS_LIMIT = 100
-MIN_CLUSTER_LIMIT = 50.0
+MIN_DATA_POINTS_LIMIT = 50
+MIN_CLUSTER_LIMIT = 20.0
 SPC_BINARY_PATH = './SPC/'
 SPC_BINARY_EXE = './SW'
 SPC_TMP_FILES_PREFIX = '__tmp_ctwc'

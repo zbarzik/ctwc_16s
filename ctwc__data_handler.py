@@ -4,7 +4,7 @@ import ctwc__plot
 import warnings
 import numpy as np
 
-DATASET = "milk" # "twins"
+DATASET = "ag" # "cows" # "milk" # "twins"
 
 RAW_MILK_FILES = [ 'milk_3572_otu_table.json', 'milk_3573_otu_table.json', 'milk_3574_otu_table.json', 'milk_3575_otu_table.json',
 'milk_3576_otu_table.json' ] #, 'milk_3579_otu_table.json' ]
@@ -15,9 +15,13 @@ FILTERED_RAW_MILK_FILES = [ 'subset-milk_3572_otu_table.json', 'subset-milk_3574
 NORMALIZED_RAW_MILK_FILES = [ 'normalized-milk_3572_otu_table.json', 'normalized-milk_3574_otu_table.json', 'normalized-milk_3576_otu_table.json',
                             'normalized-milk_3573_otu_table.json',
                             'normalized-milk_3575_otu_table.json']# 'normalized-milk_3579_otu_table.json' ]
+AG_RAW_FILES = [ 'new_data/AG_even1k.json' ]
+
 DENOVO_REPROCESSED_MILK_FILES = [ 'milk-sub15k-min10.json' ]
 
 DENOVO_REPROCESSED_TWINS_FILES = [ 'twins-sub15k-min10.json' ]
+
+RAW_COWS_BIOM_FILES = [ 'Core_58%_otu_table.json' ]
 
 #BIOM_FILES_DICT = FILTERED_RAW_MILK_FILES
 #BIOM_FILES_DICT = FILTERED_NORMALIZED_RAW_MILK_FILES
@@ -25,8 +29,11 @@ DENOVO_REPROCESSED_TWINS_FILES = [ 'twins-sub15k-min10.json' ]
 #BIOM_FILES_DICT = NORMALIZED_RAW_MILK_FILES
 
 RAW_MILK_TREE_FILE = "97_otus.tree"
+AG_RAW_TREE_FILE = "97_otus.tree"
 DENOVO_REPROCESSED_MILK_TREE_FILE = "milk_all.tre"
 DENOVO_REPROCESSED_TWINS_TREE_FILE = "twins_all.tre"
+COWS_TREE_FILE = "unified_seq_run.fq_rep_set.fasta_mafft2_no_bc_otus_pfiltered.tre"
+
 
 TREE_FILE = DENOVO_REPROCESSED_MILK_TREE_FILE
 #TREE_FILE = DENOVO_REPROCESSED_TWINS_TREE_FILE
@@ -38,6 +45,12 @@ if DATASET == "milk":
 elif DATASET == "twins":
     BIOM_FILES_DICT = DENOVO_REPROCESSED_TWINS_FILES
     TREE_FILE = DENOVO_REPROCESSED_TWINS_TREE_FILE
+elif DATASET == "cows":
+    BIOM_FILES_DICT = RAW_COWS_BIOM_FILES
+    TREE_FILE = COWS_TREE_FILE
+elif DATASET == "ag":
+    BIOM_FILES_DICT = AG_RAW_FILES
+    TREE_FILE = AG_RAW_TREE_FILE
 else:
     FATAL("Unknown dataset")
 

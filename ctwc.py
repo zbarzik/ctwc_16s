@@ -547,17 +547,19 @@ def __ctwc_recursive_iteration(data, tree, samples, otus, table,
 
 
 def test():
-    ctwc__plot.init()
-    np.seterr(all="ignore")
-    samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=False)
+    try:
+        ctwc__plot.init()
+        np.seterr(all="ignore")
+        samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=False)
 
-    output = ctwc_recursive_select(data, tree, samples, otus, table)
-    INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
-    for elem in output:
-        keys, pv = get_top_p_val(output[elem][RES_IND_P_VAL])
-        INFO("{0}: {1} X {2} - P Value {3} Keys {4}".format(elem, output[elem][RES_IND_INPUT][0], output[elem][RES_IND_INPUT][1], pv, keys))
-    write_cluster_summary_for_all_files_in_path(CLUSTER_OUTPUT_FILE)
-
+        output = ctwc_recursive_select(data, tree, samples, otus, table)
+        INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
+        for elem in output:
+            keys, pv = get_top_p_val(output[elem][RES_IND_P_VAL])
+            INFO("{0}: {1} X {2} - P Value {3} Keys {4}".format(elem, output[elem][RES_IND_INPUT][0], output[elem][RES_IND_INPUT][1], pv, keys))
+        write_cluster_summary_for_all_files_in_path(CLUSTER_OUTPUT_FILE)
+    except Exception as ex:
+        ERROR("Failed with exception: {}".format(str(ex)))
 
 if __name__ == "__main__":
     test()
