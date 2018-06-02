@@ -13,7 +13,7 @@ MILK_SAMPLES_MD_FILE = '10485_20160420-093403.txt'
 TWINS_SAMPLES_MD_FILE = 'SraRunTable.txt'
 TAXA_MD_FILE = '97_otu_taxonomy.txt'
 OTU_RANKS_TO_SKIP = ['kingdom']
-AG_SAMPLES_MD_FILE = "new_data/AG_even1k.txt"
+AG_SAMPLES_MD_FILE = "new_data/AG_even1k_no_comas.txt"
 AG_SAMPLES_ID_FIELD = "#sampleid"
 TEST = False
 

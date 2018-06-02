@@ -15,6 +15,8 @@ FILTERED_RAW_MILK_FILES = [ 'subset-milk_3572_otu_table.json', 'subset-milk_3574
 NORMALIZED_RAW_MILK_FILES = [ 'normalized-milk_3572_otu_table.json', 'normalized-milk_3574_otu_table.json', 'normalized-milk_3576_otu_table.json',
                             'normalized-milk_3573_otu_table.json',
                             'normalized-milk_3575_otu_table.json']# 'normalized-milk_3579_otu_table.json' ]
+
+#AG_RAW_FILES = [ 'new_data/AG_even1k_gut_only.json' ]
 AG_RAW_FILES = [ 'new_data/AG_even1k.json' ]
 
 DENOVO_REPROCESSED_MILK_FILES = [ 'milk-sub15k-min10.json' ]

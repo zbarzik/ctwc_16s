@@ -3,6 +3,7 @@ from ctwc__common import *
 
 import ctwc__distance_matrix, ctwc__cluster_rank, ctwc__data_handler, ctwc__plot, ctwc__metadata_analysis
 import numpy as np
+import traceback
 
 # Result tuple indices:
 RES_IND_INPUT = 0
@@ -559,7 +560,9 @@ def test():
             INFO("{0}: {1} X {2} - P Value {3} Keys {4}".format(elem, output[elem][RES_IND_INPUT][0], output[elem][RES_IND_INPUT][1], pv, keys))
         write_cluster_summary_for_all_files_in_path(CLUSTER_OUTPUT_FILE)
     except Exception as ex:
-        ERROR("Failed with exception: {}".format(str(ex)))
+        ERROR("Failed with exception: {}, stack trace".format(str(ex)))
+        ERROR("Calling stack:")
+        ERROR(traceback.print_stack())
 
 if __name__ == "__main__":
     test()
