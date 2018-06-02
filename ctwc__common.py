@@ -165,13 +165,13 @@ def get_iteration_path_string(iteration_ind):
         elif step == "2":
             return "pick OTUs top cluster"
         elif step == "3":
-            return "pick samples top cluster using samples compliment"
+            return "pick samples top cluster using samples complement"
         elif step == "4":
-            return "pick OTUs top cluster using OTUs compliment"
+            return "pick OTUs top cluster using OTUs complement"
         elif step == "5":
-            return "pick samples top cluster using OTUs compliment"
+            return "pick samples top cluster using OTUs complement"
         elif step == "6":
-            return "pick OTUs top cluster using samples compliment"
+            return "pick OTUs top cluster using samples complement"
         else:
             FATAL("Ilegal string value")
 

@@ -220,13 +220,13 @@ def __filter_rows_by_top_rank(data, rows_dist, clust, labels, ag, entry_names=No
         entries = [ entry for ind, entry in enumerate(entry_names) if ind in picked_indices ]
         log_func("Picked entries: {0}".format(entries))
 
-    filtered_data_compliment = [ row for ind, row in enumerate(data) if ind not in picked_indices]
+    filtered_data_complement = [ row for ind, row in enumerate(data) if ind not in picked_indices]
 
     filtered_dist_matrix = [row for ind, row in enumerate(rows_dist) if ind in picked_indices]
 
-    filtered_dist_matrix_compliment = [row for ind, row in enumerate(rows_dist) if ind not in picked_indices]
+    filtered_dist_matrix_complement = [row for ind, row in enumerate(rows_dist) if ind not in picked_indices]
 
-    return picked_indices, max_rank[1], __fix(filtered_data), __fix(filtered_dist_matrix), __fix(filtered_data_compliment), __fix(filtered_dist_matrix_compliment)
+    return picked_indices, max_rank[1], __fix(filtered_data), __fix(filtered_dist_matrix), __fix(filtered_data_complement), __fix(filtered_dist_matrix_complement)
 
 def filter_cols_by_top_rank(data, cols_dist, cluster_limit=0, samples=None, debug=False):
     data = data.transpose()
