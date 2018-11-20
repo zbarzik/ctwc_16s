@@ -4,7 +4,7 @@ import ctwc__plot
 import warnings
 import numpy as np
 
-DATASET = "ag" # "cows" # "milk" # "twins"
+DATASET = "milk" #"ag" # "cows" # "milk" # "twins"
 
 RAW_MILK_FILES = [ 'milk_3572_otu_table.json', 'milk_3573_otu_table.json', 'milk_3574_otu_table.json', 'milk_3575_otu_table.json',
 'milk_3576_otu_table.json' ] #, 'milk_3579_otu_table.json' ]
@@ -238,7 +238,7 @@ def get_synthetic_biom_table_single_axis_noise(full_set=True):
     data, otus, samples, table = get_sample_biom_table(full_set)
     INFO("Generating single axis noise patterns in data...")
     # noise
-    data = abs(np.random.normal(0, 2, size=data.shape)) / 100.0
+    data = abs(np.random.normal(0, 5, size=data.shape)) / 100.0
     data[data < 0] = 0.0
     # cluster of samples
     size_of_samp_set = 150 if not full_set else 800
@@ -252,12 +252,12 @@ def get_synthetic_biom_table_single_axis_noise(full_set=True):
          size_of_partial_samp_set : size_of_samp_set] = 5.0 / 100.0 # 1900 OTU types common for the latter 500 of the first 800 samples
     ctwc__plot.plot_mat(data, header="Original Data Pre-shuffle")
     # shuffle along first axis:
-    np.random.shuffle(data)
+    #np.random.shuffle(data)
     # shuffle along second axis:
-    data = data.transpose()
-    np.random.shuffle(data)
+    #data = data.transpose()
+    #np.random.shuffle(data)
     # transpose back:
-    data = data.transpose()
+    #data = data.transpose()
     ctwc__plot.plot_mat(data, header="Original Data Post-shuffle")
     INFO("Done preparing synthetic data")
     return data, otus, samples, table

@@ -222,7 +222,7 @@ def __correct_p_vals(q_vals_vec, p_vals):
 
 def __corrected_p_values(p_vals_vec):
     import statsmodels.sandbox.stats.multicomp
-    return statsmodels.sandbox.stats.multicomp.multipletests(p_vals_vec)
+    return statsmodels.sandbox.stats.multicomp.multipletests(p_vals_vec, method="fdr_bh")
 
 def correct_p_vals(p_vals):
     p_vals_vec = __prepare_p_val_vec(p_vals)

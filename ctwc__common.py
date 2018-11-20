@@ -9,7 +9,7 @@ from collections import namedtuple
 LOG_LEVEL_CONSOLE = logging.INFO
 LOG_LEVEL_FILE = logging.DEBUG
 
-RESULTS_PATH="results/"
+RESULTS_PATH="/v/rg/shental2/groupData/zahi/results/synthetic/"
 LOG_FILE = RESULTS_PATH + "ctwc__logger.log"
 logger = None
 MAX_PRINT_SIZE = 5000
@@ -274,14 +274,18 @@ def parse_result_file_to_structured_line(filename):
                 reached_separator = True
                 continue
             if reached_q_vals:
-                label = line.split(',')[0]
-                value = line.split(',')[1]
-                q_val = float(line.split(',')[2][2:])
-                purity = float(line.split(',')[3])
-                ref_abundance = float(line.split(',')[4])
-                accuracy = float(line.split(',')[5][:-2])
+                try:
+                    label = line.split(',')[0]
+                    value = line.split(',')[1]
+                    q_val = float(line.split(',')[2][2:])
+                    purity = float(line.split(',')[3])
+                    ref_abundance = float(line.split(',')[4])
+                    accuracy = float(line.split(',')[5][:-2])
 
-                q_vals.append(QValStructure(label, value, q_val, purity, ref_abundance, accuracy))
+                    q_vals.append(QValStructure(label, value, q_val, purity, ref_abundance, accuracy))
+                except:
+                    ERROR("couldn't split line: {}".format(line))
+
 
 
         best = QValStructure("", "", 1.0, 0.0, 0.0, 0.0)

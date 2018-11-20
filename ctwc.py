@@ -13,7 +13,7 @@ RES_IND_REF_DIST = 3
 RES_IND_NUM_SELECTED = 4
 RES_IND_NUM_TOTAL = 5
 
-RECURSION_DEPTH = 4
+RECURSION_DEPTH = 3
 
 Q_VALUES_ITERATION_FILENAME = RESULTS_PATH+"q_vals_{0}.csv"
 
@@ -369,7 +369,7 @@ def ctwc_recursive_select(data, tree, samples, otus, table):
                 add_line_to_results_file(res_file, line.strip())
             res_file.close()
 
-    ctwc__plot.wait_for_user()
+    #ctwc__plot.wait_for_user()
     return iteration_results
 
 def __is_iteration_max_depth(iteration_ind):
@@ -551,18 +551,19 @@ def test():
     try:
         ctwc__plot.init()
         np.seterr(all="ignore")
-        samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=False)
+        samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=True, full_set=True)
+        #samples, otus, tree, data, table = ctwc__distance_matrix.get_data(use_real_data=False, full_set=False)
 
         output = ctwc_recursive_select(data, tree, samples, otus, table)
+        write_cluster_summary_for_all_files_in_path(CLUSTER_OUTPUT_FILE)
         INFO("Full data size: {0} X {1}".format(data.shape[0], data.shape[1]))
         for elem in output:
             keys, pv = get_top_p_val(output[elem][RES_IND_P_VAL])
-            INFO("{0}: {1} X {2} - P Value {3} Keys {4}".format(elem, output[elem][RES_IND_INPUT][0], output[elem][RES_IND_INPUT][1], pv, keys))
-        write_cluster_summary_for_all_files_in_path(CLUSTER_OUTPUT_FILE)
+            #INFO("{0}: {1} X {2} - P Value {3} Keys {4}".format(elem, output[elem][RES_IND_INPUT][0], output[elem][RES_IND_INPUT][1], pv, keys))
     except Exception as ex:
         ERROR("Failed with exception: {}, stack trace".format(str(ex)))
         ERROR("Calling stack:")
-        ERROR(traceback.print_stack())
+        ERROR(traceback.print_exc())
 
 if __name__ == "__main__":
     test()
